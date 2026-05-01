@@ -1,0 +1,1639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laura's Money Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #F5F2EC;
+  --bg2: #EDEAD8;
+  --card: #FFFFFF;
+  --text: #1A1814;
+  --text2: #6B6760;
+  --text3: #9C9890;
+  --border: #E2DED6;
+  --teal: #0E7A61;
+  --teal-light: #D6F0E8;
+  --teal-mid: #B0DDD0;
+  --coral: #C94C28;
+  --coral-light: #FAE8E3;
+  --amber: #9B6200;
+  --amber-light: #FBF0DC;
+  --blue: #1A5FA8;
+  --blue-light: #E3EEF9;
+  --purple: #5B49C5;
+  --purple-light: #EEECFB;
+  --red: #B83232;
+  --red-light: #FAE5E5;
+  --shadow: 0 2px 16px rgba(0,0,0,0.07);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.1);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --sidebar: 240px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+
+/* SIDEBAR */
+.sidebar {
+  position: fixed; top: 0; left: 0; bottom: 0; width: var(--sidebar);
+  background: var(--text); display: flex; flex-direction: column;
+  padding: 24px 16px; z-index: 100; overflow-y: auto;
+}
+.sidebar-logo { font-family: 'Playfair Display', serif; font-size: 18px; color: #fff; font-weight: 700; line-height: 1.2; }
+.sidebar-sub { font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 3px; font-family: 'DM Mono', monospace; letter-spacing: 0.05em; margin-bottom: 24px; }
+.nav-label { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.25); padding: 10px 0 4px; font-family: 'DM Mono', monospace; }
+.nav-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; color: rgba(255,255,255,0.55); font-size: 12px; margin-bottom: 2px; cursor: pointer; transition: all 0.15s; }
+.nav-item:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.85); }
+.nav-item.active { background: rgba(255,255,255,0.12); color: #fff; font-weight: 500; }
+.nav-icon { font-size: 14px; }
+.sidebar-footer { margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.08); }
+.sync-info { font-size: 10px; color: rgba(255,255,255,0.25); font-family: 'DM Mono', monospace; margin-bottom: 10px; }
+.btn-export { width: 100%; padding: 8px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: var(--radius-sm); color: rgba(255,255,255,0.6); font-size: 11px; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+.btn-export:hover { background: rgba(255,255,255,0.14); color: #fff; }
+
+/* HAMBURGER */
+.hamburger { display: none; position: fixed; top: 16px; left: 16px; z-index: 200; background: var(--text); border: none; border-radius: 8px; padding: 8px 10px; cursor: pointer; color: #fff; font-size: 16px; }
+.sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 90; }
+
+/* MAIN */
+.main { margin-left: var(--sidebar); min-height: 100vh; padding: 36px 32px 60px; }
+.page { display: none; }
+.page.active { display: block; }
+
+/* PAGE HEADER */
+.page-eyebrow { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3); font-family: 'DM Mono', monospace; margin-bottom: 6px; }
+.page-title { font-family: 'Playfair Display', serif; font-size: 34px; font-weight: 700; line-height: 1.1; }
+.page-sub { font-size: 14px; color: var(--text2); margin-top: 6px; margin-bottom: 28px; }
+
+/* CARDS */
+.card { background: var(--card); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+.card-sm { padding: 16px 18px; }
+.card-title { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 500; margin-bottom: 4px; }
+.card-sub { font-size: 12px; color: var(--text2); }
+
+/* STAT CARDS */
+.stat-card { background: var(--card); border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+.stat-val { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; line-height: 1; }
+.stat-label { font-size: 12px; color: var(--text2); margin-top: 5px; }
+.stat-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+/* GRIDS */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+
+/* BADGES */
+.badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 999px; }
+.badge-teal { background: var(--teal-light); color: var(--teal); }
+.badge-coral { background: var(--coral-light); color: var(--coral); }
+.badge-amber { background: var(--amber-light); color: var(--amber); }
+.badge-blue { background: var(--blue-light); color: var(--blue); }
+.badge-purple { background: var(--purple-light); color: var(--purple); }
+.badge-red { background: var(--red-light); color: var(--red); }
+
+/* PILLS */
+.pill-sm { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; font-family: 'DM Mono', monospace; display: inline-flex; }
+.pill-teal { background: var(--teal-light); color: var(--teal); }
+.pill-blue { background: var(--blue-light); color: var(--blue); }
+.pill-muted { background: var(--bg2); color: var(--text2); }
+.pill-red { background: var(--red-light); color: var(--red); }
+.pill-amber { background: var(--amber-light); color: var(--amber); }
+
+/* TABS (pill style) */
+.tab-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
+.etab { padding: 7px 16px; border-radius: 999px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1.5px solid var(--border); background: var(--card); color: var(--text2); transition: all 0.15s; display: inline-block; }
+.etab:hover { border-color: var(--text); color: var(--text); }
+.etab.active { background: var(--text); color: #fff; border-color: var(--text); }
+
+/* BUTTONS */
+.btn-primary { display: inline-flex; align-items: center; gap: 8px; padding: 11px 22px; background: var(--text); color: #fff; border: none; border-radius: 999px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
+.btn-primary:hover { opacity: 0.85; }
+.btn-teal { display: inline-flex; align-items: center; gap: 8px; padding: 9px 18px; background: var(--teal); color: #fff; border: none; border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
+.btn-teal:hover { opacity: 0.9; }
+.btn-ghost { display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; background: var(--card); color: var(--text2); border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+.btn-ghost:hover { border-color: var(--text); color: var(--text); }
+.btn-danger { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--red-light); color: var(--red); border: none; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: opacity 0.15s; }
+.btn-danger:hover { opacity: 0.8; }
+
+/* PROGRESS BARS */
+.goal-bar-wrap { margin-top: 6px; }
+.goal-bar-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
+.goal-bar-label span:first-child { color: var(--text2); }
+.goal-bar-label span:last-child { font-weight: 600; color: var(--text); }
+.goal-bar-track { height: 7px; background: var(--bg2); border-radius: 999px; overflow: hidden; }
+.goal-bar-fill { height: 100%; border-radius: 999px; background: var(--teal); }
+
+/* FORMS */
+.form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.08em; }
+.form-input { width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 13px; background: var(--bg); color: var(--text); outline: none; transition: border-color 0.15s; }
+.form-input:focus { border-color: var(--teal); }
+.form-select { width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 13px; background: var(--bg); color: var(--text); outline: none; }
+.form-row { display: grid; gap: 12px; margin-bottom: 14px; }
+.form-row-2 { grid-template-columns: 1fr 1fr; }
+.form-row-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+/* TABLES */
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table th { font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+.data-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--text); }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--bg2); }
+.td-mono { font-family: 'DM Mono', monospace; font-size: 12px; }
+.td-muted { color: var(--text2); }
+.td-green { color: var(--teal); font-weight: 600; font-family: 'DM Mono', monospace; }
+.td-red { color: var(--red); font-weight: 600; font-family: 'DM Mono', monospace; }
+.td-amber { color: var(--amber); font-weight: 600; font-family: 'DM Mono', monospace; }
+
+/* SECTION HEADERS */
+.section-eyebrow { font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.section-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 500; margin-bottom: 16px; }
+
+/* TIP BOX */
+.tip-box { background: var(--bg2); border-radius: var(--radius-sm); padding: 16px 18px; }
+.tip-box-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); font-family: 'DM Mono', monospace; margin-bottom: 10px; }
+.tip-item { font-size: 13px; color: var(--text); padding: 4px 0; display: flex; gap: 10px; align-items: flex-start; }
+.tip-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; margin-top: 6px; background: var(--teal); }
+
+/* NOTIFICATION TOAST */
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--text); color: #fff; padding: 10px 20px; border-radius: 999px; font-size: 13px; font-weight: 500; box-shadow: var(--shadow-lg); z-index: 500; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+.toast.show { opacity: 1; }
+
+/* MODAL */
+.modal-overlay { position: fixed; inset: 0; background: rgba(26,24,20,0.5); z-index: 300; display: none; align-items: center; justify-content: center; padding: 20px; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--card); border-radius: var(--radius); padding: 28px; max-width: 480px; width: 100%; box-shadow: var(--shadow-lg); }
+.modal-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; margin-bottom: 20px; }
+.modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+/* DIVIDER */
+.divider { height: 1px; background: var(--border); margin: 24px 0; }
+
+/* AMOUNT DISPLAYS */
+.amount-positive { color: var(--teal); font-family: 'DM Mono', monospace; font-weight: 600; }
+.amount-negative { color: var(--red); font-family: 'DM Mono', monospace; font-weight: 600; }
+.amount-neutral { font-family: 'DM Mono', monospace; font-weight: 600; }
+
+/* CREDIT CARD VISUAL */
+.credit-card { background: var(--text); border-radius: var(--radius); padding: 20px; color: #fff; position: relative; overflow: hidden; }
+.credit-card::before { content: ''; position: absolute; top: -40px; right: -40px; width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.05); }
+.credit-card-bank { font-size: 11px; color: rgba(255,255,255,0.4); font-family: 'DM Mono', monospace; letter-spacing: 0.1em; text-transform: uppercase; }
+.credit-card-balance { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; margin: 8px 0 4px; }
+.credit-card-limit { font-size: 11px; color: rgba(255,255,255,0.4); }
+.credit-card-util { margin-top: 12px; }
+.credit-bar-track { height: 4px; background: rgba(255,255,255,0.15); border-radius: 999px; overflow: hidden; }
+.credit-bar-fill { height: 100%; border-radius: 999px; }
+
+/* CHART CONTAINER */
+.chart-wrap { position: relative; height: 200px; }
+.chart-wrap-sm { position: relative; height: 160px; }
+
+/* SPENDING ROW */
+.spending-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.spending-row:last-child { border-bottom: none; }
+.spending-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.spending-name { flex: 1; font-size: 14px; }
+.spending-meta { font-size: 11px; color: var(--text3); margin-top: 2px; font-family: 'DM Mono', monospace; }
+.spending-amount { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 600; color: var(--red); }
+
+/* INVESTMENT ROW */
+.invest-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.invest-row:last-child { border-bottom: none; }
+.invest-name { font-size: 14px; color: var(--text); }
+.invest-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.invest-val { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; }
+
+/* POT ROW */
+.pot-row { padding: 14px 0; border-bottom: 1px solid var(--border); }
+.pot-row:last-child { border-bottom: none; }
+.pot-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.pot-name { font-size: 14px; font-weight: 500; }
+.pot-amounts { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text2); }
+
+/* NET WORTH BANNER */
+.networth-banner { background: var(--text); border-radius: var(--radius); padding: 28px 32px; color: #fff; margin-bottom: 24px; }
+.nw-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 8px; }
+.nw-val { font-family: 'Playfair Display', serif; font-size: 48px; font-weight: 700; line-height: 1; }
+.nw-sub { font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 8px; }
+.nw-breakdown { display: flex; gap: 32px; margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+.nw-item { }
+.nw-item-label { font-size: 10px; color: rgba(255,255,255,0.3); font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: 0.1em; }
+.nw-item-val { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; margin-top: 3px; }
+.nw-positive { color: var(--teal-mid); }
+.nw-negative { color: #F4816A; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .sidebar { transform: translateX(-240px); transition: transform 0.25s; }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-overlay.open { display: block; }
+  .main { margin-left: 0; padding: 20px 16px 60px; }
+  .hamburger { display: block; }
+  .grid-3, .grid-4 { grid-template-columns: 1fr 1fr; }
+  .nw-val { font-size: 36px; }
+  .nw-breakdown { gap: 20px; flex-wrap: wrap; }
+}
+@media (max-width: 600px) {
+  .main { padding: 16px 14px 60px; }
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .page-title { font-size: 26px; }
+  .form-row-2, .form-row-3 { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- Hamburger -->
+<button class="hamburger" onclick="toggleSidebar()">☰</button>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div>
+    <div class="sidebar-logo">Laura's<br>Money Hub</div>
+    <div class="sidebar-sub">Financial Dashboard</div>
+
+    <div class="nav-label">Overview</div>
+    <div class="nav-item active" data-page="dashboard" onclick="showPage('dashboard', this)">
+      <span class="nav-icon">📊</span> Dashboard
+    </div>
+
+    <div class="nav-label">Planning</div>
+    <div class="nav-item" data-page="budget" onclick="showPage('budget', this)">
+      <span class="nav-icon">💷</span> Budget
+    </div>
+    <div class="nav-item" data-page="spending" onclick="showPage('spending', this)">
+      <span class="nav-icon">🛒</span> Spending
+    </div>
+
+    <div class="nav-label">Assets</div>
+    <div class="nav-item" data-page="savings" onclick="showPage('savings', this)">
+      <span class="nav-icon">🏦</span> Savings
+    </div>
+    <div class="nav-item" data-page="credit" onclick="showPage('credit', this)">
+      <span class="nav-icon">📈</span> Credit & Investments
+    </div>
+
+    <div class="nav-label">Extras</div>
+    <div class="nav-item" data-page="perks" onclick="showPage('perks', this)">
+      <span class="nav-icon">✨</span> Perks
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="sync-info" id="sync-info">Last updated: —</div>
+    <button class="btn-export" onclick="exportData()">↓ Export JSON Backup</button>
+    <div style="margin-top:6px;">
+      <button class="btn-export" onclick="document.getElementById('import-input').click()">↑ Import JSON</button>
+      <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(event)">
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main class="main">
+
+  <!-- ══════════════════════════════════
+       PAGE: DASHBOARD
+  ══════════════════════════════════ -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-eyebrow">Overview</div>
+    <div class="page-title">Dashboard</div>
+    <div class="page-sub">Your financial snapshot for May 2026</div>
+
+    <!-- Net Worth Banner -->
+    <div class="networth-banner">
+      <div class="nw-label">Estimated Net Worth</div>
+      <div class="nw-val" id="nw-total">£26,961</div>
+      <div class="nw-sub">Assets minus all debt</div>
+      <div class="nw-breakdown">
+        <div class="nw-item">
+          <div class="nw-item-label">Savings</div>
+          <div class="nw-item-val nw-positive" id="nw-savings">£1,933</div>
+        </div>
+        <div class="nw-item">
+          <div class="nw-item-label">Investments</div>
+          <div class="nw-item-val nw-positive" id="nw-invest">£1,716</div>
+        </div>
+        <div class="nw-item">
+          <div class="nw-item-label">Pension</div>
+          <div class="nw-item-val nw-positive" id="nw-pension">£35,463</div>
+        </div>
+        <div class="nw-item">
+          <div class="nw-item-label">Credit Debt</div>
+          <div class="nw-item-val nw-negative" id="nw-debt">-£8,532</div>
+        </div>
+        <div class="nw-item">
+          <div class="nw-item-label">Mortgage</div>
+          <div class="nw-item-val nw-negative" id="nw-mortgage">-£85,942</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Monthly Stats -->
+    <div class="grid-3" style="margin-bottom:24px;">
+      <div class="stat-card">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:8px;">Monthly Income</div>
+        <div class="stat-val" style="color:var(--teal);">£3,057</div>
+        <div class="stat-label">Take-home · £51k salary</div>
+        <div class="stat-sub">New job from June 15 → £70k</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:8px;">Monthly Outgoings</div>
+        <div class="stat-val">£3,035</div>
+        <div class="stat-label">Fixed + bills + subscriptions</div>
+        <div class="stat-sub">£808 bills · £307 subs</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:8px;">Remaining</div>
+        <div class="stat-val" style="color:var(--amber);">£22</div>
+        <div class="stat-label">After all fixed outgoings</div>
+        <div class="stat-sub">Tight until June job change</div>
+      </div>
+    </div>
+
+    <!-- Income vs Outgoings bar -->
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-title">Monthly Budget Utilisation</div>
+      <div class="card-sub" style="margin-bottom:16px;">Current salary vs planned spend</div>
+      <div class="goal-bar-wrap">
+        <div class="goal-bar-label"><span>Outgoings</span><span>£3,035 / £3,057</span></div>
+        <div class="goal-bar-track"><div class="goal-bar-fill" style="width:99.3%;background:var(--amber);"></div></div>
+      </div>
+      <div class="goal-bar-wrap" style="margin-top:12px;">
+        <div class="goal-bar-label"><span>Safety Net (Goal £6,000)</span><span id="db-safenet-pct">£0 / £6,000</span></div>
+        <div class="goal-bar-track"><div class="goal-bar-fill" id="db-safenet-bar" style="width:0%;"></div></div>
+      </div>
+      <div class="goal-bar-wrap" style="margin-top:12px;">
+        <div class="goal-bar-label"><span>Lloyds Credit Utilisation</span><span>£7,044 / £15,000</span></div>
+        <div class="goal-bar-track"><div class="goal-bar-fill" style="width:47%;background:var(--coral);"></div></div>
+      </div>
+      <div class="goal-bar-wrap" style="margin-top:12px;">
+        <div class="goal-bar-label"><span>Monzo Flex Utilisation</span><span>£1,488 / £6,000</span></div>
+        <div class="goal-bar-track"><div class="goal-bar-fill" style="width:24.8%;background:var(--amber);"></div></div>
+      </div>
+    </div>
+
+    <!-- 2-col: upcoming + quick actions -->
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Upcoming Renewals</div>
+        <div class="card-sub" style="margin-bottom:14px;">Contracts ending soon</div>
+        <table class="data-table">
+          <tr><td>Sky Stream</td><td class="td-mono td-muted">18 Sep 2026</td><td class="td-mono">£43.45</td></tr>
+          <tr><td>iPhone 17 Pro</td><td class="td-mono td-muted">Dec 2027</td><td class="td-mono">£54.12</td></tr>
+          <tr><td>Internet</td><td class="td-mono td-muted">Apr 2026</td><td class="td-mono">£27.49</td></tr>
+          <tr><td>Phone Contract</td><td class="td-mono td-muted">12 Sep 2026</td><td class="td-mono">£20.00</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title">June 15 Salary Change</div>
+        <div class="card-sub" style="margin-bottom:14px;">New job impact estimate</div>
+        <div class="tip-box">
+          <div class="tip-box-title">What changes</div>
+          <div class="tip-item"><span class="tip-dot" style="background:var(--teal);"></span>Salary: £51k → £70k (~+£1,250/mo take-home)</div>
+          <div class="tip-item"><span class="tip-dot" style="background:var(--teal);"></span>New outgoings target: £3,797/mo</div>
+          <div class="tip-item"><span class="tip-dot" style="background:var(--amber);"></span>Mortgage: cover full £740/mo</div>
+          <div class="tip-item"><span class="tip-dot" style="background:var(--blue);"></span>Savings: £900/mo (was £200)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════
+       PAGE: BUDGET
+  ══════════════════════════════════ -->
+  <div class="page" id="page-budget">
+    <div class="page-eyebrow">Planning</div>
+    <div class="page-title">Budget</div>
+    <div class="page-sub">Monthly outgoings breakdown</div>
+
+    <div class="tab-bar">
+      <span class="etab active" onclick="switchBudgetTab('current', this)">Current (£51k)</span>
+      <span class="etab" onclick="switchBudgetTab('gh', this)">Get Here (£70k)</span>
+    </div>
+
+    <div id="budget-current">
+      <div class="grid-2" style="margin-bottom:24px;">
+        <div class="stat-card">
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:8px;">Total Outgoings</div>
+          <div class="stat-val">£3,035</div>
+          <div class="stat-label">Per month</div>
+        </div>
+        <div class="stat-card">
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:8px;">Remaining</div>
+          <div class="stat-val" style="color:var(--amber);">£22</div>
+          <div class="stat-label">After all outgoings</div>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <!-- Fixed -->
+        <div class="card">
+          <div class="section-eyebrow">Fixed</div>
+          <table class="data-table" style="margin-top:12px;">
+            <tr><td>Mortgage (Lloyds)</td><td class="td-mono" style="text-align:right;">£580</td></tr>
+            <tr><td>Weekly (£150/wk)</td><td class="td-mono" style="text-align:right;">£600</td></tr>
+            <tr><td>Travel (12 office)</td><td class="td-mono" style="text-align:right;">£180</td></tr>
+            <tr><td>Savings (Monzo)</td><td class="td-mono" style="text-align:right;">£200</td></tr>
+            <tr><td>Lloyds extra</td><td class="td-mono" style="text-align:right;">£102</td></tr>
+            <tr><td>Monzo Flex</td><td class="td-mono" style="text-align:right;">£315</td></tr>
+          </table>
+        </div>
+
+        <!-- Bills -->
+        <div class="card">
+          <div class="section-eyebrow">Bills · £808</div>
+          <table class="data-table" style="margin-top:12px;">
+            <tr><td>Council Tax</td><td class="td-mono" style="text-align:right;">£199.00</td></tr>
+            <tr><td>Gas + Electric</td><td class="td-mono" style="text-align:right;">£46.00</td></tr>
+            <tr><td>Water</td><td class="td-mono" style="text-align:right;">£37.00</td></tr>
+            <tr><td>Internet</td><td class="td-mono" style="text-align:right;">£27.49</td></tr>
+            <tr><td>Sky Stream</td><td class="td-mono" style="text-align:right;">£43.45</td></tr>
+            <tr><td>Phone</td><td class="td-mono" style="text-align:right;">£20.00</td></tr>
+            <tr><td>iPhone 17 Pro</td><td class="td-mono" style="text-align:right;">£54.12</td></tr>
+            <tr><td>Lottery/Charity</td><td class="td-mono" style="text-align:right;">£34.00</td></tr>
+            <tr><td>TV Licence</td><td class="td-mono" style="text-align:right;">£0.00</td></tr>
+            <tr><td>Cleaner</td><td class="td-mono" style="text-align:right;">£0.00</td></tr>
+          </table>
+        </div>
+
+        <!-- Subscriptions -->
+        <div class="card">
+          <div class="section-eyebrow">Subscriptions · £307</div>
+          <table class="data-table" style="margin-top:12px;">
+            <tr><td>David Lloyd</td><td class="td-mono" style="text-align:right;">£275.00</td></tr>
+            <tr><td>YouTube Premium</td><td class="td-mono" style="text-align:right;">£7.99</td></tr>
+            <tr><td>Spotify</td><td class="td-mono" style="text-align:right;">£12.99</td></tr>
+            <tr><td>Apple iCloud</td><td class="td-mono" style="text-align:right;">£2.99</td></tr>
+            <tr><td>Apple TV</td><td class="td-mono" style="text-align:right;">£4.99</td></tr>
+            <tr><td>Monzo Extra</td><td class="td-mono" style="text-align:right;">£3.00</td></tr>
+            <tr><td>Runna</td><td class="td-mono" style="text-align:right;"><span class="pill-sm pill-muted">Paused</span></td></tr>
+            <tr><td>Claude Pro</td><td class="td-mono" style="text-align:right;"><span class="pill-sm pill-muted">Paused</span></td></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Pots -->
+      <div style="margin-top:24px;">
+        <div class="section-title">Monthly Savings Pots</div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="section-eyebrow">Monzo Pots · Goals</div>
+            <div class="pot-row">
+              <div class="pot-header"><span class="pot-name">Car - Petrol</span><span class="pot-amounts">£0 / £30/mo (£360/yr)</span></div>
+              <div class="goal-bar-track"><div class="goal-bar-fill" style="width:0%;"></div></div>
+            </div>
+            <div class="pot-row">
+              <div class="pot-header"><span class="pot-name">Car - Costs</span><span class="pot-amounts">£215 / £60/mo (£720/yr)</span></div>
+              <div class="goal-bar-track"><div class="goal-bar-fill" style="width:30%;background:var(--blue);"></div></div>
+            </div>
+            <div class="pot-row">
+              <div class="pot-header"><span class="pot-name">Holidays</span><span class="pot-amounts">£0 / £100/mo (£1,200/yr)</span></div>
+              <div class="goal-bar-track"><div class="goal-bar-fill" style="width:0%;"></div></div>
+            </div>
+            <div class="pot-row">
+              <div class="pot-header"><span class="pot-name">Shopping</span><span class="pot-amounts">£0 / £50/mo (£600/yr)</span></div>
+              <div class="goal-bar-track"><div class="goal-bar-fill" style="width:0%;"></div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="section-eyebrow">More Pots</div>
+            <div class="pot-row">
+              <div class="pot-header"><span class="pot-name">Beauty</span><span class="pot-amounts">£0 / £40/mo (£600/yr)</span></div>
+              <div class="goal-bar-track"><div class="goal-bar-fill" style="width:0%;background:var(--purple);"></div></div>
+            </div>
+            <div class="pot-row">
+              <div class="pot-header"><span class="pot-name">Home</span><span class="pot-amounts">£95 / £30/mo (£360/yr)</span></div>
+              <div class="goal-bar-track"><div class="goal-bar-fill" style="width:26%;background:var(--amber);"></div></div>
+            </div>
+            <div class="pot-row">
+              <div class="pot-header"><span class="pot-name">Christmas</span><span class="pot-amounts">£0 / £15/mo (£180/yr)</span></div>
+              <div class="goal-bar-track"><div class="goal-bar-fill" style="width:0%;background:var(--coral);"></div></div>
+            </div>
+            <div class="pot-row">
+              <div class="pot-header"><span class="pot-name">Australia</span><span class="pot-amounts">£0 / £20/mo (£240/yr)</span></div>
+              <div class="goal-bar-track"><div class="goal-bar-fill" style="width:0%;background:var(--teal);"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GET HERE budget -->
+    <div id="budget-gh" style="display:none;">
+      <div class="grid-2" style="margin-bottom:24px;">
+        <div class="stat-card">
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:8px;">Target Outgoings</div>
+          <div class="stat-val">£3,797</div>
+          <div class="stat-label">Per month at £70k</div>
+        </div>
+        <div class="stat-card">
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:8px;">Estimated Remaining</div>
+          <div class="stat-val" style="color:var(--teal);">£33</div>
+          <div class="stat-label">After all planned outgoings</div>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="card">
+          <div class="section-eyebrow">Fixed (new job)</div>
+          <table class="data-table" style="margin-top:12px;">
+            <tr><td>Mortgage (full)</td><td class="td-mono" style="text-align:right;">£740</td></tr>
+            <tr><td>Weekly (£180/wk)</td><td class="td-mono" style="text-align:right;">£720</td></tr>
+            <tr><td>Travel (16 office)</td><td class="td-mono" style="text-align:right;">£200</td></tr>
+            <tr><td>Savings (Monzo)</td><td class="td-mono" style="text-align:right;">£900</td></tr>
+            <tr><td>Trading212</td><td class="td-mono" style="text-align:right;">£20</td></tr>
+            <tr><td>Lloyds extra</td><td class="td-mono" style="text-align:right;">£0</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <div class="section-eyebrow">Bills (same)</div>
+          <table class="data-table" style="margin-top:12px;">
+            <tr><td>Council Tax</td><td class="td-mono" style="text-align:right;">£200.00</td></tr>
+            <tr><td>Gas + Electric</td><td class="td-mono" style="text-align:right;">£46.00</td></tr>
+            <tr><td>Water</td><td class="td-mono" style="text-align:right;">£37.00</td></tr>
+            <tr><td>Internet</td><td class="td-mono" style="text-align:right;">£27.49</td></tr>
+            <tr><td>Sky Stream</td><td class="td-mono" style="text-align:right;">£41.50</td></tr>
+            <tr><td>Phone</td><td class="td-mono" style="text-align:right;">£20.00</td></tr>
+            <tr><td>iPhone 17 Pro</td><td class="td-mono" style="text-align:right;">£54.12</td></tr>
+            <tr><td>Lottery/Charity</td><td class="td-mono" style="text-align:right;">£34.00</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <div class="section-eyebrow">Pots (new targets)</div>
+          <table class="data-table" style="margin-top:12px;">
+            <tr><td>Car - Petrol</td><td class="td-mono" style="text-align:right;">£40</td></tr>
+            <tr><td>Car - Costs</td><td class="td-mono" style="text-align:right;">£60</td></tr>
+            <tr><td>Holidays</td><td class="td-mono" style="text-align:right;">£150</td></tr>
+            <tr><td>Beauty</td><td class="td-mono" style="text-align:right;">£50</td></tr>
+            <tr><td>Home</td><td class="td-mono" style="text-align:right;">£70</td></tr>
+            <tr><td>Christmas</td><td class="td-mono" style="text-align:right;">£10</td></tr>
+            <tr><td>Australia</td><td class="td-mono" style="text-align:right;">£20</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;">
+        <div class="tip-box">
+          <div class="tip-box-title">Mortgage Note</div>
+          <div class="tip-item"><span class="tip-dot"></span>June: half a month (partial)</div>
+          <div class="tip-item"><span class="tip-dot"></span>July & August: usual amount (£160 extra to Lloyds)</div>
+          <div class="tip-item"><span class="tip-dot"></span>September: pay full mortgage (£740)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════
+       PAGE: SPENDING
+  ══════════════════════════════════ -->
+  <div class="page" id="page-spending">
+    <div class="page-eyebrow">Planning</div>
+    <div class="page-title">Spending</div>
+    <div class="page-sub">Transaction log and monthly breakdowns</div>
+
+    <!-- Add spending button + monthly summary -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+      <div class="tab-bar" style="margin-bottom:0;">
+        <span class="etab active" onclick="switchSpendingTab('log', this)">Transaction Log</span>
+        <span class="etab" onclick="switchSpendingTab('monthly', this)">Monthly Summary</span>
+        <span class="etab" onclick="switchSpendingTab('food', this)">Food Only</span>
+      </div>
+      <button class="btn-teal" onclick="openAddSpending()">+ Add Transaction</button>
+    </div>
+
+    <!-- Transaction Log -->
+    <div id="spend-log">
+      <div class="card">
+        <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+          <input class="form-input" style="max-width:200px;" placeholder="Search..." id="spend-search" oninput="renderSpendingLog()">
+          <select class="form-select" style="max-width:160px;" id="spend-filter-cat" onchange="renderSpendingLog()">
+            <option value="">All categories</option>
+            <option value="Food">Food</option>
+            <option value="Shopping">Shopping</option>
+            <option value="Travel">Travel</option>
+            <option value="Going Out">Going Out</option>
+            <option value="Beauty">Beauty</option>
+            <option value="Health">Health</option>
+            <option value="Other">Other</option>
+          </select>
+          <select class="form-select" style="max-width:160px;" id="spend-filter-month" onchange="renderSpendingLog()">
+            <option value="">All months</option>
+            <option value="2026-01">Jan 2026</option>
+            <option value="2026-02">Feb 2026</option>
+            <option value="2026-03">Mar 2026</option>
+            <option value="2026-04">Apr 2026</option>
+            <option value="2026-05">May 2026</option>
+          </select>
+        </div>
+        <div id="spending-table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Date</th><th>Name</th><th>Category</th><th>Where</th><th>Cost</th><th></th></tr></thead>
+            <tbody id="spending-tbody"></tbody>
+          </table>
+        </div>
+        <div id="spending-empty" style="display:none;text-align:center;padding:32px;color:var(--text3);font-size:13px;">No transactions yet. Add your first one above.</div>
+      </div>
+    </div>
+
+    <!-- Monthly Summary -->
+    <div id="spend-monthly" style="display:none;">
+      <div class="grid-2" style="margin-bottom:24px;">
+        <div class="card">
+          <div class="card-title">2026 Monthly Totals</div>
+          <div class="card-sub" style="margin-bottom:14px;">Breakdown by category</div>
+          <table class="data-table">
+            <thead><tr><th>Month</th><th>Shopping</th><th>Food</th><th>Travel</th><th>Going Out</th><th>Total</th></tr></thead>
+            <tbody>
+              <tr><td class="td-mono">Jan 2026</td><td class="td-mono">£289</td><td class="td-mono">£227</td><td class="td-mono">£179</td><td class="td-mono">£23</td><td class="td-mono" style="font-weight:600;">£717</td></tr>
+              <tr><td class="td-mono">Feb 2026</td><td class="td-mono">£339</td><td class="td-mono">£308</td><td class="td-mono">£172</td><td class="td-mono">£81</td><td class="td-mono" style="font-weight:600;">£900</td></tr>
+              <tr><td class="td-mono">Mar 2026</td><td class="td-mono">£346</td><td class="td-mono">£383</td><td class="td-mono">£179</td><td class="td-mono">£123</td><td class="td-mono" style="font-weight:600;">£1,031</td></tr>
+              <tr><td class="td-mono" style="color:var(--text3);">Apr 2026</td><td class="td-mono" style="color:var(--text3);">—</td><td class="td-mono" style="color:var(--text3);">—</td><td class="td-mono" style="color:var(--text3);">—</td><td class="td-mono" style="color:var(--text3);">—</td><td class="td-mono" style="color:var(--text3);">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card">
+          <div class="card-title">Historical Monthly Spend</div>
+          <div class="card-sub" style="margin-bottom:14px;">Average total per year</div>
+          <table class="data-table">
+            <thead><tr><th>Year</th><th>Jan</th><th>Feb</th><th>Mar</th><th>Avg</th></tr></thead>
+            <tbody>
+              <tr><td>2022</td><td class="td-mono">£883</td><td class="td-mono">£673</td><td class="td-mono">£769</td><td class="td-mono" style="font-weight:600;">£764</td></tr>
+              <tr><td>2021</td><td class="td-mono">£718</td><td class="td-mono">£682</td><td class="td-mono">£831</td><td class="td-mono" style="font-weight:600;">£774</td></tr>
+              <tr><td>2020</td><td class="td-mono">—</td><td class="td-mono">—</td><td class="td-mono">—</td><td class="td-mono" style="font-weight:600;">£837</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Spending Chart · 2026</div>
+        <div class="chart-wrap" style="height:240px;margin-top:16px;">
+          <canvas id="spending-chart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Food Only -->
+    <div id="spend-food" style="display:none;">
+      <div class="card">
+        <div class="card-title">Food Spending Log</div>
+        <div class="card-sub" style="margin-bottom:14px;">Groceries and eating out</div>
+        <table class="data-table">
+          <thead><tr><th>Date</th><th>Where</th><th>Cost</th></tr></thead>
+          <tbody id="food-tbody">
+            <tr><td class="td-mono">27/01/2026</td><td>Tesco</td><td class="td-mono">£11.75</td></tr>
+            <tr><td class="td-mono">27/01/2026</td><td>M&S</td><td class="td-mono">£12.95</td></tr>
+            <tr><td class="td-mono">28/01/2026</td><td>Sainsbury's</td><td class="td-mono">£37.00</td></tr>
+            <tr><td class="td-mono">31/01/2026</td><td>Shop</td><td class="td-mono">£5.10</td></tr>
+            <tr><td class="td-mono">03/02/2026</td><td>Tesco</td><td class="td-mono">£3.85</td></tr>
+            <tr><td class="td-mono">03/02/2026</td><td>Shoreditch Café</td><td class="td-mono">£2.98</td></tr>
+            <tr><td class="td-mono">06/02/2026</td><td>Sainsbury's</td><td class="td-mono">£16.10</td></tr>
+            <tr><td class="td-mono">07/02/2026</td><td>Sainsbury's</td><td class="td-mono">£12.90</td></tr>
+            <tr><td class="td-mono">09/02/2026</td><td>Sainsbury's</td><td class="td-mono">£13.00</td></tr>
+            <tr><td class="td-mono">10/02/2026</td><td>Pret</td><td class="td-mono">£7.30</td></tr>
+            <tr><td class="td-mono">11/02/2026</td><td>Tesco</td><td class="td-mono">£9.75</td></tr>
+            <tr><td class="td-mono">15/02/2026</td><td>Morrisons</td><td class="td-mono">£38.62</td></tr>
+            <tr><td class="td-mono">18/02/2026</td><td>Dave's Hot Chicken</td><td class="td-mono">£7.98</td></tr>
+            <tr><td class="td-mono">19/02/2026</td><td>Sainsbury's</td><td class="td-mono">£9.70</td></tr>
+            <tr><td class="td-mono">19/02/2026</td><td>M&S</td><td class="td-mono">£25.75</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════
+       PAGE: SAVINGS
+  ══════════════════════════════════ -->
+  <div class="page" id="page-savings">
+    <div class="page-eyebrow">Assets</div>
+    <div class="page-title">Savings</div>
+    <div class="page-sub">Pots, goals, and investment ISA</div>
+
+    <!-- Summary stats -->
+    <div class="grid-4" style="margin-bottom:24px;">
+      <div class="stat-card">
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:6px;">Safety Net</div>
+        <div class="stat-val" style="font-size:22px;color:var(--red);">£0</div>
+        <div class="stat-sub">Goal: £6,000</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:6px;">1p 2025</div>
+        <div class="stat-val" style="font-size:22px;color:var(--teal);">£158</div>
+        <div class="stat-sub">Ends Oct 2026</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:6px;">1p 2026</div>
+        <div class="stat-val" style="font-size:22px;color:var(--teal);">£61</div>
+        <div class="stat-sub">Ends Dec 2026</div>
+      </div>
+      <div class="stat-card">
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:6px;">Plum</div>
+        <div class="stat-val" style="font-size:22px;">£0</div>
+        <div class="stat-sub">Round-ups</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- Savings goals -->
+      <div class="card">
+        <div class="section-eyebrow">Savings Goals</div>
+        <div style="margin-top:16px;">
+          <div class="goal-bar-wrap" style="margin-bottom:16px;">
+            <div class="goal-bar-label"><span>Safety Net</span><span style="color:var(--red);">£0 / £6,000</span></div>
+            <div class="goal-bar-track"><div class="goal-bar-fill" style="width:0%;background:var(--red);"></div></div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px;">Priority #1 — build this first</div>
+          </div>
+          <div class="goal-bar-wrap" style="margin-bottom:16px;">
+            <div class="goal-bar-label"><span>1p Savings 2025</span><span>£158.11 / £667</span></div>
+            <div class="goal-bar-track"><div class="goal-bar-fill" style="width:23.7%;background:var(--teal);"></div></div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px;">Ends 25th October 2026</div>
+          </div>
+          <div class="goal-bar-wrap" style="margin-bottom:16px;">
+            <div class="goal-bar-label"><span>1p Savings 2026</span><span>£61.21 / £668</span></div>
+            <div class="goal-bar-track"><div class="goal-bar-fill" style="width:9.2%;background:var(--blue);"></div></div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px;">Ends 31st December 2026</div>
+          </div>
+          <div class="goal-bar-wrap" style="margin-bottom:16px;">
+            <div class="goal-bar-label"><span>Holidays Pot</span><span>£0 / £1,200/yr</span></div>
+            <div class="goal-bar-track"><div class="goal-bar-fill" style="width:0%;background:var(--amber);"></div></div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px;">£100/month target</div>
+          </div>
+          <div class="goal-bar-wrap">
+            <div class="goal-bar-label"><span>Australia Fund</span><span>£0 / £240/yr</span></div>
+            <div class="goal-bar-track"><div class="goal-bar-fill" style="width:0%;background:var(--purple);"></div></div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px;">£20/month target</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Historical savings by month -->
+      <div class="card">
+        <div class="section-eyebrow">Monthly Savings History</div>
+        <div style="margin-top:16px;">
+          <table class="data-table">
+            <thead><tr><th>Month</th><th>Amount Saved</th></tr></thead>
+            <tbody>
+              <tr><td>October 2025</td><td class="td-mono td-green">£4,547</td></tr>
+              <tr><td>November 2025</td><td class="td-mono td-green">£4,833</td></tr>
+              <tr><td>December 2025</td><td class="td-mono td-green">£1,208</td></tr>
+              <tr><td>January 2026</td><td class="td-mono td-amber">£0</td></tr>
+              <tr><td>February 2026</td><td class="td-mono td-amber">£25</td></tr>
+              <tr><td>March 2026</td><td class="td-mono td-green">£200</td></tr>
+              <tr><td>April 2026</td><td class="td-mono td-green">£400</td></tr>
+              <tr><td>May 2026</td><td class="td-mono td-green">£600</td></tr>
+              <tr><td>June 2026 (target)</td><td class="td-mono" style="color:var(--text3);">£800</td></tr>
+              <tr><td>July 2026 (target)</td><td class="td-mono" style="color:var(--text3);">£1,000</td></tr>
+              <tr><td>August 2026 (target)</td><td class="td-mono" style="color:var(--text3);">£1,200</td></tr>
+              <tr><td>September 2026 (target)</td><td class="td-mono" style="color:var(--text3);">£1,400</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bank accounts reference -->
+    <div class="card" style="margin-top:24px;">
+      <div class="section-eyebrow">Bank Accounts</div>
+      <div class="grid-4" style="margin-top:16px;">
+        <div style="padding:14px;background:var(--bg2);border-radius:var(--radius-sm);">
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;">Lloyds</div>
+          <div style="font-size:13px;margin-top:6px;color:var(--text2);">Current + Joint + Credit</div>
+        </div>
+        <div style="padding:14px;background:var(--bg2);border-radius:var(--radius-sm);">
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;">Monzo</div>
+          <div style="font-size:13px;margin-top:6px;color:var(--text2);">Current + Savings + Credit</div>
+        </div>
+        <div style="padding:14px;background:var(--bg2);border-radius:var(--radius-sm);">
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;">Chase</div>
+          <div style="font-size:13px;margin-top:6px;color:var(--text2);">Current + Savings</div>
+        </div>
+        <div style="padding:14px;background:var(--bg2);border-radius:var(--radius-sm);">
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;">Nationwide</div>
+          <div style="font-size:13px;margin-top:6px;color:var(--text2);">Current (for swapping)</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;padding:12px;background:var(--bg2);border-radius:var(--radius-sm);">
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;">Curve</span>
+        <span style="font-size:13px;color:var(--text2);margin-left:12px;">One card, spend on any account. No CCFX fees. Perfect for travelling.</span>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════
+       PAGE: CREDIT & INVESTMENTS
+  ══════════════════════════════════ -->
+  <div class="page" id="page-credit">
+    <div class="page-eyebrow">Assets</div>
+    <div class="page-title">Credit & Investments</div>
+    <div class="page-sub">Debt, investments, pension, and mortgage</div>
+
+    <div class="tab-bar">
+      <span class="etab active" onclick="switchCreditTab('credit', this)">Credit & Debt</span>
+      <span class="etab" onclick="switchCreditTab('invest', this)">Investments</span>
+      <span class="etab" onclick="switchCreditTab('pension', this)">Pension</span>
+      <span class="etab" onclick="switchCreditTab('mortgage', this)">Mortgage & Loans</span>
+    </div>
+
+    <!-- CREDIT -->
+    <div id="credit-credit">
+      <div class="grid-3" style="margin-bottom:24px;">
+        <!-- Lloyds -->
+        <div class="credit-card">
+          <div class="credit-card-bank">Lloyds Credit Card</div>
+          <div class="credit-card-balance">-£7,043.66</div>
+          <div class="credit-card-limit">£15,000 limit · 0% until March 2028</div>
+          <div class="credit-card-util">
+            <div class="credit-bar-track"><div class="credit-bar-fill" style="width:47%;background:#F4816A;"></div></div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:4px;font-family:'DM Mono',monospace;">47% utilised</div>
+          </div>
+        </div>
+        <!-- Monzo Flex -->
+        <div class="credit-card" style="background:var(--blue);">
+          <div class="credit-card-bank">Monzo Flex</div>
+          <div class="credit-card-balance">-£1,488.40</div>
+          <div class="credit-card-limit">£6,000 limit · Buy now pay later</div>
+          <div class="credit-card-util">
+            <div class="credit-bar-track"><div class="credit-bar-fill" style="width:24.8%;background:rgba(255,255,255,0.7);"></div></div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:4px;font-family:'DM Mono',monospace;">24.8% utilised</div>
+          </div>
+        </div>
+        <!-- Amazon Barclaycard -->
+        <div class="credit-card" style="background:var(--teal);">
+          <div class="credit-card-bank">Amazon Barclaycard</div>
+          <div class="credit-card-balance">£0.00</div>
+          <div class="credit-card-limit">£6,500 limit · £0 balance</div>
+          <div class="credit-card-util">
+            <div class="credit-bar-track"><div class="credit-bar-fill" style="width:0%;background:rgba(255,255,255,0.7);"></div></div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:4px;font-family:'DM Mono',monospace;">0% utilised ✓</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="section-eyebrow">Debt Summary</div>
+          <div style="margin-top:14px;">
+            <div class="invest-row"><div><div class="invest-name">Lloyds Credit Card</div><div class="invest-sub">0% until March 2028</div></div><div class="invest-val" style="color:var(--red);">-£7,043.66</div></div>
+            <div class="invest-row"><div><div class="invest-name">Monzo Flex</div><div class="invest-sub">Buy now pay later</div></div><div class="invest-val" style="color:var(--red);">-£1,488.40</div></div>
+            <div class="invest-row"><div><div class="invest-name">Amazon Barclaycard</div><div class="invest-sub">£6,500 limit · clear</div></div><div class="invest-val" style="color:var(--teal);">£0.00</div></div>
+            <div style="padding:14px;background:var(--red-light);border-radius:var(--radius-sm);margin-top:14px;display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-family:'DM Mono',monospace;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--red);">Total Debt</span>
+              <span style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--red);">-£8,532.06</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-eyebrow">Recent Credit Purchases</div>
+          <div style="margin-top:14px;max-height:280px;overflow-y:auto;">
+            <table class="data-table">
+              <thead><tr><th>Item</th><th>Amount</th></tr></thead>
+              <tbody>
+                <tr><td>Phuket Cleanse 1</td><td class="td-red">-£52.00</td></tr>
+                <tr><td>Phuket Cleanse 2</td><td class="td-red">-£50.00</td></tr>
+                <tr><td>Amazon Headphones</td><td class="td-red">-£532.99</td></tr>
+                <tr><td>Amazon Ultrahuman</td><td class="td-red">-£329.00</td></tr>
+                <tr><td>Rachel Jackson Jewellery</td><td class="td-red">-£172.50</td></tr>
+                <tr><td>David Lloyd</td><td class="td-red">-£345.00</td></tr>
+                <tr><td>Liberty</td><td class="td-red">-£307.00</td></tr>
+                <tr><td>Neko Health Scan</td><td class="td-red">-£299.00</td></tr>
+                <tr><td>Phuket Trip</td><td class="td-red">-£295.00</td></tr>
+                <tr><td>Healf Zone</td><td class="td-red">-£279.00</td></tr>
+                <tr><td>Hong Kong Shopping</td><td class="td-red">-£787.00</td></tr>
+                <tr><td>Healf (Ocado)</td><td class="td-red">-£218.00</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INVESTMENTS -->
+    <div id="credit-invest" style="display:none;">
+      <div class="grid-3" style="margin-bottom:24px;">
+        <div class="stat-card">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:8px;">Trading212 S&S ISA</div>
+          <div class="stat-val" style="color:var(--teal);">£1,093.93</div>
+          <div class="stat-label">Stocks & Shares ISA</div>
+        </div>
+        <div class="stat-card">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:8px;">Cash (not ISA)</div>
+          <div class="stat-val" style="color:var(--teal);">£621.71</div>
+          <div class="stat-label">Trading212 cash</div>
+        </div>
+        <div class="stat-card">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:8px;">Total Investments</div>
+          <div class="stat-val" style="color:var(--blue);">£1,715.64</div>
+          <div class="stat-label">ISA + Cash combined</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="section-eyebrow">Investment Accounts</div>
+          <div style="margin-top:14px;">
+            <div class="invest-row">
+              <div>
+                <div class="invest-name">Trading212 S&S ISA</div>
+                <div class="invest-sub">Stocks & Shares ISA · £20/mo target (new job)</div>
+              </div>
+              <div class="invest-val" style="color:var(--teal);">£1,093.93</div>
+            </div>
+            <div class="invest-row">
+              <div>
+                <div class="invest-name">Cash (not ISA)</div>
+                <div class="invest-sub">Trading212 cash savings</div>
+              </div>
+              <div class="invest-val" style="color:var(--blue);">£621.71</div>
+            </div>
+            <div class="invest-row">
+              <div>
+                <div class="invest-name">Plum</div>
+                <div class="invest-sub">Round-ups account</div>
+              </div>
+              <div class="invest-val" style="color:var(--text2);">£0.00</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tip-box" style="height:fit-content;">
+          <div class="tip-box-title">Investment Notes</div>
+          <div class="tip-item"><span class="tip-dot"></span>Currently investing £0/month (tight budget)</div>
+          <div class="tip-item"><span class="tip-dot"></span>New job target: £20/month into Trading212</div>
+          <div class="tip-item"><span class="tip-dot" style="background:var(--amber);"></span>ISA allowance 2026/27: £20,000/year</div>
+          <div class="tip-item"><span class="tip-dot" style="background:var(--blue);"></span>Consider increasing after debt clearance</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PENSION -->
+    <div id="credit-pension" style="display:none;">
+      <div class="grid-2" style="margin-bottom:24px;">
+        <div class="stat-card">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:8px;">Total Pension Value</div>
+          <div class="stat-val" style="color:var(--teal);">£35,463.18</div>
+          <div class="stat-label">Aviva + TPP combined</div>
+        </div>
+        <div class="stat-card">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:8px;">Monthly Contributions</div>
+          <div class="stat-val">£288.40</div>
+          <div class="stat-label">Me 5% + LDS 3%</div>
+          <div class="stat-sub">£180.25 (me) + £108.15 (employer)</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="section-eyebrow">Pension Pots</div>
+          <div style="margin-top:14px;">
+            <div class="invest-row">
+              <div>
+                <div class="invest-name">TPP / LDS Pension</div>
+                <div class="invest-sub">Me 5% (£180.25) · Employer 3% (£108.15)</div>
+              </div>
+              <div class="invest-val" style="color:var(--teal);">£29,123.84</div>
+            </div>
+            <div class="invest-row">
+              <div>
+                <div class="invest-name">Aviva (Sony)</div>
+                <div class="invest-sub">Previous employer pension</div>
+              </div>
+              <div class="invest-val" style="color:var(--blue);">£6,339.34</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tip-box" style="height:fit-content;">
+          <div class="tip-box-title">Pension Notes</div>
+          <div class="tip-item"><span class="tip-dot"></span>Consider consolidating Aviva into new pension when job changes</div>
+          <div class="tip-item"><span class="tip-dot" style="background:var(--amber);"></span>Review contribution % after June pay rise</div>
+          <div class="tip-item"><span class="tip-dot"></span>Income protection insurance — still to investigate</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MORTGAGE & LOANS -->
+    <div id="credit-mortgage" style="display:none;">
+      <div class="grid-2" style="margin-bottom:24px;">
+        <div class="stat-card">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:8px;">Mortgage Balance</div>
+          <div class="stat-val" style="color:var(--red);">£85,942</div>
+          <div class="stat-label">Accord · was fixed until Jul 2025</div>
+          <div class="stat-sub">Monthly: £580 (current) → £740 (June)</div>
+        </div>
+        <div class="stat-card">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:8px;">Student Loan</div>
+          <div class="stat-val" style="color:var(--amber);">£12,442</div>
+          <div class="stat-label">Plan 1 · 4.3% · £194/mo repayment</div>
+          <div class="stat-sub">Goal: clear by 2030/31 · 9% above £22,015</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="section-eyebrow">Mortgage Details</div>
+          <div style="margin-top:14px;">
+            <table class="data-table">
+              <tr><td>Lender</td><td class="td-mono">Accord Mortgages</td></tr>
+              <tr><td>Outstanding Balance</td><td class="td-mono">£85,942.00</td></tr>
+              <tr><td>Was Fixed Until</td><td class="td-mono">31st July 2025</td></tr>
+              <tr><td>Current Monthly (half)</td><td class="td-mono">£580.00</td></tr>
+              <tr><td>From June (full)</td><td class="td-mono">£740.00</td></tr>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-eyebrow">Student Loan</div>
+          <div style="margin-top:14px;">
+            <table class="data-table">
+              <tr><td>Plan</td><td class="td-mono">Plan 1</td></tr>
+              <tr><td>Interest Rate</td><td class="td-mono">4.3%</td></tr>
+              <tr><td>Balance</td><td class="td-mono">~£12,442</td></tr>
+              <tr><td>Repayment</td><td class="td-mono">9% above £22,015</td></tr>
+              <tr><td>Monthly Amount</td><td class="td-mono">£194 (£16.54 extra)</td></tr>
+              <tr><td>Writeoff</td><td class="td-mono">25 years after eligibility</td></tr>
+              <tr><td>Goal</td><td class="td-mono">Clear by 2030/2031</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════
+       PAGE: PERKS
+  ══════════════════════════════════ -->
+  <div class="page" id="page-perks">
+    <div class="page-eyebrow">Extras</div>
+    <div class="page-title">Perks</div>
+    <div class="page-sub">Airbnb income, air miles, cashback, and rewards</div>
+
+    <div class="tab-bar">
+      <span class="etab active" onclick="switchPerksTab('airbnb', this)">Airbnb Income</span>
+      <span class="etab" onclick="switchPerksTab('miles', this)">Air Miles</span>
+      <span class="etab" onclick="switchPerksTab('cashback', this)">Cashback & Rewards</span>
+    </div>
+
+    <!-- AIRBNB -->
+    <div id="perks-airbnb">
+      <div class="grid-4" style="margin-bottom:24px;">
+        <div class="stat-card">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:6px;">2024 Total</div>
+          <div class="stat-val" style="font-size:22px;color:var(--teal);">£3,960</div>
+        </div>
+        <div class="stat-card">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:6px;">2023 Total</div>
+          <div class="stat-val" style="font-size:22px;color:var(--teal);">£3,528</div>
+        </div>
+        <div class="stat-card">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:6px;">2025 Total</div>
+          <div class="stat-val" style="font-size:22px;color:var(--amber);">£270</div>
+          <div class="stat-sub">Partial year</div>
+        </div>
+        <div class="stat-card">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:6px;">Split Rule</div>
+          <div style="font-family:'Playfair Display',serif;font-size:17px;font-weight:700;margin-top:4px;">50/50</div>
+          <div class="stat-sub">50% savings · 50% joint</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="section-eyebrow">2026 Bookings</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;margin-top:14px;">
+            <div style="font-size:13px;color:var(--text2);">Total earned 2026</div>
+            <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--teal);" id="airbnb-2026-total">£437.64</div>
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Guest / Date</th><th>Income (my share)</th></tr></thead>
+            <tbody>
+              <tr><td>Alli · 28 Jan</td><td class="td-green">£55.91</td></tr>
+              <tr><td>Liviu · 4 Feb</td><td class="td-green">£107.00</td></tr>
+              <tr><td>Phil · 14 Feb</td><td class="td-green">£107.00</td></tr>
+              <tr><td>Michiel · 26 Apr</td><td class="td-green">£167.73</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="section-eyebrow">Nightly Rates</div>
+          <div style="margin-top:14px;">
+            <table class="data-table">
+              <thead><tr><th>Guest</th><th>Rate</th></tr></thead>
+              <tbody>
+                <tr><td>Kostas</td><td class="td-mono">£50/night</td></tr>
+                <tr><td>Mal</td><td class="td-mono">£50/night</td></tr>
+                <tr><td>Jessie</td><td class="td-mono">£50/night</td></tr>
+                <tr><td>Jill</td><td class="td-mono">£45/night</td></tr>
+                <tr><td>Yogesh</td><td class="td-mono">£58/night</td></tr>
+                <tr><td>Sonia</td><td class="td-mono">£58/night</td></tr>
+                <tr><td>Liviu</td><td class="td-mono">£58/night</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AIR MILES -->
+    <div id="perks-miles" style="display:none;">
+      <div class="grid-4" style="margin-bottom:24px;">
+        <div class="stat-card">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:6px;">Virgin Miles</div>
+          <div class="stat-val" style="color:var(--red);">18,550</div>
+        </div>
+        <div class="stat-card">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:6px;">BA Avios</div>
+          <div class="stat-val" style="color:var(--blue);">10,904</div>
+        </div>
+        <div class="stat-card">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:6px;">Eurostar</div>
+          <div class="stat-val" style="color:var(--amber);">137</div>
+        </div>
+        <div class="stat-card">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:6px;">Qantas</div>
+          <div class="stat-val" style="color:var(--text3);">0</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="section-eyebrow">Loyalty Programs</div>
+          <div style="margin-top:14px;">
+            <table class="data-table">
+              <thead><tr><th>Program</th><th>Notes</th><th>Balance</th></tr></thead>
+              <tbody>
+                <tr><td>Virgin Flying Club</td><td class="td-muted">—</td><td class="td-mono" style="color:var(--red);">18,550</td></tr>
+                <tr><td>BA Executive Club</td><td class="td-muted">—</td><td class="td-mono" style="color:var(--blue);">10,904</td></tr>
+                <tr><td>Club Eurostar</td><td class="td-muted">—</td><td class="td-mono">137</td></tr>
+                <tr><td>Qantas Frequent Flyer</td><td class="td-muted">—</td><td class="td-mono" style="color:var(--text3);">0</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-eyebrow">Earn More Miles</div>
+          <div style="margin-top:14px;">
+            <div class="invest-row">
+              <div>
+                <div class="invest-name">BA Shopping</div>
+                <div class="invest-sub">Earn Avios on online shopping</div>
+              </div>
+              <span class="badge badge-blue">Avios</span>
+            </div>
+            <div class="invest-row">
+              <div>
+                <div class="invest-name">Avios for Thoughts</div>
+                <div class="invest-sub">Earn Avios via surveys</div>
+              </div>
+              <span class="badge badge-blue">Avios</span>
+            </div>
+            <div class="invest-row">
+              <div>
+                <div class="invest-name">Virgin Shops Away</div>
+                <div class="invest-sub">Earn Virgin Miles on shopping</div>
+              </div>
+              <span class="badge badge-red">Virgin</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CASHBACK -->
+    <div id="perks-cashback" style="display:none;">
+      <div class="grid-2" style="margin-bottom:24px;">
+        <div class="card">
+          <div class="section-eyebrow">Active Cashback & Rewards</div>
+          <div style="margin-top:14px;">
+            <table class="data-table">
+              <thead><tr><th>Platform</th><th>How</th><th>Balance</th></tr></thead>
+              <tbody>
+                <tr><td>Top Cashback</td><td class="td-muted">Cashback on shopping</td><td class="td-green">£9.78</td></tr>
+                <tr><td>Barclaycard Cashback</td><td class="td-muted">Card cashback</td><td class="td-green">£4.20</td></tr>
+                <tr><td>Airtime Rewards</td><td class="td-muted">Cashback · O2</td><td class="td-green">£8.57</td></tr>
+                <tr><td>Oh My Dosh</td><td class="td-muted">Cash</td><td class="td-green">£2.25</td></tr>
+                <tr><td>Cheddar</td><td class="td-muted">Cashback on Monzo</td><td class="td-green">£0.08</td></tr>
+                <tr><td>Prolific</td><td class="td-muted">Surveys</td><td class="td-green">£0.80</td></tr>
+                <tr><td>YouGov</td><td class="td-muted">Surveys (voucher)</td><td class="td-amber">1,445 pts</td></tr>
+                <tr><td>CitizenMe</td><td class="td-muted">Surveys</td><td class="td-green">£0.45</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-eyebrow">Past Cashback Income</div>
+          <div style="margin-top:14px;">
+            <table class="data-table">
+              <thead><tr><th>Source</th><th>Date</th><th>Amount</th></tr></thead>
+              <tbody>
+                <tr><td>Halifax Switch</td><td class="td-muted">Apr 2023</td><td class="td-green">£175.00</td></tr>
+                <tr><td>HSBC Switch</td><td class="td-muted">May 2023</td><td class="td-green">£200.00</td></tr>
+                <tr><td>NatWest Switch</td><td class="td-muted">Jun 2023</td><td class="td-green">£200.00</td></tr>
+                <tr><td>Nationwide Switch</td><td class="td-muted">Oct 2023</td><td class="td-green">£200.00</td></tr>
+                <tr><td>Top Cashback</td><td class="td-muted">Mar 2023</td><td class="td-green">£88.15</td></tr>
+                <tr><td>Peloton Survey</td><td class="td-muted">Apr 2023</td><td class="td-green">£21.00</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-eyebrow">Sonia Payments Owed</div>
+        <div style="margin-top:14px;">
+          <table class="data-table">
+            <thead><tr><th>What</th><th>Date</th><th>My share</th></tr></thead>
+            <tbody>
+              <tr><td>Sonia</td><td class="td-muted">16 November</td><td class="td-green">£116.00</td></tr>
+              <tr><td>Vinted Adidas (Sonia)</td><td class="td-muted">—</td><td class="td-amber">£25.00 owed</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ADD SPENDING MODAL -->
+<div class="modal-overlay" id="modal-spending">
+  <div class="modal">
+    <div class="modal-title">Add Transaction</div>
+    <div class="form-row form-row-2">
+      <div>
+        <label class="form-label">Date</label>
+        <input type="date" class="form-input" id="spend-date">
+      </div>
+      <div>
+        <label class="form-label">Amount (£)</label>
+        <input type="number" class="form-input" id="spend-amount" placeholder="0.00" step="0.01">
+      </div>
+    </div>
+    <div class="form-row">
+      <div>
+        <label class="form-label">Name / Description</label>
+        <input type="text" class="form-input" id="spend-name" placeholder="e.g. Sainsbury's, ASOS...">
+      </div>
+    </div>
+    <div class="form-row form-row-2">
+      <div>
+        <label class="form-label">Category</label>
+        <select class="form-select" id="spend-cat">
+          <option value="Food">Food</option>
+          <option value="Shopping">Shopping</option>
+          <option value="Travel">Travel</option>
+          <option value="Going Out">Going Out</option>
+          <option value="Beauty">Beauty</option>
+          <option value="Health">Health</option>
+          <option value="Subscriptions">Subscriptions</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Where (card)</label>
+        <select class="form-select" id="spend-where">
+          <option value="Lloyds">Lloyds</option>
+          <option value="Monzo">Monzo</option>
+          <option value="Monzo Flex">Monzo Flex</option>
+          <option value="Amex">Amex</option>
+          <option value="Cash">Cash</option>
+          <option value="Klarna">Klarna</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal('modal-spending')">Cancel</button>
+      <button class="btn-teal" onclick="saveSpending()">Save Transaction</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════
+// DATA LAYER
+// ══════════════════════════════════
+
+const KEYS = {
+  spending: 'money_hub_spending_v1',
+  meta: 'money_hub_meta_v1',
+};
+
+function loadData(key) {
+  try { return JSON.parse(localStorage.getItem(key)) || []; } catch { return []; }
+}
+function saveData(key, data) {
+  localStorage.setItem(key, JSON.stringify(data));
+  updateSyncInfo();
+}
+function updateSyncInfo() {
+  const now = new Date();
+  const str = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) + ' · ' +
+    now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  document.getElementById('sync-info').textContent = 'Updated: ' + str;
+  localStorage.setItem(KEYS.meta, JSON.stringify({ lastUpdated: now.toISOString() }));
+}
+
+// Pre-populate with initial sheet data if first load
+function initDefaultSpending() {
+  const existing = loadData(KEYS.spending);
+  if (existing.length > 0) return;
+  const defaults = [
+    { id: 1, date: '2026-01-27', name: 'Tesco', category: 'Food', where: 'Amex', amount: 11.75 },
+    { id: 2, date: '2026-01-27', name: 'M&S', category: 'Food', where: 'Amex', amount: 12.95 },
+    { id: 3, date: '2026-01-28', name: "Sainsbury's", category: 'Food', where: 'Lloyds', amount: 37.00 },
+    { id: 4, date: '2026-02-01', name: 'TikTok Shop', category: 'Shopping', where: 'Lloyds', amount: 82.49 },
+    { id: 5, date: '2026-02-04', name: 'ASOS', category: 'Shopping', where: 'Klarna', amount: 29.00 },
+    { id: 6, date: '2026-02-06', name: 'Primark', category: 'Shopping', where: 'Amex', amount: 19.50 },
+    { id: 7, date: '2026-02-06', name: 'ASOS Premier', category: 'Shopping', where: 'Monzo', amount: 9.95 },
+    { id: 8, date: '2026-02-07', name: 'Amazon (pull up bar)', category: 'Health', where: 'Monzo Flex', amount: 28.04 },
+    { id: 9, date: '2026-02-10', name: 'Amazon', category: 'Shopping', where: 'Monzo Flex', amount: 35.47 },
+    { id: 10, date: '2026-02-11', name: 'Superga trainers', category: 'Shopping', where: 'Monzo Flex', amount: 41.49 },
+    { id: 11, date: '2026-02-12', name: 'Rush Hair', category: 'Beauty', where: 'Monzo Flex', amount: 104.00 },
+    { id: 12, date: '2026-02-15', name: 'Morrisons', category: 'Food', where: 'Amex', amount: 38.62 },
+    { id: 13, date: '2026-02-18', name: "Dave's Hot Chicken", category: 'Food', where: 'Amex', amount: 7.98 },
+    { id: 14, date: '2026-02-19', name: 'Vinted (Nike Jumper)', category: 'Shopping', where: 'Monzo Flex', amount: 9.29 },
+    { id: 15, date: '2026-02-20', name: 'Amazon (light mirror)', category: 'Beauty', where: 'Monzo Flex', amount: 29.40 },
+    { id: 16, date: '2026-02-20', name: 'M&S Trousers', category: 'Shopping', where: 'Lloyds', amount: 84.00 },
+    { id: 17, date: '2026-02-05', name: 'Strava', category: 'Subscriptions', where: 'Lloyds', amount: 27.49 },
+    { id: 18, date: '2026-02-01', name: 'Symprove', category: 'Health', where: 'Lloyds', amount: 34.99 },
+    { id: 19, date: '2026-02-01', name: 'Café', category: 'Going Out', where: 'Amex', amount: 12.25 },
+    { id: 20, date: '2026-02-03', name: 'Cinema', category: 'Going Out', where: 'Amex', amount: 15.00 },
+  ];
+  saveData(KEYS.spending, defaults);
+}
+
+// ══════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════
+
+function showPage(pageId, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + pageId).classList.add('active');
+  el.classList.add('active');
+  if (window.innerWidth <= 900) toggleSidebar();
+  if (pageId === 'spending') renderSpendingLog();
+  if (pageId === 'spending') initSpendingChart();
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+
+// ══════════════════════════════════
+// TAB SWITCHERS
+// ══════════════════════════════════
+
+function switchBudgetTab(tab, el) {
+  document.querySelectorAll('#page-budget .etab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('budget-current').style.display = tab === 'current' ? 'block' : 'none';
+  document.getElementById('budget-gh').style.display = tab === 'gh' ? 'block' : 'none';
+}
+
+function switchSpendingTab(tab, el) {
+  document.querySelectorAll('#page-spending .etab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('spend-log').style.display = tab === 'log' ? 'block' : 'none';
+  document.getElementById('spend-monthly').style.display = tab === 'monthly' ? 'block' : 'none';
+  document.getElementById('spend-food').style.display = tab === 'food' ? 'block' : 'none';
+  if (tab === 'monthly') setTimeout(initSpendingChart, 50);
+}
+
+function switchCreditTab(tab, el) {
+  document.querySelectorAll('#page-credit .etab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  ['credit','invest','pension','mortgage'].forEach(t => {
+    document.getElementById('credit-' + t).style.display = t === tab ? 'block' : 'none';
+  });
+}
+
+function switchPerksTab(tab, el) {
+  document.querySelectorAll('#page-perks .etab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  ['airbnb','miles','cashback'].forEach(t => {
+    document.getElementById('perks-' + t).style.display = t === tab ? 'block' : 'none';
+  });
+}
+
+// ══════════════════════════════════
+// SPENDING
+// ══════════════════════════════════
+
+const CAT_ICONS = {
+  Food: { icon: '🛒', bg: '#D6F0E8' },
+  Shopping: { icon: '🛍️', bg: '#E3EEF9' },
+  Travel: { icon: '🚇', bg: '#EEECFB' },
+  'Going Out': { icon: '🎉', bg: '#FAE8E3' },
+  Beauty: { icon: '💄', bg: '#FBF0DC' },
+  Health: { icon: '💊', bg: '#D6F0E8' },
+  Subscriptions: { icon: '📱', bg: '#E3EEF9' },
+  Other: { icon: '📦', bg: '#EDEAD8' },
+};
+
+function renderSpendingLog() {
+  const data = loadData(KEYS.spending);
+  const search = (document.getElementById('spend-search')?.value || '').toLowerCase();
+  const filterCat = document.getElementById('spend-filter-cat')?.value || '';
+  const filterMonth = document.getElementById('spend-filter-month')?.value || '';
+
+  let filtered = data.filter(t => {
+    const matchSearch = !search || t.name.toLowerCase().includes(search);
+    const matchCat = !filterCat || t.category === filterCat;
+    const matchMonth = !filterMonth || t.date.startsWith(filterMonth);
+    return matchSearch && matchCat && matchMonth;
+  });
+
+  filtered.sort((a, b) => b.date.localeCompare(a.date));
+
+  const tbody = document.getElementById('spending-tbody');
+  const empty = document.getElementById('spending-empty');
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    document.getElementById('spending-table-wrap').style.display = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  document.getElementById('spending-table-wrap').style.display = 'block';
+
+  tbody.innerHTML = filtered.map(t => {
+    const cat = CAT_ICONS[t.category] || CAT_ICONS.Other;
+    const d = new Date(t.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    return `<tr>
+      <td class="td-mono">${d}</td>
+      <td style="display:flex;align-items:center;gap:8px;padding:10px 12px;">
+        <span style="width:28px;height:28px;border-radius:8px;background:${cat.bg};display:inline-flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">${cat.icon}</span>
+        ${escHtml(t.name)}
+      </td>
+      <td><span class="badge badge-${getCatColor(t.category)}">${t.category}</span></td>
+      <td class="td-muted">${escHtml(t.where || '—')}</td>
+      <td class="td-red">£${t.amount.toFixed(2)}</td>
+      <td><button class="btn-danger" onclick="deleteSpending(${t.id})">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function getCatColor(cat) {
+  const map = { Food: 'teal', Shopping: 'blue', Travel: 'purple', 'Going Out': 'coral', Beauty: 'amber', Health: 'teal', Subscriptions: 'blue', Other: '' };
+  return map[cat] || 'teal';
+}
+
+function deleteSpending(id) {
+  let data = loadData(KEYS.spending);
+  data = data.filter(t => t.id !== id);
+  saveData(KEYS.spending, data);
+  renderSpendingLog();
+  showToast('Transaction deleted');
+}
+
+function openAddSpending() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('spend-date').value = today;
+  document.getElementById('spend-amount').value = '';
+  document.getElementById('spend-name').value = '';
+  document.getElementById('modal-spending').classList.add('open');
+}
+
+function saveSpending() {
+  const date = document.getElementById('spend-date').value;
+  const amount = parseFloat(document.getElementById('spend-amount').value);
+  const name = document.getElementById('spend-name').value.trim();
+  const category = document.getElementById('spend-cat').value;
+  const where = document.getElementById('spend-where').value;
+  if (!date || !amount || !name) { showToast('Please fill in all fields'); return; }
+  const data = loadData(KEYS.spending);
+  data.push({ id: Date.now(), date, amount, name, category, where });
+  saveData(KEYS.spending, data);
+  closeModal('modal-spending');
+  renderSpendingLog();
+  showToast('✓ Transaction saved');
+}
+
+// ══════════════════════════════════
+// CHARTS
+// ══════════════════════════════════
+
+let spendingChart = null;
+function initSpendingChart() {
+  const ctx = document.getElementById('spending-chart')?.getContext('2d');
+  if (!ctx) return;
+  if (spendingChart) { spendingChart.destroy(); }
+  spendingChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+      datasets: [
+        { label: 'Shopping', data: [289, 339, 346, 0, 0, 0, 0, 0, 0, 0, 0, 0], backgroundColor: '#E3EEF9', borderColor: '#1A5FA8', borderWidth: 1 },
+        { label: 'Food', data: [227, 308, 383, 0, 0, 0, 0, 0, 0, 0, 0, 0], backgroundColor: '#D6F0E8', borderColor: '#0E7A61', borderWidth: 1 },
+        { label: 'Travel', data: [179, 172, 179, 0, 0, 0, 0, 0, 0, 0, 0, 0], backgroundColor: '#EEECFB', borderColor: '#5B49C5', borderWidth: 1 },
+        { label: 'Going Out', data: [23, 81, 123, 0, 0, 0, 0, 0, 0, 0, 0, 0], backgroundColor: '#FAE8E3', borderColor: '#C94C28', borderWidth: 1 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', labels: { font: { family: 'DM Sans', size: 12 } } } },
+      scales: {
+        x: { stacked: true, grid: { display: false }, ticks: { font: { family: 'DM Mono', size: 11 } } },
+        y: { stacked: true, grid: { color: '#E2DED6' }, ticks: { font: { family: 'DM Mono', size: 11 }, callback: v => '£' + v } }
+      }
+    }
+  });
+}
+
+// ══════════════════════════════════
+// MODALS & TOASTS
+// ══════════════════════════════════
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('open'); });
+});
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ══════════════════════════════════
+// EXPORT / IMPORT
+// ══════════════════════════════════
+
+function exportData() {
+  const data = {
+    exported: new Date().toISOString(),
+    version: 1,
+    spending: loadData(KEYS.spending),
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'money-hub-backup-' + new Date().toISOString().split('T')[0] + '.json';
+  a.click();
+  showToast('✓ Backup exported');
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.spending) saveData(KEYS.spending, data.spending);
+      renderSpendingLog();
+      showToast('✓ Data imported successfully');
+    } catch { showToast('Error importing file'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ══════════════════════════════════
+// UTILITIES
+// ══════════════════════════════════
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ══════════════════════════════════
+// INIT
+// ══════════════════════════════════
+
+document.addEventListener('DOMContentLoaded', function() {
+  initDefaultSpending();
+  updateSyncInfo();
+  renderSpendingLog();
+});
+</script>
+</body>
+</html>
