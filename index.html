@@ -2087,7 +2087,7 @@ async function syncMonzo() {
   if (btn) { btn.disabled = true; btn.textContent = 'Syncing…'; }
   try {
     // Fetch all rows from the Monzo sheet (Sheet1, all columns)
-    const range = encodeURIComponent('A:P');
+    const range = encodeURIComponent('Personal Account Transactions!A:P');
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${MONZO_SHEET_ID}/values/${range}`;
     const res = await fetch(url, { headers: { Authorization: 'Bearer ' + gAccessToken } });
     if (!res.ok) {
