@@ -289,37 +289,6 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
   }
   .emerald-glow { box-shadow: 0 0 20px rgba(0,245,212,0.08); }
   .emerald-text-glow { text-shadow: 0 0 15px rgba(0,245,212,0.3); }
-
-  /* ── ACCENT STAT CARDS ── */
-  .stat-card-accent {
-    background: var(--card);
-    border-radius: var(--radius);
-    padding: 18px 20px;
-    box-shadow: var(--shadow);
-    border: 1px solid var(--border);
-    border-top: 3px solid var(--accent-color, var(--teal));
-  }
-  .stat-card-dark {
-    background: #0e0e0e;
-    border-radius: var(--radius);
-    padding: 18px 20px;
-    box-shadow: var(--shadow);
-    border: 1px solid rgba(255,255,255,0.08);
-  }
-  /* Glowing hero banner variant (used on Credit tab) */
-  .hero-banner {
-    background: linear-gradient(135deg,#0e1a2e 0%,#0e0e0e 100%);
-    border: 1px solid rgba(96,165,250,0.2);
-    border-radius: var(--radius);
-    padding: 28px 32px;
-    margin-bottom: 24px;
-    box-shadow: 0 0 30px rgba(96,165,250,0.06);
-  }
-  .hero-banner.teal-hero {
-    background: linear-gradient(135deg,#0e2e28 0%,#0e0e0e 100%);
-    border-color: rgba(0,245,212,0.15);
-    box-shadow: 0 0 30px rgba(0,245,212,0.06);
-  }
   /* Mobile bottom-nav safe area */
   .pb-safe { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
 
@@ -1034,19 +1003,19 @@ function renderDashboard() {
     </div>
 
     <div class="grid-3" style="margin-bottom:24px;">
-      <div class="stat-card-accent" style="--accent-color:var(--teal);">
+      <div class="stat-card">
         <div class="stat-eyebrow">Monthly Income</div>
         <div class="stat-val" style="color:var(--teal);">${fmtMoney(inc.current_takehome)}</div>
         <div class="stat-label">Take-home · <span data-edit="income.current_salary" data-type="money">${fmtMoney(inc.current_salary)}</span> salary</div>
         <div class="stat-sub" data-edit="income.notes" data-type="text">${escHtml(inc.notes || '')}</div>
       </div>
-      <div class="stat-card-accent" style="--accent-color:var(--blue);">
+      <div class="stat-card">
         <div class="stat-eyebrow">Monthly Outgoings</div>
-        <div class="stat-val" style="color:var(--blue);">${fmtMoney(out)}</div>
+        <div class="stat-val">${fmtMoney(out)}</div>
         <div class="stat-label">Fixed + bills + subs + pots</div>
         <div class="stat-sub">${fmtMoney(totalBills('current'))} bills · ${fmtMoney(totalSubsActive())} subs · ${fmtMoney(totalPotsMonthly())} pots</div>
       </div>
-      <div class="stat-card-accent" style="--accent-color:${remColor};">
+      <div class="stat-card">
         <div class="stat-eyebrow">Remaining</div>
         <div class="stat-val" style="color:${remColor};">${fmtMoneyD(rem)}</div>
         <div class="stat-label">After all fixed outgoings</div>
@@ -1142,10 +1111,10 @@ function renderBudget() {
 
     <div id="bud-cur">
       <div class="grid-4" style="margin-bottom:24px;">
-        <div class="stat-card-accent" style="--accent-color:var(--text2);"><div class="stat-eyebrow">Current Salary</div><div class="stat-val"><span data-edit="income.current_salary" data-type="money">${fmtMoney(gAppData.income.current_salary)}</span></div><div class="stat-label">Per year · click to edit</div></div>
-        <div class="stat-card-accent" style="--accent-color:var(--teal);"><div class="stat-eyebrow">Take-home</div><div class="stat-val" style="color:var(--teal);"><span data-edit="income.current_takehome" data-type="money">${fmtMoney(gAppData.income.current_takehome)}</span></div><div class="stat-label">Per month · click to edit</div></div>
-        <div class="stat-card-accent" style="--accent-color:var(--blue);"><div class="stat-eyebrow">Outgoings</div><div class="stat-val" style="color:var(--blue);">${fmtMoney(totalOutgoings('current'))}</div><div class="stat-label">Fixed + Bills + Subs + Pots</div></div>
-        <div class="stat-card-accent" style="--accent-color:${remainingCurrent() < 100 ? 'var(--amber)' : 'var(--teal)'};"><div class="stat-eyebrow">Remaining</div><div class="stat-val" style="color:${remainingCurrent() < 100 ? 'var(--amber)' : 'var(--teal)'};">${fmtMoneyD(remainingCurrent())}</div><div class="stat-label">After outgoings</div></div>
+        <div class="stat-card"><div class="stat-eyebrow">Current Salary</div><div class="stat-val"><span data-edit="income.current_salary" data-type="money">${fmtMoney(gAppData.income.current_salary)}</span></div><div class="stat-label">Per year · click to edit</div></div>
+        <div class="stat-card"><div class="stat-eyebrow">Take-home</div><div class="stat-val" style="color:var(--teal);"><span data-edit="income.current_takehome" data-type="money">${fmtMoney(gAppData.income.current_takehome)}</span></div><div class="stat-label">Per month · click to edit</div></div>
+        <div class="stat-card"><div class="stat-eyebrow">Outgoings</div><div class="stat-val">${fmtMoney(totalOutgoings('current'))}</div><div class="stat-label">Fixed + Bills + Subs + Pots</div></div>
+        <div class="stat-card"><div class="stat-eyebrow">Remaining</div><div class="stat-val" style="color:${remainingCurrent() < 100 ? 'var(--amber)' : 'var(--teal)'};">${fmtMoneyD(remainingCurrent())}</div><div class="stat-label">After outgoings</div></div>
       </div>
       <div class="grid-3">
         ${renderListCard('Fixed', gAppData.fixed_current, 'Fixed', 'current', false)}
@@ -1157,10 +1126,10 @@ function renderBudget() {
 
     <div id="bud-fut" style="display:none;">
       <div class="grid-4" style="margin-bottom:24px;">
-        <div class="stat-card-accent" style="--accent-color:var(--text2);"><div class="stat-eyebrow">Future Salary</div><div class="stat-val"><span data-edit="income.future_salary" data-type="money">${fmtMoney(gAppData.income.future_salary)}</span></div><div class="stat-label">Per year · click to edit</div></div>
-        <div class="stat-card-accent" style="--accent-color:var(--teal);"><div class="stat-eyebrow">Future Take-home</div><div class="stat-val" style="color:var(--teal);"><span data-edit="income.future_takehome" data-type="money">${fmtMoney(gAppData.income.future_takehome)}</span></div><div class="stat-label">Per month · click to edit</div></div>
-        <div class="stat-card-accent" style="--accent-color:var(--blue);"><div class="stat-eyebrow">Outgoings</div><div class="stat-val" style="color:var(--blue);">${fmtMoney(totalOutgoings('future'))}</div><div class="stat-label">Fixed + Bills + Subs + Pots</div></div>
-        <div class="stat-card-accent" style="--accent-color:${remainingFuture() > 0 ? 'var(--teal)' : 'var(--amber)'};"><div class="stat-eyebrow">Remaining</div><div class="stat-val" style="color:${remainingFuture() > 0 ? 'var(--teal)' : 'var(--amber)'};">${fmtMoneyD(remainingFuture())}</div><div class="stat-label">After outgoings</div></div>
+        <div class="stat-card"><div class="stat-eyebrow">Future Salary</div><div class="stat-val"><span data-edit="income.future_salary" data-type="money">${fmtMoney(gAppData.income.future_salary)}</span></div><div class="stat-label">Per year · click to edit</div></div>
+        <div class="stat-card"><div class="stat-eyebrow">Future Take-home</div><div class="stat-val" style="color:var(--teal);"><span data-edit="income.future_takehome" data-type="money">${fmtMoney(gAppData.income.future_takehome)}</span></div><div class="stat-label">Per month · click to edit</div></div>
+        <div class="stat-card"><div class="stat-eyebrow">Outgoings</div><div class="stat-val">${fmtMoney(totalOutgoings('future'))}</div><div class="stat-label">Fixed + Bills + Subs + Pots</div></div>
+        <div class="stat-card"><div class="stat-eyebrow">Remaining</div><div class="stat-val" style="color:${remainingFuture() > 0 ? 'var(--teal)' : 'var(--amber)'};">${fmtMoneyD(remainingFuture())}</div><div class="stat-label">After outgoings</div></div>
       </div>
       <div class="grid-3">
         ${renderListCard('Fixed', gAppData.fixed_future, 'Fixed', 'future', false)}
@@ -1306,14 +1275,14 @@ function renderSavings() {
     <div class="page-title">Savings</div>
     <div class="page-sub">Goals, pots, and history — all totals computed live</div>
 
-    <div class="networth-banner" style="margin-bottom:24px;">
+    <div class="networth-banner" style="background:linear-gradient(135deg,var(--teal) 0%,#0a5a48 100%);margin-bottom:24px;">
       <div class="nw-label">Total Savings</div>
-      <div class="nw-val" style="color:var(--teal);">${fmtMoney(totalSavings())}</div>
+      <div class="nw-val">${fmtMoney(totalSavings())}</div>
       <div class="nw-sub">Goals + Pots combined · live</div>
       <div class="nw-breakdown">
-        <div><div class="nw-item-label">Goals</div><div class="nw-item-val nw-positive">${fmtMoney(totalGoalsCurrent())}</div></div>
-        <div><div class="nw-item-label">Pots</div><div class="nw-item-val nw-positive">${fmtMoney(totalPotsCurrent())}</div></div>
-        <div><div class="nw-item-label">Goals progress</div><div class="nw-item-val nw-positive">${(() => { const t = sum(gAppData.savings_goals,'target'); const c = totalGoalsCurrent(); return t > 0 ? Math.round(c / t * 100) + '%' : '—'; })()}</div></div>
+        <div><div class="nw-item-label">Goals</div><div class="nw-item-val">${fmtMoney(totalGoalsCurrent())}</div></div>
+        <div><div class="nw-item-label">Pots</div><div class="nw-item-val">${fmtMoney(totalPotsCurrent())}</div></div>
+        <div><div class="nw-item-label">Goals progress</div><div class="nw-item-val">${(() => { const t = sum(gAppData.savings_goals,'target'); const c = totalGoalsCurrent(); return t > 0 ? Math.round(c / t * 100) + '%' : '—'; })()}</div></div>
       </div>
     </div>
 
@@ -1396,24 +1365,15 @@ function renderCredit() {
       <div class="grid-${gAppData.credit_cards.length === 3 ? '3' : '2'}" style="margin-bottom:24px;">
         ${gAppData.credit_cards.map(c => {
           const util = (Math.abs(c.balance) / Math.max(1, c.limit)) * 100;
-          // card colour scheme: blue = bright blue, teal = bright teal, anything else = dark card with coral accent
-          const isBright = c.color === 'blue' || c.color === 'teal';
-          const colorBg = c.color === 'blue'
-            ? 'linear-gradient(135deg,#1e3a6e 0%,#2563eb 100%)'
-            : c.color === 'teal'
-            ? 'linear-gradient(135deg,#0e2e28 0%,#0d9488 100%)'
-            : 'linear-gradient(135deg,#1a1a1a 0%,#111 100%)';
-          const accentColor = c.color === 'blue' ? 'rgba(255,255,255,0.85)' : c.color === 'teal' ? 'rgba(255,255,255,0.85)' : '#f4816a';
-          const borderStyle = isBright ? '1px solid rgba(255,255,255,0.18)' : '1px solid rgba(244,129,106,0.35)';
-          const barFill = util > 70 ? '#F4816A' : isBright ? 'rgba(255,255,255,0.75)' : 'var(--coral)';
+          const colorBg = c.color === 'blue' ? 'var(--blue)' : c.color === 'teal' ? 'var(--teal)' : 'var(--text)';
           return `
-            <div class="credit-card" style="background:${colorBg};border:${borderStyle};">
-              <div class="credit-card-bank" style="color:rgba(255,255,255,0.6);"><span data-edit-list="credit_cards|${c.id}|name" data-type="text">${escHtml(c.name)}</span></div>
-              <div class="credit-card-balance" style="color:${accentColor};"><span data-edit-list="credit_cards|${c.id}|balance" data-type="money">${fmtMoneyD(c.balance)}</span></div>
-              <div class="credit-card-limit" style="color:rgba(255,255,255,0.5);"><span data-edit-list="credit_cards|${c.id}|limit" data-type="money">${fmtMoney(c.limit)}</span> limit · <span data-edit-list="credit_cards|${c.id}|rate_info" data-type="text">${escHtml(c.rate_info || '')}</span></div>
+            <div class="credit-card" style="background:${colorBg};">
+              <div class="credit-card-bank"><span data-edit-list="credit_cards|${c.id}|name" data-type="text">${escHtml(c.name)}</span></div>
+              <div class="credit-card-balance"><span data-edit-list="credit_cards|${c.id}|balance" data-type="money">${fmtMoneyD(c.balance)}</span></div>
+              <div class="credit-card-limit"><span data-edit-list="credit_cards|${c.id}|limit" data-type="money">${fmtMoney(c.limit)}</span> limit · <span data-edit-list="credit_cards|${c.id}|rate_info" data-type="text">${escHtml(c.rate_info || '')}</span></div>
               <div class="credit-card-util">
-                <div class="credit-bar-track"><div class="credit-bar-fill" style="width:${Math.min(100, util)}%;background:${barFill};"></div></div>
-                <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:4px;font-family:'Manrope', sans-serif;">${util.toFixed(1)}% utilised</div>
+                <div class="credit-bar-track"><div class="credit-bar-fill" style="width:${Math.min(100, util)}%;background:${util > 70 ? '#F4816A' : 'rgba(255,255,255,0.7)'};"></div></div>
+                <div style="font-size:10px;color:rgba(255,255,255,0.5);margin-top:4px;font-family:'Manrope', sans-serif;">${util.toFixed(1)}% utilised</div>
               </div>
             </div>`;
         }).join('')}
@@ -1454,10 +1414,10 @@ function renderCredit() {
     </div>
 
     <div id="cred-invest" style="display:none;">
-      <div class="stat-card-accent" style="--accent-color:var(--teal);margin-bottom:24px;">
-        <div class="stat-eyebrow">Total Investments</div>
-        <div class="stat-val" style="color:var(--teal);">${fmtMoney(totalInvestments())}</div>
-        <div class="stat-label">Live total · updates as you edit below</div>
+      <div class="stat-card" style="background:#0e0e0e;color:#e5e2e1;border:1px solid rgba(255,255,255,0.1);margin-bottom:24px;">
+        <div class="stat-eyebrow" style="color:rgba(255,255,255,0.5);">Total Investments</div>
+        <div class="stat-val" style="color:var(--teal-mid);">${fmtMoney(totalInvestments())}</div>
+        <div class="stat-label" style="color:rgba(255,255,255,0.6);">Live total · updates as you edit below</div>
       </div>
       <div class="card">
         <div class="section-eyebrow">Investment Accounts <span class="total-pill">${fmtMoney(totalInvestments())}</span></div>
@@ -1474,8 +1434,8 @@ function renderCredit() {
 
     <div id="cred-pension" style="display:none;">
       <div class="grid-2" style="margin-bottom:24px;">
-        <div class="stat-card-accent" style="--accent-color:var(--teal);"><div class="stat-eyebrow">Total Pension Value</div><div class="stat-val" style="color:var(--teal);">${fmtMoney(totalPension())}</div><div class="stat-label">Live total · all pots</div></div>
-        <div class="stat-card-accent" style="--accent-color:var(--blue);"><div class="stat-eyebrow">Total Monthly Contributions</div><div class="stat-val" style="color:var(--blue);">${fmtMoney(sum(gAppData.pension,'monthly_contribution') + sum(gAppData.pension,'employer_contribution'))}</div><div class="stat-label">Me + Employer</div></div>
+        <div class="stat-card"><div class="stat-eyebrow">Total Pension Value</div><div class="stat-val" style="color:var(--teal);">${fmtMoney(totalPension())}</div><div class="stat-label">Live total · all pots</div></div>
+        <div class="stat-card"><div class="stat-eyebrow">Total Monthly Contributions</div><div class="stat-val">${fmtMoney(sum(gAppData.pension,'monthly_contribution') + sum(gAppData.pension,'employer_contribution'))}</div><div class="stat-label">Me + Employer</div></div>
       </div>
       <div class="card">
         <div class="section-eyebrow">Pension Pots <span class="total-pill">${fmtMoney(totalPension())}</span></div>
@@ -1492,8 +1452,8 @@ function renderCredit() {
 
     <div id="cred-mortgage" style="display:none;">
       <div class="grid-2" style="margin-bottom:24px;">
-        <div class="stat-card-accent" style="--accent-color:var(--coral);"><div class="stat-eyebrow">Mortgage Balance</div><div class="stat-val" style="color:var(--coral);"><span data-edit="mortgage.balance" data-type="money">${fmtMoney(gAppData.mortgage.balance)}</span></div><div class="stat-label"><span data-edit="mortgage.lender" data-type="text">${escHtml(gAppData.mortgage.lender)}</span></div></div>
-        <div class="stat-card-accent" style="--accent-color:var(--amber);"><div class="stat-eyebrow">Student Loan</div><div class="stat-val" style="color:var(--amber);"><span data-edit="student_loan.balance" data-type="money">${fmtMoney(gAppData.student_loan.balance)}</span></div><div class="stat-label"><span data-edit="student_loan.plan" data-type="text">${escHtml(gAppData.student_loan.plan)}</span> · <span data-edit="student_loan.rate" data-type="number">${gAppData.student_loan.rate}</span>% · <span data-edit="student_loan.monthly" data-type="money">${fmtMoney(gAppData.student_loan.monthly)}</span>/mo</div></div>
+        <div class="stat-card"><div class="stat-eyebrow">Mortgage Balance</div><div class="stat-val" style="color:var(--red);"><span data-edit="mortgage.balance" data-type="money">${fmtMoney(gAppData.mortgage.balance)}</span></div><div class="stat-label"><span data-edit="mortgage.lender" data-type="text">${escHtml(gAppData.mortgage.lender)}</span></div></div>
+        <div class="stat-card"><div class="stat-eyebrow">Student Loan</div><div class="stat-val" style="color:var(--amber);"><span data-edit="student_loan.balance" data-type="money">${fmtMoney(gAppData.student_loan.balance)}</span></div><div class="stat-label"><span data-edit="student_loan.plan" data-type="text">${escHtml(gAppData.student_loan.plan)}</span> · <span data-edit="student_loan.rate" data-type="number">${gAppData.student_loan.rate}</span>% · <span data-edit="student_loan.monthly" data-type="money">${fmtMoney(gAppData.student_loan.monthly)}</span>/mo</div></div>
       </div>
       <div class="grid-2">
         <div class="card">
@@ -1549,11 +1509,11 @@ function renderPerks() {
     <div id="perks-airbnb">
       <div class="grid-4" style="margin-bottom:24px;">
         ${gAppData.airbnb_yearly.map(y => `
-          <div class="stat-card-accent" style="--accent-color:var(--teal);">
+          <div class="stat-card">
             <div class="stat-eyebrow"><span data-edit-list="airbnb_yearly|${y.id}|year" data-type="number">${y.year}</span> Total</div>
             <div class="stat-val" style="font-size:22px;color:var(--teal);"><span data-edit-list="airbnb_yearly|${y.id}|total" data-type="money">${fmtMoney(y.total)}</span><button class="btn-row-del" onclick="deleteItem('airbnb_yearly','${y.id}')">✕</button></div>
           </div>`).join('')}
-        <div class="stat-card-accent" style="--accent-color:var(--teal);border-top-color:var(--blue);"><div class="stat-eyebrow">${currentYear} Total (live)</div><div class="stat-val" style="font-size:22px;color:var(--blue);">${fmtMoney(totalAirbnbYear(currentYear))}</div><div class="stat-sub">From bookings list</div></div>
+        <div class="stat-card"><div class="stat-eyebrow">${currentYear} Total (live)</div><div class="stat-val" style="font-size:22px;color:var(--teal);">${fmtMoney(totalAirbnbYear(currentYear))}</div><div class="stat-sub">From bookings list</div></div>
       </div>
       <div class="grid-2">
         <div class="card">
@@ -1592,7 +1552,7 @@ function renderPerks() {
     <div id="perks-miles" style="display:none;">
       <div class="grid-4" style="margin-bottom:24px;">
         ${gAppData.miles.map(m => `
-          <div class="stat-card-accent" style="--accent-color:var(--${m.color || 'text'});">
+          <div class="stat-card">
             <div class="stat-eyebrow"><span data-edit-list="miles|${m.id}|program" data-type="text">${escHtml(m.program)}</span></div>
             <div class="stat-val" style="color:var(--${m.color || 'text'});"><span data-edit-list="miles|${m.id}|balance" data-type="number">${(Number(m.balance)||0).toLocaleString()}</span><button class="btn-row-del" onclick="deleteItem('miles','${m.id}')">✕</button></div>
           </div>`).join('')}
@@ -1615,8 +1575,8 @@ function renderPerks() {
 
     <div id="perks-cashback" style="display:none;">
       <div class="grid-2" style="margin-bottom:24px;">
-        <div class="stat-card-accent" style="--accent-color:var(--teal);"><div class="stat-eyebrow">Active Cashback Total</div><div class="stat-val" style="color:var(--teal);">${fmtMoney(totalCashback())}</div><div class="stat-label">Live · all platforms</div></div>
-        <div class="stat-card-accent" style="--accent-color:var(--amber);"><div class="stat-eyebrow">Owed to me</div><div class="stat-val" style="color:var(--amber);">${fmtMoney(totalOwed())}</div><div class="stat-label">From the list below</div></div>
+        <div class="stat-card"><div class="stat-eyebrow">Active Cashback Total</div><div class="stat-val" style="color:var(--teal);">${fmtMoney(totalCashback())}</div><div class="stat-label">Live · all platforms</div></div>
+        <div class="stat-card"><div class="stat-eyebrow">Owed to me</div><div class="stat-val" style="color:var(--amber);">${fmtMoney(totalOwed())}</div><div class="stat-label">From the list below</div></div>
       </div>
 
       <div class="grid-2">
