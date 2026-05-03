@@ -993,9 +993,10 @@ function renderBudget() {
     </div>
 
     <div id="bud-cur">
-      <div class="grid-3" style="margin-bottom:24px;">
+      <div class="grid-4" style="margin-bottom:24px;">
+        <div class="stat-card"><div class="stat-eyebrow">Current Salary</div><div class="stat-val"><span data-edit="income.current_salary" data-type="money">${fmtMoney(gAppData.income.current_salary)}</span></div><div class="stat-label">Per year · click to edit</div></div>
         <div class="stat-card"><div class="stat-eyebrow">Take-home</div><div class="stat-val" style="color:var(--teal);"><span data-edit="income.current_takehome" data-type="money">${fmtMoney(gAppData.income.current_takehome)}</span></div><div class="stat-label">Per month · click to edit</div></div>
-        <div class="stat-card"><div class="stat-eyebrow">Total Outgoings</div><div class="stat-val">${fmtMoney(totalOutgoings('current'))}</div><div class="stat-label">Fixed + Bills + Subs + Pots</div></div>
+        <div class="stat-card"><div class="stat-eyebrow">Outgoings</div><div class="stat-val">${fmtMoney(totalOutgoings('current'))}</div><div class="stat-label">Fixed + Bills + Subs + Pots</div></div>
         <div class="stat-card"><div class="stat-eyebrow">Remaining</div><div class="stat-val" style="color:${remainingCurrent() < 100 ? 'var(--amber)' : 'var(--teal)'};">${fmtMoneyD(remainingCurrent())}</div><div class="stat-label">After outgoings</div></div>
       </div>
       <div class="grid-3">
