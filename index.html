@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Laura's Money Hub</title>
+<title>Finance Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;900&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -360,7 +360,7 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
 <div id="sync-overlay">
   <div class="sync-card">
     <div style="font-size:36px;margin-bottom:12px;">💷</div>
-    <div class="sync-logo">Laura's Money Hub</div>
+    <div class="sync-logo">Finance Hub</div>
     <div class="sync-sub">Sign in with Google to sync your data across all devices</div>
 
     <div id="client-id-setup" style="display:none;">
@@ -831,7 +831,7 @@ function remainingFuture()            { return (Number(gAppData.income.future_ta
    UTILITIES
    ============================================================ */
 const escHtml = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-const fmtMoney = n => '£' + (Number(n) || 0).toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+const fmtMoney = n => '£' + (Number(n) || 0).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtMoneyD = n => { const v = Number(n) || 0; return (v < 0 ? '-£' : '£') + Math.abs(v).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
 const fmtMoneyAbs = n => '£' + Math.abs(Number(n) || 0).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const parseMoney = s => { const n = parseFloat(String(s).replace(/[£,\s]/g,'')); return isNaN(n) ? 0 : n; };
@@ -1002,12 +1002,10 @@ function migrateColours() {
   // miles — assign cycling colours if stale
   const milesColors = ['teal','amber','purple','coral'];
   (gAppData.miles || []).forEach((m, i) => { m.color = fix(m.color) === 'teal' && m.color === 'blue' ? milesColors[i % milesColors.length] : fix(m.color); });
-  // credit cards — map old names to new palette
+  // credit cards — enforce index-based teal/purple/amber so all three are always different
   const cardColors = ['teal','purple','amber'];
   (gAppData.credit_cards || []).forEach((c, i) => {
-    if (!c.color || c.color === 'blue' || c.color === 'text') {
-      c.color = cardColors[i % cardColors.length];
-    }
+    c.color = cardColors[i % cardColors.length];
   });
 }
 
@@ -1015,6 +1013,11 @@ function migrateColours() {
    RENDERERS — one per page
    ============================================================ */
 function renderAll() {
+  // Preserve the currently active page before re-rendering wipes innerHTML
+  const activePage = document.querySelector('.page.active');
+  const activePageId = activePage ? activePage.id.replace('page-', '') : null;
+  const activeNavEl = document.querySelector('.nav-item.active');
+
   renderDashboard();
   renderBudget();
   renderSpending();
@@ -1022,6 +1025,18 @@ function renderAll() {
   renderCredit();
   renderPerks();
   attachEditHandlers();
+
+  // Restore the active page after render
+  if (activePageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    const pg = document.getElementById('page-' + activePageId);
+    if (pg) pg.classList.add('active');
+    if (activeNavEl) {
+      const navItems = document.querySelectorAll('.nav-item');
+      navItems.forEach(n => { if (n.textContent.trim() === activeNavEl.textContent.trim()) n.classList.add('active'); });
+    }
+  }
 }
 
 function renderDashboard() {
@@ -1335,17 +1350,6 @@ function renderSavings() {
       </div>
     </div>
 
-    <div class="networth-banner" style="margin-bottom:24px;">
-      <div class="nw-label">Total Savings</div>
-      <div class="nw-val" style="color:var(--teal);text-shadow:0 0 28px rgba(0,245,212,0.6), 0 0 60px rgba(0,245,212,0.2);">${fmtMoney(totalSavings())}</div>
-      <div class="nw-sub">Goals + Pots combined · live</div>
-      <div class="nw-breakdown">
-        <div><div class="nw-item-label">Goals</div><div class="nw-item-val" style="color:var(--teal);">${fmtMoney(totalGoalsCurrent())}</div></div>
-        <div><div class="nw-item-label">Pots</div><div class="nw-item-val" style="color:var(--purple);">${fmtMoney(totalPotsCurrent())}</div></div>
-        <div><div class="nw-item-label">Goals progress</div><div class="nw-item-val" style="color:var(--teal);">${(() => { const t = sum(gAppData.savings_goals,'target'); const c = totalGoalsCurrent(); return t > 0 ? Math.round(c / t * 100) + '%' : '—'; })()}</div></div>
-      </div>
-    </div>
-
     <div class="grid-2">
       <div class="card">
         <div class="section-eyebrow">Savings Goals <span class="total-pill">${fmtMoney(totalGoalsCurrent())} / ${fmtMoney(sum(gAppData.savings_goals,'target'))}</span></div>
@@ -1571,14 +1575,14 @@ function renderPerks() {
     <div class="page-sub">Airbnb, miles, cashback — totals computed live</div>
 
     <div class="tab-bar">
-      <span class="etab active" onclick="switchPerksTab(this,'airbnb')">Airbnb Income</span>
+      <span class="etab active" onclick="switchPerksTab(this,'airbnb')">Airbnb</span>
       <span class="etab" onclick="switchPerksTab(this,'miles')">Air Miles</span>
-      <span class="etab" onclick="switchPerksTab(this,'cashback')">Cashback & Owed</span>
+      <span class="etab" onclick="switchPerksTab(this,'cashback')">Extras</span>
     </div>
 
     <div id="perks-airbnb">
       <div class="grid-4" style="margin-bottom:24px;">
-        ${gAppData.airbnb_yearly.map((y, i) => { const aC = ['teal','purple','amber'][i % 3]; return `
+        ${[...gAppData.airbnb_yearly].sort((a,b) => (a.year||0) - (b.year||0)).map((y, i) => { const aC = ['teal','purple','amber'][i % 3]; return `
           <div class="stat-card-accent" style="--accent-color:var(--${aC});">
             <div class="stat-eyebrow"><span data-edit-list="airbnb_yearly|${y.id}|year" data-type="number">${y.year}</span> Total</div>
             <div class="stat-val" style="font-size:22px;color:var(--${aC});"><span data-edit-list="airbnb_yearly|${y.id}|total" data-type="money">${fmtMoney(y.total)}</span><button class="btn-row-del" onclick="deleteItem('airbnb_yearly','${y.id}')">✕</button></div>
