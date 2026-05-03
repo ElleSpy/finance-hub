@@ -92,7 +92,7 @@ body { font-family: 'Manrope', sans-serif; background: var(--bg); color: var(--t
 .page-sub { font-size:14px;color:var(--text2);margin-top:6px;margin-bottom:28px; }
 
 /* CARDS */
-.card { background:var(--card);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);border:1px solid var(--border); }
+.card { background:var(--card);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.1); }
 .card-title { font-family:'Space Grotesk', sans-serif;font-size:17px;font-weight:500;margin-bottom:4px; }
 .card-sub { font-size:12px;color:var(--text2); }
 
@@ -294,16 +294,22 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
 
   /* ── ACCENT STAT CARDS ── */
   .stat-card-accent {
-    background: var(--card);
+    background: color-mix(in srgb, var(--accent-color, var(--teal)) 8%, var(--card));
     border-radius: var(--radius);
     padding: 18px 20px;
-    box-shadow: var(--shadow);
-    border: 1px solid var(--border);
-    border-top: 3px solid var(--accent-color, var(--teal));
-    transition: box-shadow 0.2s;
+    border: 1px solid color-mix(in srgb, var(--accent-color, var(--teal)) 30%, transparent);
+    box-shadow: 0 0 24px color-mix(in srgb, var(--accent-color, var(--teal)) 12%, transparent), 0 2px 16px rgba(0,0,0,0.4);
+    transition: box-shadow 0.2s, background 0.2s;
   }
   .stat-card-accent:hover {
-    box-shadow: 0 2px 16px rgba(0,0,0,0.4), 0 0 20px color-mix(in srgb, var(--accent-color, var(--teal)) 20%, transparent);
+    background: color-mix(in srgb, var(--accent-color, var(--teal)) 14%, var(--card));
+    box-shadow: 0 0 40px color-mix(in srgb, var(--accent-color, var(--teal)) 22%, transparent), 0 2px 16px rgba(0,0,0,0.5);
+  }
+  .stat-card-accent .stat-val {
+    text-shadow: 0 0 20px color-mix(in srgb, var(--accent-color, var(--teal)) 60%, transparent);
+  }
+  .stat-card-accent .stat-eyebrow {
+    color: color-mix(in srgb, var(--accent-color, var(--teal)) 70%, var(--text3));
   }
 
   /* Mobile bottom-nav safe area */
@@ -1026,9 +1032,9 @@ function renderDashboard() {
         <div class="stat-label">Take-home · <span data-edit="income.current_salary" data-type="money">${fmtMoney(inc.current_salary)}</span> salary</div>
         <div class="stat-sub" data-edit="income.notes" data-type="text">${escHtml(inc.notes || '')}</div>
       </div>
-      <div class="stat-card-accent" style="--accent-color:var(--blue);">
+      <div class="stat-card-accent" style="--accent-color:var(--coral);">
         <div class="stat-eyebrow">Monthly Outgoings</div>
-        <div class="stat-val" style="color:var(--blue);">${fmtMoney(out)}</div>
+        <div class="stat-val" style="color:var(--coral);">${fmtMoney(out)}</div>
         <div class="stat-label">Fixed + bills + subs + pots</div>
         <div class="stat-sub">${fmtMoney(totalBills('current'))} bills · ${fmtMoney(totalSubsActive())} subs · ${fmtMoney(totalPotsMonthly())} pots</div>
       </div>
@@ -1128,9 +1134,9 @@ function renderBudget() {
 
     <div id="bud-cur">
       <div class="grid-4" style="margin-bottom:24px;">
-        <div class="stat-card-accent" style="--accent-color:var(--text2);"><div class="stat-eyebrow">Current Salary</div><div class="stat-val"><span data-edit="income.current_salary" data-type="money">${fmtMoney(gAppData.income.current_salary)}</span></div><div class="stat-label">Per year · click to edit</div></div>
+        <div class="stat-card-accent" style="--accent-color:var(--purple);"><div class="stat-eyebrow">Current Salary</div><div class="stat-val" style="color:var(--purple);"><span data-edit="income.current_salary" data-type="money">${fmtMoney(gAppData.income.current_salary)}</span></div><div class="stat-label">Per year · click to edit</div></div>
         <div class="stat-card-accent" style="--accent-color:var(--teal);"><div class="stat-eyebrow">Take-home</div><div class="stat-val" style="color:var(--teal);"><span data-edit="income.current_takehome" data-type="money">${fmtMoney(gAppData.income.current_takehome)}</span></div><div class="stat-label">Per month · click to edit</div></div>
-        <div class="stat-card-accent" style="--accent-color:var(--blue);"><div class="stat-eyebrow">Outgoings</div><div class="stat-val" style="color:var(--blue);">${fmtMoney(totalOutgoings('current'))}</div><div class="stat-label">Fixed + Bills + Subs + Pots</div></div>
+        <div class="stat-card-accent" style="--accent-color:var(--coral);"><div class="stat-eyebrow">Outgoings</div><div class="stat-val" style="color:var(--coral);">${fmtMoney(totalOutgoings('current'))}</div><div class="stat-label">Fixed + Bills + Subs + Pots</div></div>
         <div class="stat-card-accent" style="--accent-color:${remainingCurrent() < 100 ? 'var(--amber)' : 'var(--teal)'};"><div class="stat-eyebrow">Remaining</div><div class="stat-val" style="color:${remainingCurrent() < 100 ? 'var(--amber)' : 'var(--teal)'};">${fmtMoneyD(remainingCurrent())}</div><div class="stat-label">After outgoings</div></div>
       </div>
       <div class="grid-3">
@@ -1143,10 +1149,10 @@ function renderBudget() {
 
     <div id="bud-fut" style="display:none;">
       <div class="grid-4" style="margin-bottom:24px;">
-        <div class="stat-card-accent" style="--accent-color:var(--text2);"><div class="stat-eyebrow">Future Salary</div><div class="stat-val"><span data-edit="income.future_salary" data-type="money">${fmtMoney(gAppData.income.future_salary)}</span></div><div class="stat-label">Per year · click to edit</div></div>
+        <div class="stat-card-accent" style="--accent-color:var(--purple);"><div class="stat-eyebrow">Future Salary</div><div class="stat-val" style="color:var(--purple);"><span data-edit="income.future_salary" data-type="money">${fmtMoney(gAppData.income.future_salary)}</span></div><div class="stat-label">Per year · click to edit</div></div>
         <div class="stat-card-accent" style="--accent-color:var(--teal);"><div class="stat-eyebrow">Future Take-home</div><div class="stat-val" style="color:var(--teal);"><span data-edit="income.future_takehome" data-type="money">${fmtMoney(gAppData.income.future_takehome)}</span></div><div class="stat-label">Per month · click to edit</div></div>
-        <div class="stat-card-accent" style="--accent-color:var(--blue);"><div class="stat-eyebrow">Outgoings</div><div class="stat-val" style="color:var(--blue);">${fmtMoney(totalOutgoings('future'))}</div><div class="stat-label">Fixed + Bills + Subs + Pots</div></div>
-        <div class="stat-card-accent" style="--accent-color:${remainingFuture() > 0 ? 'var(--teal)' : 'var(--amber)'};"><div class="stat-eyebrow">Remaining</div><div class="stat-val" style="color:${remainingFuture() > 0 ? 'var(--teal)' : 'var(--amber)'};">${fmtMoneyD(remainingFuture())}</div><div class="stat-label">After outgoings</div></div>
+        <div class="stat-card-accent" style="--accent-color:var(--amber);"><div class="stat-eyebrow">Outgoings</div><div class="stat-val" style="color:var(--amber);">${fmtMoney(totalOutgoings('future'))}</div><div class="stat-label">Fixed + Bills + Subs + Pots</div></div>
+        <div class="stat-card-accent" style="--accent-color:${remainingFuture() > 0 ? 'var(--teal)' : 'var(--red)'};"><div class="stat-eyebrow">Remaining</div><div class="stat-val" style="color:${remainingFuture() > 0 ? 'var(--teal)' : 'var(--red)'};">${fmtMoneyD(remainingFuture())}</div><div class="stat-label">After outgoings</div></div>
       </div>
       <div class="grid-3">
         ${renderListCard('Fixed', gAppData.fixed_future, 'Fixed', 'future', false)}
