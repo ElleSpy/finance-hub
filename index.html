@@ -294,24 +294,31 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
   .emerald-text-glow { text-shadow: 0 0 15px rgba(0,245,212,0.3); }
 
   /* ── ACCENT STAT CARDS ── */
+  /* Fallback for browsers without color-mix (older iOS/Android) */
   .stat-card-accent {
-    background: color-mix(in srgb, var(--accent-color, var(--teal)) 8%, var(--card));
+    background: var(--card);
     border-radius: var(--radius);
     padding: 18px 20px;
-    border: 1px solid color-mix(in srgb, var(--accent-color, var(--teal)) 30%, transparent);
-    box-shadow: 0 0 24px color-mix(in srgb, var(--accent-color, var(--teal)) 12%, transparent), 0 2px 16px rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 2px 16px rgba(0,0,0,0.4);
     transition: box-shadow 0.2s, background 0.2s;
   }
-  .stat-card-accent:hover {
-    background: color-mix(in srgb, var(--accent-color, var(--teal)) 14%, var(--card));
-    box-shadow: 0 0 40px color-mix(in srgb, var(--accent-color, var(--teal)) 22%, transparent), 0 2px 16px rgba(0,0,0,0.5);
+  @supports (background: color-mix(in srgb, red 8%, blue)) {
+    .stat-card-accent {
+      background: color-mix(in srgb, var(--accent-color, var(--teal)) 8%, var(--card));
+      border: 1px solid color-mix(in srgb, var(--accent-color, var(--teal)) 30%, transparent);
+      box-shadow: 0 0 24px color-mix(in srgb, var(--accent-color, var(--teal)) 12%, transparent), 0 2px 16px rgba(0,0,0,0.4);
+    }
+    .stat-card-accent:hover {
+      background: color-mix(in srgb, var(--accent-color, var(--teal)) 14%, var(--card));
+      box-shadow: 0 0 40px color-mix(in srgb, var(--accent-color, var(--teal)) 22%, transparent), 0 2px 16px rgba(0,0,0,0.5);
+    }
+    .stat-card-accent .stat-eyebrow {
+      color: color-mix(in srgb, var(--accent-color, var(--teal)) 70%, var(--text3));
+    }
   }
-  .stat-card-accent .stat-val {
-    text-shadow: 0 0 20px color-mix(in srgb, var(--accent-color, var(--teal)) 60%, transparent);
-  }
-  .stat-card-accent .stat-eyebrow {
-    color: color-mix(in srgb, var(--accent-color, var(--teal)) 70%, var(--text3));
-  }
+  /* Always show the coloured value + glow using inline style on stat-val — no color-mix needed */
+  .stat-card-accent .stat-eyebrow { color: var(--text3); }
 
   /* Mobile bottom-nav safe area */
   .pb-safe { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
@@ -320,39 +327,105 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
   @media (max-width: 767px) {
     .sidebar { transform: translateX(-100%); transition: transform 0.25s ease; }
     .sidebar.open { transform: translateX(0); }
-    .main { margin-left: 0 !important; padding: 16px 16px 100px !important; }
+    .main { margin-left: 0 !important; padding: 56px 12px 100px !important; }
     .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr !important; }
-    .page-title { font-size: 26px !important; }
+    /* 2-col grid for stat cards so they don't stretch too tall */
+    .grid-4.stats-grid, .stats-grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+    .page-title { font-size: 24px !important; }
+    .page-sub { font-size: 13px; margin-bottom: 18px; }
     .hamburger { display: flex !important; }
     .sidebar-overlay { display: block; }
-    .mobile-nav {
-      display: flex !important;
-      position: fixed; bottom: 0; left: 0; right: 0;
-      background: rgba(19,19,19,0.85);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-top: 1px solid rgba(255,255,255,0.08);
-      padding: 8px 0;
-      padding-bottom: max(8px, env(safe-area-inset-bottom));
-      z-index: 150;
-      justify-content: space-around;
-      align-items: center;
-    }
-    .mobile-nav-item {
-      display: flex; flex-direction: column; align-items: center; gap: 2px;
-      padding: 6px 12px; border-radius: 10px; cursor: pointer;
-      font-size: 10px; font-weight: 600; color: #83948f;
-      font-family: 'Manrope', sans-serif; letter-spacing: 0.04em;
-      border: none; background: none; transition: color 0.15s;
-      min-width: 44px; min-height: 44px; justify-content: center;
-    }
-    .mobile-nav-item.active, .mobile-nav-item:hover { color: #00f5d4; }
-    .mobile-nav-item .nav-icon { font-size: 20px; }
+
+    /* Tighter cards on mobile */
+    .card { padding: 16px; }
+    .stat-card-accent { padding: 14px 16px; }
+    .stat-val { font-size: 22px !important; }
+    .nw-val { font-size: 36px !important; }
+    .networth-banner { padding: 20px; }
+    .nw-breakdown { gap: 16px; flex-wrap: wrap; }
+
+    /* Tab bar — scrollable, no wrap */
+    .tab-bar { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 4px; gap: 6px; }
+    .tab-bar::-webkit-scrollbar { display: none; }
+    .etab { white-space: nowrap; flex-shrink: 0; font-size: 12px; padding: 6px 14px; }
+
+    /* Tables — make them scrollable horizontally when wide */
+    .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .data-table { min-width: 280px; font-size: 12px; }
+    .data-table th { font-size: 9px; padding: 6px 8px; }
+    .data-table td { padding: 8px 8px; font-size: 12px; }
+
+    /* Pots table — collapse to key columns */
+    .pots-table-col-year { display: none; }
+
+    /* Always show delete buttons on touch (no hover) */
+    .btn-row-del { opacity: 0.6 !important; }
+
+    /* Credit card grid — single column */
+    .credit-card { padding: 16px; }
+    .credit-card-balance { font-size: 22px; }
+
+    /* Incoming payments — stack columns vertically */
+    .incoming-grid { grid-template-columns: 1fr !important; }
+
+    /* Purchases tables inside credit cards — keep them tight */
+    .purchases-table-wrap { overflow-x: auto; }
+
+    /* Section eyebrow — slightly smaller */
+    .section-eyebrow { font-size: 9px; padding-left: 8px; }
+
+    /* Form modal — full width */
+    .modal { padding: 20px; }
+    .modal-title { font-size: 18px; }
+    .form-row-2, .form-row-3 { grid-template-columns: 1fr; }
+
+    /* Budget — pots section table horizontal scroll */
+    .pots-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+    /* Airbnb rates grid */
+    .airbnb-rates-grid { grid-template-columns: 1fr 1fr !important; }
+
+    /* Savings goals — full width */
+    .goal-bar-wrap { margin-top: 8px; }
+
+    /* Investments rows */
+    .invest-val { font-size: 16px !important; }
+
+    /* Bottom toast above nav */
+    .toast { bottom: 80px; }
   }
   @media (min-width: 768px) {
     .mobile-nav { display: none !important; }
     .hamburger { display: none !important; }
   }
+
+  /* ── MOBILE BOTTOM NAV ── */
+  .mobile-nav {
+    display: none;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(14,14,14,0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding: 8px 0;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    z-index: 150;
+    justify-content: space-around;
+    align-items: center;
+  }
+  @media (max-width: 767px) {
+    .mobile-nav { display: flex !important; }
+  }
+  .mobile-nav-item {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    padding: 6px 8px; border-radius: 10px; cursor: pointer;
+    font-size: 9px; font-weight: 600; color: #83948f;
+    font-family: 'Manrope', sans-serif; letter-spacing: 0.04em;
+    border: none; background: none; transition: color 0.15s;
+    min-width: 44px; min-height: 44px; justify-content: center;
+  }
+  .mobile-nav-item.active { color: #00f5d4; }
+  .mobile-nav-item .nav-icon { font-size: 18px; }
 </style>
 </head>
 <body>
@@ -1151,7 +1224,7 @@ function renderDashboard() {
       </div>
     </div>
 
-    <div class="grid-3" style="margin-bottom:24px;">
+    <div class="grid-3 stats-grid" style="margin-bottom:24px;">
       <div class="stat-card-accent" style="--accent-color:var(--purple);">
         <div class="stat-eyebrow">Monthly Income</div>
         <div class="stat-val" style="color:var(--purple);">${fmtMoney(inc.current_takehome)}</div>
@@ -1259,7 +1332,7 @@ function renderBudget() {
     </div>
 
     <div id="bud-cur">
-      <div class="grid-4" style="margin-bottom:24px;">
+      <div class="grid-4 stats-grid" style="margin-bottom:24px;">
         <div class="stat-card-accent" style="--accent-color:var(--purple);"><div class="stat-eyebrow">Current Salary</div><div class="stat-val" style="color:var(--purple);"><span data-edit="income.current_salary" data-type="money">${fmtMoney(gAppData.income.current_salary)}</span></div><div class="stat-label">Per year · click to edit</div></div>
         <div class="stat-card-accent" style="--accent-color:var(--teal);"><div class="stat-eyebrow">Take-home</div><div class="stat-val" style="color:var(--teal);"><span data-edit="income.current_takehome" data-type="money">${fmtMoney(gAppData.income.current_takehome)}</span></div><div class="stat-label">Per month · click to edit</div></div>
         <div class="stat-card-accent" style="--accent-color:var(--coral);"><div class="stat-eyebrow">Outgoings</div><div class="stat-val" style="color:var(--coral);">${fmtMoney(totalOutgoings('current'))}</div><div class="stat-label">Fixed + Bills + Subs + Pots</div></div>
@@ -1274,7 +1347,7 @@ function renderBudget() {
     </div>
 
     <div id="bud-fut" style="display:none;">
-      <div class="grid-4" style="margin-bottom:24px;">
+      <div class="grid-4 stats-grid" style="margin-bottom:24px;">
         <div class="stat-card-accent" style="--accent-color:var(--purple);"><div class="stat-eyebrow">Future Salary</div><div class="stat-val" style="color:var(--purple);"><span data-edit="income.future_salary" data-type="money">${fmtMoney(gAppData.income.future_salary)}</span></div><div class="stat-label">Per year · click to edit</div></div>
         <div class="stat-card-accent" style="--accent-color:var(--teal);"><div class="stat-eyebrow">Future Take-home</div><div class="stat-val" style="color:var(--teal);"><span data-edit="income.future_takehome" data-type="money">${fmtMoney(gAppData.income.future_takehome)}</span></div><div class="stat-label">Per month · click to edit</div></div>
         <div class="stat-card-accent" style="--accent-color:var(--coral);"><div class="stat-eyebrow">Outgoings</div><div class="stat-val" style="color:var(--coral);">${fmtMoney(totalOutgoings('future'))}</div><div class="stat-label">Fixed + Bills + Subs + Pots</div></div>
@@ -1300,8 +1373,9 @@ function renderPotsSection(scenario) {
     <div style="margin-top:24px;">
       <div class="section-title">Monthly Spending Pots <span class="total-pill" style="font-size:18px;color:var(--teal);">${fmtMoney(totalMonthlyPots)}/mo</span></div>
       <div class="card">
+        <div class="pots-scroll">
         <table class="data-table" style="margin-top:4px;">
-          <thead><tr><th style="width:18px;"></th><th>Pot</th><th class="td-right">Monthly (£)</th><th class="td-right">Current Total</th><th class="td-right" style="color:var(--text3);">Per year</th><th></th></tr></thead>
+          <thead><tr><th style="width:18px;"></th><th>Pot</th><th class="td-right">Monthly</th><th class="td-right">Current</th><th class="td-right pots-table-col-year" style="color:var(--text3);">Per year</th><th></th></tr></thead>
           <tbody>
             ${pots.map((p, idx) => {
               const yearly = (Number(p.monthly) || 0) * 12;
@@ -1316,12 +1390,13 @@ function renderPotsSection(scenario) {
                   <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--teal);margin-right:7px;vertical-align:middle;"></span><span data-edit-list="${arrName}|${p.id}|name" data-type="text">${escHtml(p.name)}</span></td>
                   <td class="td-mono td-right"><span data-edit-list="${arrName}|${p.id}|monthly" data-type="money">${fmtMoney(p.monthly)}</span></td>
                   <td class="td-mono td-right" style="color:var(--teal);"><span data-edit-list="${arrName}|${p.id}|current" data-type="money">${fmtMoney(p.current || 0)}</span></td>
-                  <td class="td-mono td-right" style="color:var(--text3);">${fmtMoney(yearly)}</td>
+                  <td class="td-mono td-right pots-table-col-year" style="color:var(--text3);">${fmtMoney(yearly)}</td>
                   <td><button class="btn-row-del" onclick="deleteItem('${arrName}','${p.id}')">✕</button></td>
                 </tr>`;
             }).join('')}
           </tbody>
         </table>
+        </div>
         <button class="btn-add" onclick="openAddModal('Add pot', '${arrName}', [['name','Name','text',''],['monthly','Monthly £','money',0],['current','Current total £','money',0]])">+ Add pot</button>
       </div>
     </div>`;
@@ -1358,6 +1433,7 @@ function renderSpending() {
           </select>
           <div style="margin-left:auto;font-family:'Space Grotesk', sans-serif;font-size:18px;font-weight:700;">Total: <span style="color:var(--red);">${fmtMoney(getFilteredSpending().reduce((s,t)=>s+t.amount,0))}</span></div>
         </div>
+        <div class="table-scroll">
         <table class="data-table">
           <thead><tr><th>Date</th><th>Name</th><th>Category</th><th>Where</th><th>Amount</th><th></th></tr></thead>
           <tbody>${getFilteredSpending().map(t => `
@@ -1371,6 +1447,7 @@ function renderSpending() {
             </tr>`).join('')}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
 
@@ -1428,7 +1505,7 @@ function renderSavings() {
     <div class="page-title">Savings</div>
     <div class="page-sub">Goals, pots, and history — all totals computed live</div>
 
-    <div class="grid-2" style="margin-bottom:24px;">
+    <div class="grid-2 stats-grid" style="margin-bottom:24px;">
       <div class="stat-card-accent" style="--accent-color:var(--teal);">
         <div class="stat-eyebrow">Total Savings</div>
         <div class="stat-val" style="color:var(--teal);">${fmtMoney(totalGoalsCurrent())}</div>
@@ -1554,7 +1631,7 @@ function renderCredit() {
 
       <div class="card" style="margin-bottom:20px;">
         <div class="section-eyebrow">Incoming & Paying Off</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:12px;">
+        <div class="incoming-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:12px;">
           ${[0,1,2].map(col => {
             const rows = [];
             for (let i = 0; i < 6; i++) {
@@ -1591,7 +1668,7 @@ function renderCredit() {
         ${gAppData.credit_cards.map(c => `
           <div class="card">
             <div class="section-eyebrow">${escHtml(c.name)} Purchases <span class="total-pill" style="color:var(--red);">${fmtMoney(totalPurchasesForCard(c.id))}</span></div>
-            <div style="margin-top:10px;">
+            <div class="table-scroll" style="margin-top:10px;">
               <table class="data-table">
                 <thead><tr><th>Item</th><th class="td-right">Amount</th><th></th></tr></thead>
                 <tbody>${gAppData.purchases.filter(p => p.card_id === c.id).sort((a,b) => (Number(b.amount)||0) - (Number(a.amount)||0)).map(p => `
@@ -1615,7 +1692,7 @@ function renderCredit() {
     </div>
 
     <div id="cred-invest" style="display:none;">
-      <div class="grid-2" style="margin-bottom:24px;">
+      <div class="grid-2 stats-grid" style="margin-bottom:24px;">
         <div class="stat-card-accent" style="--accent-color:var(--teal);"><div class="stat-eyebrow">Total Investments</div><div class="stat-val" style="color:var(--teal);">${fmtMoney(totalInvestments())}</div><div class="stat-label">Live total · all accounts</div></div>
         <div class="stat-card-accent" style="--accent-color:var(--amber);"><div class="stat-eyebrow">Monthly Target</div><div class="stat-val" style="color:var(--amber);">${fmtMoney(sum(gAppData.investments,'monthly_target'))}</div><div class="stat-label">Across all accounts</div></div>
       </div>
@@ -1633,7 +1710,7 @@ function renderCredit() {
     </div>
 
     <div id="cred-pension" style="display:none;">
-      <div class="grid-2" style="margin-bottom:24px;">
+      <div class="grid-2 stats-grid" style="margin-bottom:24px;">
         <div class="stat-card-accent" style="--accent-color:var(--teal);"><div class="stat-eyebrow">Total Pension Value</div><div class="stat-val" style="color:var(--teal);">${fmtMoney(totalPension())}</div><div class="stat-label">Live total · all pots</div></div>
         <div class="stat-card-accent" style="--accent-color:var(--amber);"><div class="stat-eyebrow">Total Monthly Contributions</div><div class="stat-val" style="color:var(--amber);">${fmtMoney(sum(gAppData.pension,'monthly_contribution') + sum(gAppData.pension,'employer_contribution'))}</div><div class="stat-label">Me + Employer</div></div>
       </div>
@@ -1651,7 +1728,7 @@ function renderCredit() {
     </div>
 
     <div id="cred-mortgage" style="display:none;">
-      <div class="grid-2" style="margin-bottom:24px;">
+      <div class="grid-2 stats-grid" style="margin-bottom:24px;">
         <div class="stat-card-accent" style="--accent-color:var(--coral);"><div class="stat-eyebrow">Mortgage Balance</div><div class="stat-val" style="color:var(--coral);"><span data-edit="mortgage.balance" data-type="money">${fmtMoney(gAppData.mortgage.balance)}</span></div><div class="stat-label"><span data-edit="mortgage.lender" data-type="text">${escHtml(gAppData.mortgage.lender)}</span></div></div>
         <div class="stat-card-accent" style="--accent-color:var(--coral);"><div class="stat-eyebrow">Student Loan</div><div class="stat-val" style="color:var(--coral);"><span data-edit="student_loan.balance" data-type="money">${fmtMoney(gAppData.student_loan.balance)}</span></div><div class="stat-label"><span data-edit="student_loan.plan" data-type="text">${escHtml(gAppData.student_loan.plan)}</span> · <span data-edit="student_loan.rate" data-type="number">${gAppData.student_loan.rate}</span>% · <span data-edit="student_loan.monthly" data-type="money">${fmtMoney(gAppData.student_loan.monthly)}</span>/mo</div></div>
       </div>
@@ -1707,7 +1784,7 @@ function renderPerks() {
     </div>
 
     <div id="perks-airbnb">
-      <div class="grid-4" style="margin-bottom:24px;">
+      <div class="grid-4 stats-grid" style="margin-bottom:24px;">
         ${[...gAppData.airbnb_yearly].sort((a,b) => (a.year||0) - (b.year||0)).map((y, i) => { const aC = ['teal','purple','amber'][i % 3]; return `
           <div class="stat-card-accent" style="--accent-color:var(--${aC});">
             <div class="stat-eyebrow"><span data-edit-list="airbnb_yearly|${y.id}|year" data-type="number">${y.year}</span> Total</div>
@@ -1750,7 +1827,7 @@ function renderPerks() {
     </div>
 
     <div id="perks-miles" style="display:none;">
-      <div class="grid-4" style="margin-bottom:24px;">
+      <div class="grid-4 stats-grid" style="margin-bottom:24px;">
         ${gAppData.miles.map((m, i) => { const mC = ['teal','purple','amber','coral'][i % 4]; return `
           <div class="stat-card-accent" style="--accent-color:var(--${mC});">
             <div class="stat-eyebrow"><span data-edit-list="miles|${m.id}|program" data-type="text">${escHtml(m.program)}</span></div>
@@ -1774,7 +1851,7 @@ function renderPerks() {
     </div>
 
     <div id="perks-cashback" style="display:none;">
-      <div class="grid-2" style="margin-bottom:24px;">
+      <div class="grid-2 stats-grid" style="margin-bottom:24px;">
         <div class="stat-card-accent" style="--accent-color:var(--teal);"><div class="stat-eyebrow">Active Cashback Total</div><div class="stat-val" style="color:var(--teal);">${fmtMoney(totalCashback())}</div><div class="stat-label">Live · all platforms</div></div>
         <div class="stat-card-accent" style="--accent-color:var(--amber);"><div class="stat-eyebrow">Owed to me</div><div class="stat-val" style="color:var(--amber);">${fmtMoney(totalOwed())}</div><div class="stat-label">From the list below</div></div>
       </div>
