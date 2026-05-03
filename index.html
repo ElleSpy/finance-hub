@@ -1007,9 +1007,10 @@ function renderBudget() {
     </div>
 
     <div id="bud-fut" style="display:none;">
-      <div class="grid-3" style="margin-bottom:24px;">
-        <div class="stat-card"><div class="stat-eyebrow">Target Take-home</div><div class="stat-val" style="color:var(--teal);"><span data-edit="income.future_takehome" data-type="money">${fmtMoney(gAppData.income.future_takehome)}</span></div><div class="stat-label">Per month · click to edit</div></div>
-        <div class="stat-card"><div class="stat-eyebrow">Target Outgoings</div><div class="stat-val">${fmtMoney(totalOutgoings('future'))}</div><div class="stat-label">Fixed + Bills + Subs + Pots</div></div>
+      <div class="grid-4" style="margin-bottom:24px;">
+        <div class="stat-card"><div class="stat-eyebrow">Future Salary</div><div class="stat-val"><span data-edit="income.future_salary" data-type="money">${fmtMoney(gAppData.income.future_salary)}</span></div><div class="stat-label">Per year · click to edit</div></div>
+        <div class="stat-card"><div class="stat-eyebrow">Future Take-home</div><div class="stat-val" style="color:var(--teal);"><span data-edit="income.future_takehome" data-type="money">${fmtMoney(gAppData.income.future_takehome)}</span></div><div class="stat-label">Per month · click to edit</div></div>
+        <div class="stat-card"><div class="stat-eyebrow">Outgoings</div><div class="stat-val">${fmtMoney(totalOutgoings('future'))}</div><div class="stat-label">Fixed + Bills + Subs + Pots</div></div>
         <div class="stat-card"><div class="stat-eyebrow">Remaining</div><div class="stat-val" style="color:${remainingFuture() > 0 ? 'var(--teal)' : 'var(--amber)'};">${fmtMoneyD(remainingFuture())}</div><div class="stat-label">After outgoings</div></div>
       </div>
       <div class="grid-3">
