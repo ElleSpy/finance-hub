@@ -1417,6 +1417,8 @@ function renderSpending() {
       <button id="monzo-sync-btn" class="btn-teal" style="padding:9px 18px;font-size:13px;" onclick="syncMonzo()">⟳ Sync Monzo</button>
       <button class="btn-teal" style="padding:9px 18px;font-size:13px;background:var(--card-high);color:var(--text2);border:1px solid var(--border);" onclick="document.getElementById('amex-csv-input').click()">↑ Import Amex CSV</button>
       <input type="file" id="amex-csv-input" accept=".csv" style="display:none" onchange="importAmexCSV(event)">
+      <button class="btn-teal" style="padding:9px 18px;font-size:13px;background:var(--card-high);color:var(--text2);border:1px solid var(--border);" onclick="document.getElementById('lloyds-csv-input').click()">↑ Import Lloyds CSV</button>
+      <input type="file" id="lloyds-csv-input" accept=".csv" style="display:none" onchange="importLloydsCSV(event)">
       <button class="btn-teal" style="padding:9px 18px;font-size:13px;background:var(--red-light);color:var(--red);border:1px solid rgba(255,59,92,0.3);" onclick="clearMonzoTransactions()">✕ Clear Monzo</button>
     </div>
 
@@ -1460,7 +1462,7 @@ function renderSpending() {
       <div class="card">
         <div class="card-title">Monthly Spend by Category</div>
         <div class="card-sub" style="margin-bottom:14px;">Computed from your transaction log</div>
-        ${renderMonthlyBreakdown()}
+        <div id="monthly-breakdown">${renderMonthlyBreakdown()}</div>
       </div>
       <div class="card" style="margin-top:20px;">
         <div class="card-title">Spending Chart · ${new Date().getFullYear()}</div>
@@ -1513,7 +1515,7 @@ function renderMonthlyBreakdown() {
   return `
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px;">
       ${sortedMonths.map(mo => `
-        <button onclick="window._activeMonth='${mo}';renderSpending();" style="padding:8px 16px;border-radius:999px;border:1.5px solid ${mo===m?'var(--teal)':'var(--border)'};background:${mo===m?'var(--teal-light)':'transparent'};color:${mo===m?'var(--teal)':'var(--text2)'};font-family:'Manrope',sans-serif;font-size:13px;font-weight:${mo===m?'600':'400'};cursor:pointer;">
+        <button onclick="window._activeMonth='${mo}';document.getElementById('monthly-breakdown').innerHTML=renderMonthlyBreakdown();" style="padding:8px 16px;border-radius:999px;border:1.5px solid ${mo===m?'var(--teal)':'var(--border)'};background:${mo===m?'var(--teal-light)':'transparent'};color:${mo===m?'var(--teal)':'var(--text2)'};font-family:'Manrope',sans-serif;font-size:13px;font-weight:${mo===m?'600':'400'};cursor:pointer;">
           ${fmtMonth(mo)}
         </button>`).join('')}
     </div>
@@ -2323,6 +2325,93 @@ function importAmexCSV(event) {
     } catch(err) {
       console.error('Amex import failed', err);
       showToast('Error parsing Amex CSV');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+/* ============================================================
+   LLOYDS CSV IMPORT
+   Lloyds format: Transaction Date, Transaction Type, Sort Code,
+   Account Number, Transaction Description, Debit Amount, Credit Amount, Balance
+   ============================================================ */
+function importLloydsCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const lines = e.target.result.split('\n').map(l => l.trim()).filter(Boolean);
+      if (lines.length < 2) { showToast('CSV appears empty'); return; }
+
+      // Find header row
+      let startIdx = 0;
+      for (let i = 0; i < Math.min(5, lines.length); i++) {
+        if (lines[i].toLowerCase().includes('transaction date') || lines[i].toLowerCase().includes('date')) {
+          startIdx = i + 1; break;
+        }
+      }
+
+      const existingKeys = new Set(
+        (gAppData.spending || [])
+          .filter(t => t.where === 'Lloyds')
+          .map(t => `${t.date}|${t.name}|${t.amount}`)
+      );
+
+      let added = 0;
+      const newTxns = [];
+
+      for (let i = startIdx; i < lines.length; i++) {
+        const cols = parseCSVRow(lines[i]);
+        if (cols.length < 6) continue;
+
+        // Lloyds columns: Date(0), Type(1), SortCode(2), AccNum(3), Description(4), Debit(5), Credit(6)
+        const rawDate   = (cols[0] || '').trim().replace(/"/g, '');
+        const desc      = (cols[4] || '').trim().replace(/"/g, '');
+        const debit     = parseFloat((cols[5] || '').trim().replace(/[^0-9.]/g, '')) || 0;
+        const credit    = parseFloat((cols[6] || '').trim().replace(/[^0-9.]/g, '')) || 0;
+
+        if (!rawDate || !desc) continue;
+        if (debit === 0 && credit === 0) continue;
+        if (debit === 0) continue; // skip credits/refunds
+
+        // Lloyds date format: DD/MM/YYYY
+        let isoDate = rawDate;
+        const parts = rawDate.split('/');
+        if (parts.length === 3 && parts[2].length === 4) {
+          isoDate = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+        }
+
+        // Only 2026 onwards
+        if (!isoDate.startsWith('2026')) continue;
+
+        const key = `${isoDate}|${desc}|${debit}`;
+        if (existingKeys.has(key)) continue;
+        existingKeys.add(key);
+
+        newTxns.push({
+          id:       'lloyds_' + Date.now() + '_' + i,
+          date:     isoDate,
+          name:     desc,
+          category: guessAmexCategory(desc), // reuse the same keyword guesser
+          where:    'Lloyds',
+          amount:   debit,
+        });
+        added++;
+      }
+
+      if (newTxns.length > 0) {
+        if (!Array.isArray(gAppData.spending)) gAppData.spending = [];
+        gAppData.spending.push(...newTxns);
+        scheduleSave();
+        renderSpending();
+      }
+
+      showToast(added > 0 ? `✓ Imported ${added} new Lloyds transactions` : '✓ Already up to date');
+    } catch(err) {
+      console.error('Lloyds import failed', err);
+      showToast('Error parsing Lloyds CSV');
     }
   };
   reader.readAsText(file);
