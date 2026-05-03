@@ -1151,8 +1151,8 @@ function renderBudget() {
       <div class="grid-4" style="margin-bottom:24px;">
         <div class="stat-card-accent" style="--accent-color:var(--purple);"><div class="stat-eyebrow">Future Salary</div><div class="stat-val" style="color:var(--purple);"><span data-edit="income.future_salary" data-type="money">${fmtMoney(gAppData.income.future_salary)}</span></div><div class="stat-label">Per year · click to edit</div></div>
         <div class="stat-card-accent" style="--accent-color:var(--teal);"><div class="stat-eyebrow">Future Take-home</div><div class="stat-val" style="color:var(--teal);"><span data-edit="income.future_takehome" data-type="money">${fmtMoney(gAppData.income.future_takehome)}</span></div><div class="stat-label">Per month · click to edit</div></div>
-        <div class="stat-card-accent" style="--accent-color:var(--amber);"><div class="stat-eyebrow">Outgoings</div><div class="stat-val" style="color:var(--amber);">${fmtMoney(totalOutgoings('future'))}</div><div class="stat-label">Fixed + Bills + Subs + Pots</div></div>
-        <div class="stat-card-accent" style="--accent-color:${remainingFuture() > 0 ? 'var(--teal)' : 'var(--red)'};"><div class="stat-eyebrow">Remaining</div><div class="stat-val" style="color:${remainingFuture() > 0 ? 'var(--teal)' : 'var(--red)'};">${fmtMoneyD(remainingFuture())}</div><div class="stat-label">After outgoings</div></div>
+        <div class="stat-card-accent" style="--accent-color:var(--coral);"><div class="stat-eyebrow">Outgoings</div><div class="stat-val" style="color:var(--coral);">${fmtMoney(totalOutgoings('future'))}</div><div class="stat-label">Fixed + Bills + Subs + Pots</div></div>
+        <div class="stat-card-accent" style="--accent-color:${remainingFuture() < 100 ? 'var(--amber)' : 'var(--teal)'};"><div class="stat-eyebrow">Remaining</div><div class="stat-val" style="color:${remainingFuture() < 100 ? 'var(--amber)' : 'var(--teal)'};">${fmtMoneyD(remainingFuture())}</div><div class="stat-label">After outgoings</div></div>
       </div>
       <div class="grid-3">
         ${renderListCard('Fixed', gAppData.fixed_future, 'Fixed', 'future', false)}
@@ -1297,6 +1297,24 @@ function renderSavings() {
     <div class="page-eyebrow">Assets</div>
     <div class="page-title">Savings</div>
     <div class="page-sub">Goals, pots, and history — all totals computed live</div>
+
+    <div class="grid-3" style="margin-bottom:24px;">
+      <div class="stat-card-accent" style="--accent-color:var(--teal);">
+        <div class="stat-eyebrow">Total Savings</div>
+        <div class="stat-val" style="color:var(--teal);">${fmtMoney(totalSavings())}</div>
+        <div class="stat-label">Goals + Pots combined</div>
+      </div>
+      <div class="stat-card-accent" style="--accent-color:var(--blue);">
+        <div class="stat-eyebrow">Savings Goals</div>
+        <div class="stat-val" style="color:var(--blue);">${fmtMoney(totalGoalsCurrent())}</div>
+        <div class="stat-label">${(() => { const t = sum(gAppData.savings_goals,'target'); const c = totalGoalsCurrent(); return t > 0 ? Math.round(c / t * 100) + '% of target' : 'of target'; })()}</div>
+      </div>
+      <div class="stat-card-accent" style="--accent-color:var(--purple);">
+        <div class="stat-eyebrow">Spending Pots</div>
+        <div class="stat-val" style="color:var(--purple);">${fmtMoney(totalPotsCurrent())}</div>
+        <div class="stat-label">Across all pots</div>
+      </div>
+    </div>
 
     <div class="networth-banner" style="margin-bottom:24px;">
       <div class="nw-label">Total Savings</div>
@@ -1446,10 +1464,9 @@ function renderCredit() {
     </div>
 
     <div id="cred-invest" style="display:none;">
-      <div class="stat-card-accent" style="--accent-color:var(--teal);margin-bottom:24px;">
-        <div class="stat-eyebrow">Total Investments</div>
-        <div class="stat-val" style="color:var(--teal);">${fmtMoney(totalInvestments())}</div>
-        <div class="stat-label">Live total · updates as you edit below</div>
+      <div class="grid-2" style="margin-bottom:24px;">
+        <div class="stat-card-accent" style="--accent-color:var(--teal);"><div class="stat-eyebrow">Total Investments</div><div class="stat-val" style="color:var(--teal);">${fmtMoney(totalInvestments())}</div><div class="stat-label">Live total · all accounts</div></div>
+        <div class="stat-card-accent" style="--accent-color:var(--blue);"><div class="stat-eyebrow">Monthly Target</div><div class="stat-val" style="color:var(--blue);">${fmtMoney(sum(gAppData.investments,'monthly_target'))}</div><div class="stat-label">Across all accounts</div></div>
       </div>
       <div class="card">
         <div class="section-eyebrow">Investment Accounts <span class="total-pill">${fmtMoney(totalInvestments())}</span></div>
@@ -1584,9 +1601,9 @@ function renderPerks() {
     <div id="perks-miles" style="display:none;">
       <div class="grid-4" style="margin-bottom:24px;">
         ${gAppData.miles.map(m => `
-          <div class="stat-card-accent" style="--accent-color:var(--${m.color || 'text'});">
+          <div class="stat-card-accent" style="--accent-color:var(--${m.color || 'teal'});">
             <div class="stat-eyebrow"><span data-edit-list="miles|${m.id}|program" data-type="text">${escHtml(m.program)}</span></div>
-            <div class="stat-val" style="color:var(--${m.color || 'text'});"><span data-edit-list="miles|${m.id}|balance" data-type="number">${(Number(m.balance)||0).toLocaleString()}</span><button class="btn-row-del" onclick="deleteItem('miles','${m.id}')">✕</button></div>
+            <div class="stat-val" style="color:var(--${m.color || 'teal'});"><span data-edit-list="miles|${m.id}|balance" data-type="number">${(Number(m.balance)||0).toLocaleString()}</span><button class="btn-row-del" onclick="deleteItem('miles','${m.id}')">✕</button></div>
           </div>`).join('')}
       </div>
       <div class="card">
@@ -1596,7 +1613,7 @@ function renderPerks() {
           <tbody>${gAppData.miles.map(m => `
             <tr>
               <td><span data-edit-list="miles|${m.id}|program" data-type="text">${escHtml(m.program)}</span></td>
-              <td class="td-mono" style="color:var(--${m.color || 'text'});"><span data-edit-list="miles|${m.id}|balance" data-type="number">${(Number(m.balance)||0).toLocaleString()}</span></td>
+              <td class="td-mono" style="color:var(--${m.color || 'teal'});"><span data-edit-list="miles|${m.id}|balance" data-type="number">${(Number(m.balance)||0).toLocaleString()}</span></td>
               <td><button class="btn-row-del" onclick="deleteItem('miles','${m.id}')">✕</button></td>
             </tr>`).join('')}
           </tbody>
