@@ -1206,7 +1206,7 @@ function renderPotsSection() {
       <div class="section-title">Monthly Spending Pots <span class="total-pill" style="font-size:18px;color:var(--teal);">${fmtMoney(totalMonthlyPots)}/mo</span></div>
       <div class="card">
         <table class="data-table" style="margin-top:4px;">
-          <thead><tr><th style="width:18px;"></th><th>Pot</th><th class="td-right">Monthly (£)</th><th class="td-right">Current Total</th><th class="td-right td-muted" style="font-style:italic;">Per year</th><th></th></tr></thead>
+          <thead><tr><th style="width:18px;"></th><th>Pot</th><th class="td-right">Monthly (£)</th><th class="td-right">Current Total</th><th class="td-right" style="color:var(--text3);">Per year</th><th></th></tr></thead>
           <tbody>
             ${gAppData.pots.map((p, idx) => {
               const yearly = (Number(p.monthly) || 0) * 12;
@@ -1221,7 +1221,7 @@ function renderPotsSection() {
                   <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--teal);margin-right:7px;vertical-align:middle;"></span><span data-edit-list="pots|${p.id}|name" data-type="text">${escHtml(p.name)}</span></td>
                   <td class="td-mono td-right"><span data-edit-list="pots|${p.id}|monthly" data-type="money">${fmtMoney(p.monthly)}</span></td>
                   <td class="td-mono td-right" style="color:var(--teal);"><span data-edit-list="pots|${p.id}|current" data-type="money">${fmtMoney(p.current || 0)}</span></td>
-                  <td class="td-mono td-right td-muted" style="font-style:italic;font-size:12px;">${fmtMoney(yearly)}</td>
+                  <td class="td-mono td-right" style="color:var(--text3);">${fmtMoney(yearly)}</td>
                   <td><button class="btn-row-del" onclick="deleteItem('pots','${p.id}')">✕</button></td>
                 </tr>`;
             }).join('')}
