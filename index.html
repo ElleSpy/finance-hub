@@ -540,7 +540,8 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
    ============================================================ */
 const CLIENT_ID_STORAGE = 'laura_money_goog_client_id';
 const DRIVE_FILE_NAME   = 'money_hub_data.json';
-const DRIVE_SCOPE       = 'https://www.googleapis.com/auth/drive.file';
+const DRIVE_SCOPE       = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets.readonly';
+const MONZO_SHEET_ID    = '1TEIqfpNWvuFh9tubz4vimXuH-TQGsGGKWuGgQLPmS74';
 
 let gAccessToken = null;
 let gDriveFileId = null;
@@ -1408,10 +1409,14 @@ function renderSpending() {
     <div class="page-title">Spending</div>
     <div class="page-sub">Transaction log — totals roll up live</div>
 
-    <div style="background:var(--teal-light);border:1px solid rgba(0,245,212,0.3);border-radius:var(--radius-sm);padding:14px 18px;margin-bottom:20px;font-size:13px;color:var(--teal);">
-      <strong>💡 Live bank connections</strong> — Monzo Plus includes a Data Export API, and Amex has an open banking feed.
-      A direct integration isn't built in yet, but it's possible to add: Monzo's API can push new transactions here automatically.
-      For now, log manually or paste from your bank export. <em>Ask Claude to wire up the Monzo API if you'd like it automated.</em>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:180px;">
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;">Bank connections</div>
+        <div style="font-size:12px;color:var(--text3);">Pull transactions straight from your banks — no manual entry needed.</div>
+      </div>
+      <button id="monzo-sync-btn" class="btn-teal" style="padding:9px 18px;font-size:13px;" onclick="syncMonzo()">⟳ Sync Monzo</button>
+      <button class="btn-teal" style="padding:9px 18px;font-size:13px;background:var(--card-high);color:var(--text2);border:1px solid var(--border);" onclick="document.getElementById('amex-csv-input').click()">↑ Import Amex CSV</button>
+      <input type="file" id="amex-csv-input" accept=".csv" style="display:none" onchange="importAmexCSV(event)">
     </div>
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
@@ -2057,6 +2062,219 @@ function snapshotNow() {
 /* ============================================================
    EXPORT / IMPORT
    ============================================================ */
+/* ============================================================
+   MONZO SYNC — reads from Monzo Google Sheet via Sheets API
+   ============================================================ */
+const MONZO_CATEGORY_MAP = {
+  'eating out':    'Food',
+  'groceries':     'Food',
+  'general':       'Shopping',
+  'shopping':      'Shopping',
+  'transport':     'Travel',
+  'entertainment': 'Going Out',
+  'personal care': 'Beauty',
+  'health':        'Health',
+  'bills':         'Subscriptions',
+  'finances':      'Other',
+  'transfers':     null,   // skip pot/account transfers
+  'savings':       null,   // skip savings moves
+  'income':        null,   // skip income
+};
+
+async function syncMonzo() {
+  if (!gAccessToken) { showToast('Sign in with Google first'); return; }
+  const btn = document.getElementById('monzo-sync-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Syncing…'; }
+  try {
+    // Fetch all rows from the Monzo sheet (Sheet1, all columns)
+    const range = encodeURIComponent('A:P');
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${MONZO_SHEET_ID}/values/${range}`;
+    const res = await fetch(url, { headers: { Authorization: 'Bearer ' + gAccessToken } });
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error('Sheets API ' + res.status + ': ' + txt);
+    }
+    const data = await res.json();
+    const rows = data.values || [];
+    if (rows.length < 2) { showToast('No transactions found in Monzo sheet'); return; }
+
+    // Build header index from first row
+    const headers = rows[0].map(h => h.trim().toLowerCase());
+    const col = k => headers.indexOf(k);
+    const iId       = col('transaction id');
+    const iDate     = col('date');
+    const iName     = col('name');
+    const iCategory = col('category');
+    const iAmount   = col('amount');
+
+    // Existing transaction IDs for dedup (stored in t.monzoId)
+    const existingIds = new Set((gAppData.spending || []).map(t => t.monzoId).filter(Boolean));
+
+    let added = 0, skipped = 0;
+    const newTxns = [];
+
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      const txId    = (row[iId]       || '').trim();
+      const rawDate = (row[iDate]     || '').trim();
+      const name    = (row[iName]     || '').trim();
+      const monzoCat= (row[iCategory] || '').trim().toLowerCase();
+      const rawAmt  = parseFloat((row[iAmount] || '0').replace(/[^0-9.\-]/g,''));
+
+      // Skip pot transfers, savings, income — only record spending (negative amounts)
+      const mappedCat = MONZO_CATEGORY_MAP[monzoCat];
+      if (mappedCat === null) { skipped++; continue; }
+      if (rawAmt >= 0) { skipped++; continue; } // skip refunds/credits for now
+
+      // Skip already-imported
+      if (txId && existingIds.has(txId)) { skipped++; continue; }
+
+      // Convert DD/MM/YYYY → YYYY-MM-DD
+      let isoDate = '';
+      if (rawDate) {
+        const parts = rawDate.split('/');
+        if (parts.length === 3) isoDate = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+        else isoDate = rawDate;
+      }
+
+      newTxns.push({
+        id:       'monzo_' + (txId || Date.now() + '_' + i),
+        monzoId:  txId,
+        date:     isoDate,
+        name:     name,
+        category: mappedCat || 'Other',
+        where:    'Monzo',
+        amount:   Math.abs(rawAmt),
+      });
+      added++;
+    }
+
+    if (newTxns.length > 0) {
+      if (!Array.isArray(gAppData.spending)) gAppData.spending = [];
+      gAppData.spending.push(...newTxns);
+      scheduleSave();
+      renderSpending();
+    }
+
+    showToast(added > 0 ? `✓ Imported ${added} new Monzo transactions` : '✓ Already up to date');
+  } catch(e) {
+    console.error('Monzo sync failed', e);
+    showToast('Monzo sync failed — check console');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '⟳ Sync Monzo'; }
+  }
+}
+
+/* ============================================================
+   AMEX CSV IMPORT
+   Amex CSV format: Date, Description, Amount (negative = spending)
+   ============================================================ */
+function importAmexCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const lines = e.target.result.split('\n').map(l => l.trim()).filter(Boolean);
+      if (lines.length < 2) { showToast('CSV appears empty'); return; }
+
+      // Detect header row — Amex CSVs sometimes start with a title row
+      // Look for a row containing "Date" or "date"
+      let startIdx = 0;
+      for (let i = 0; i < Math.min(5, lines.length); i++) {
+        if (lines[i].toLowerCase().includes('date')) { startIdx = i + 1; break; }
+      }
+
+      // Build a dedup set from existing Amex transactions
+      const existingKeys = new Set(
+        (gAppData.spending || [])
+          .filter(t => t.where === 'Amex')
+          .map(t => `${t.date}|${t.name}|${t.amount}`)
+      );
+
+      let added = 0;
+      const newTxns = [];
+
+      for (let i = startIdx; i < lines.length; i++) {
+        // Parse CSV row (handle quoted fields)
+        const cols = parseCSVRow(lines[i]);
+        if (cols.length < 3) continue;
+
+        // Amex format: Date, Description, Amount
+        // Date is typically DD/MM/YYYY or MM/DD/YYYY — Amex UK uses DD/MM/YYYY
+        const rawDate   = (cols[0] || '').trim().replace(/"/g,'');
+        const desc      = (cols[1] || '').trim().replace(/"/g,'');
+        const rawAmount = parseFloat((cols[2] || '0').trim().replace(/[^0-9.\-]/g,''));
+
+        if (!rawDate || !desc || isNaN(rawAmount)) continue;
+
+        // Amex amounts: positive = spending charged, negative = payment/credit
+        if (rawAmount <= 0) continue; // skip payments back
+
+        // Convert DD/MM/YYYY → YYYY-MM-DD
+        let isoDate = rawDate;
+        const parts = rawDate.split('/');
+        if (parts.length === 3 && parts[2].length === 4) {
+          isoDate = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+        }
+
+        const key = `${isoDate}|${desc}|${rawAmount}`;
+        if (existingKeys.has(key)) continue;
+        existingKeys.add(key);
+
+        newTxns.push({
+          id:       'amex_' + Date.now() + '_' + i,
+          date:     isoDate,
+          name:     desc,
+          category: guessAmexCategory(desc),
+          where:    'Amex',
+          amount:   rawAmount,
+        });
+        added++;
+      }
+
+      if (newTxns.length > 0) {
+        if (!Array.isArray(gAppData.spending)) gAppData.spending = [];
+        gAppData.spending.push(...newTxns);
+        scheduleSave();
+        renderSpending();
+      }
+
+      showToast(added > 0 ? `✓ Imported ${added} new Amex transactions` : '✓ Already up to date');
+    } catch(err) {
+      console.error('Amex import failed', err);
+      showToast('Error parsing Amex CSV');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function parseCSVRow(line) {
+  const result = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') { inQ = !inQ; }
+    else if (ch === ',' && !inQ) { result.push(cur); cur = ''; }
+    else { cur += ch; }
+  }
+  result.push(cur);
+  return result;
+}
+
+function guessAmexCategory(desc) {
+  const d = desc.toLowerCase();
+  if (/tesco|sainsbury|waitrose|asda|aldi|lidl|morrisons|marks|m&s|co-op/.test(d)) return 'Food';
+  if (/amazon|argos|asos|primark|next|h&m|topshop|zara|tkmaxx/.test(d)) return 'Shopping';
+  if (/train|tfl|tube|uber|lyft|bus|rail|ryanair|easyjet|british airways|heathrow/.test(d)) return 'Travel';
+  if (/restaurant|cafe|coffee|bar|pub|eat|pizza|nando|wagamama|mcdonalds|kfc|starbucks|pret/.test(d)) return 'Going Out';
+  if (/boots|superdrug|salon|spa|beauty|hair|nails/.test(d)) return 'Beauty';
+  if (/gym|doctor|pharmacy|health|dental|optician/.test(d)) return 'Health';
+  if (/netflix|spotify|apple|disney|sky|broadband|bt|vodafone|virgin|ee|o2/.test(d)) return 'Subscriptions';
+  return 'Other';
+}
+
 function exportData() {
   const blob = new Blob([JSON.stringify(gAppData, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
