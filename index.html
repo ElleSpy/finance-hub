@@ -20,16 +20,17 @@
     --teal:          #00f5d4;
     --teal-light:    rgba(0,245,212,0.12);
     --teal-mid:      rgba(0,245,212,0.25);
-    --coral:         #f4816a;
-    --coral-light:   rgba(244,129,106,0.15);
-    --amber:         #f5c842;
-    --amber-light:   rgba(245,200,66,0.15);
-    --blue:          #60a5fa;
-    --blue-light:    rgba(96,165,250,0.15);
-    --purple:        #a78bfa;
-    --purple-light:  rgba(167,139,250,0.15);
-    --red:           #ff6b6b;
-    --red-light:     rgba(255,107,107,0.15);
+    --coral:         #ff5f57;
+    --coral-light:   rgba(255,95,87,0.12);
+    --amber:         #ffe600;
+    --amber-light:   rgba(255,230,0,0.12);
+    --blue:          #00cfff;
+    --blue-light:    rgba(0,207,255,0.12);
+    --blue-mid:      rgba(0,207,255,0.25);
+    --purple:        #d44dff;
+    --purple-light:  rgba(212,77,255,0.12);
+    --red:           #ff3b5c;
+    --red-light:     rgba(255,59,92,0.12);
     --shadow:        0 2px 16px rgba(0,0,0,0.4);
     --shadow-lg:     0 8px 40px rgba(0,0,0,0.6);
     --radius:        16px;
@@ -240,14 +241,15 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
 .goal-amounts { font-family:'Manrope', sans-serif;font-size:12px;color:var(--on-surface,#e5e2e1); }
 
 /* NETWORTH BANNER */
-.networth-banner { background:linear-gradient(135deg,#0e2e28 0%,#0e0e0e 100%);border:1px solid rgba(0,245,212,0.15);border-radius:var(--radius);padding:28px 32px;color:#e5e2e1;margin-bottom:24px;box-shadow:0 0 30px rgba(0,245,212,0.06); }
+.networth-banner { background:linear-gradient(135deg,#0a1f1a 0%,#0d0d12 60%,#0a0f1a 100%);border:1px solid rgba(0,245,212,0.3);border-radius:var(--radius);padding:28px 32px;color:#e5e2e1;margin-bottom:24px;box-shadow:0 0 60px rgba(0,245,212,0.12), 0 0 120px rgba(0,245,212,0.05); }
+.networth-banner.blue-banner { background:linear-gradient(135deg,#03101f 0%,#0d0d12 60%,#03101f 100%);border-color:rgba(0,207,255,0.35);box-shadow:0 0 60px rgba(0,207,255,0.15), 0 0 120px rgba(0,207,255,0.06); }
 .nw-label { font-family:'Manrope', sans-serif;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:8px; }
 .nw-val { font-family:'Space Grotesk', sans-serif;font-size:48px;font-weight:700;line-height:1; }
-.nw-sub { font-size:13px;color:rgba(255,255,255,0.5);margin-top:8px; }
-.nw-breakdown { display:flex;gap:32px;margin-top:20px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.1);flex-wrap:wrap; }
+.nw-sub { font-size:13px;color:rgba(255,255,255,0.45);margin-top:8px; }
+.nw-breakdown { display:flex;gap:32px;margin-top:20px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.08);flex-wrap:wrap; }
 .nw-item-label { font-size:10px;color:rgba(255,255,255,0.3);font-family:'Manrope', sans-serif;text-transform:uppercase;letter-spacing:0.1em; }
 .nw-item-val { font-family:'Space Grotesk', sans-serif;font-size:18px;font-weight:700;margin-top:3px; }
-.nw-positive { color:var(--teal-mid); }
+.nw-positive { color:var(--teal); }
 .nw-negative { color:#F4816A; }
 
 /* INLINE EDITABLE */
@@ -298,6 +300,10 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
     box-shadow: var(--shadow);
     border: 1px solid var(--border);
     border-top: 3px solid var(--accent-color, var(--teal));
+    transition: box-shadow 0.2s;
+  }
+  .stat-card-accent:hover {
+    box-shadow: 0 2px 16px rgba(0,0,0,0.4), 0 0 20px color-mix(in srgb, var(--accent-color, var(--teal)) 20%, transparent);
   }
 
   /* Mobile bottom-nav safe area */
@@ -1002,13 +1008,13 @@ function renderDashboard() {
     <div class="page-title">Dashboard</div>
     <div class="page-sub">Your live financial snapshot — every number computes from your data</div>
 
-    <div class="networth-banner">
+    <div class="networth-banner blue-banner">
       <div class="nw-label">Estimated Net Worth</div>
-      <div class="nw-val">${fmtMoneyD(netWorth())}</div>
+      <div class="nw-val" style="color:var(--blue);text-shadow:0 0 28px rgba(0,207,255,0.6), 0 0 60px rgba(0,207,255,0.2);">${fmtMoneyD(netWorth())}</div>
       <div class="nw-sub">Savings + investments minus credit debt · live</div>
       <div class="nw-breakdown">
-        <div><div class="nw-item-label">Savings</div><div class="nw-item-val nw-positive">${fmtMoney(totalSavings())}</div></div>
-        <div><div class="nw-item-label">Investments</div><div class="nw-item-val nw-positive">${fmtMoney(totalInvestments())}</div></div>
+        <div><div class="nw-item-label">Savings</div><div class="nw-item-val" style="color:var(--teal);">${fmtMoney(totalSavings())}</div></div>
+        <div><div class="nw-item-label">Investments</div><div class="nw-item-val" style="color:var(--blue);">${fmtMoney(totalInvestments())}</div></div>
         <div><div class="nw-item-label">Credit Debt</div><div class="nw-item-val nw-negative">-${fmtMoney(totalDebt())}</div></div>
       </div>
     </div>
@@ -1288,12 +1294,12 @@ function renderSavings() {
 
     <div class="networth-banner" style="margin-bottom:24px;">
       <div class="nw-label">Total Savings</div>
-      <div class="nw-val" style="color:var(--teal);">${fmtMoney(totalSavings())}</div>
+      <div class="nw-val" style="color:var(--teal);text-shadow:0 0 28px rgba(0,245,212,0.6), 0 0 60px rgba(0,245,212,0.2);">${fmtMoney(totalSavings())}</div>
       <div class="nw-sub">Goals + Pots combined · live</div>
       <div class="nw-breakdown">
-        <div><div class="nw-item-label">Goals</div><div class="nw-item-val nw-positive">${fmtMoney(totalGoalsCurrent())}</div></div>
-        <div><div class="nw-item-label">Pots</div><div class="nw-item-val nw-positive">${fmtMoney(totalPotsCurrent())}</div></div>
-        <div><div class="nw-item-label">Goals progress</div><div class="nw-item-val nw-positive">${(() => { const t = sum(gAppData.savings_goals,'target'); const c = totalGoalsCurrent(); return t > 0 ? Math.round(c / t * 100) + '%' : '—'; })()}</div></div>
+        <div><div class="nw-item-label">Goals</div><div class="nw-item-val" style="color:var(--teal);">${fmtMoney(totalGoalsCurrent())}</div></div>
+        <div><div class="nw-item-label">Pots</div><div class="nw-item-val" style="color:var(--blue);">${fmtMoney(totalPotsCurrent())}</div></div>
+        <div><div class="nw-item-label">Goals progress</div><div class="nw-item-val" style="color:var(--teal);">${(() => { const t = sum(gAppData.savings_goals,'target'); const c = totalGoalsCurrent(); return t > 0 ? Math.round(c / t * 100) + '%' : '—'; })()}</div></div>
       </div>
     </div>
 
@@ -1378,21 +1384,22 @@ function renderCredit() {
           const util = (Math.abs(c.balance) / Math.max(1, c.limit)) * 100;
           const isBright = c.color === 'blue' || c.color === 'teal';
           const colorBg = c.color === 'blue'
-            ? 'linear-gradient(135deg,#1e3a6e 0%,#2563eb 100%)'
+            ? 'linear-gradient(145deg,#020d18 0%,#041e36 100%)'
             : c.color === 'teal'
-            ? 'linear-gradient(135deg,#0e2e28 0%,#0d9488 100%)'
-            : 'linear-gradient(135deg,#1a1a1a 0%,#111 100%)';
-          const accentColor = isBright ? 'rgba(255,255,255,0.85)' : '#f4816a';
-          const borderStyle = isBright ? '1px solid rgba(255,255,255,0.18)' : '1px solid rgba(244,129,106,0.35)';
-          const barFill = util > 70 ? '#F4816A' : isBright ? 'rgba(255,255,255,0.75)' : 'var(--coral)';
+            ? 'linear-gradient(145deg,#021310 0%,#042e26 100%)'
+            : 'linear-gradient(145deg,#180a0a 0%,#2a0e0e 100%)';
+          const accentColor = c.color === 'blue' ? '#00cfff' : c.color === 'teal' ? '#00f5d4' : '#ff5f57';
+          const borderStyle = c.color === 'blue' ? '1px solid rgba(0,207,255,0.45)' : c.color === 'teal' ? '1px solid rgba(0,245,212,0.45)' : '1px solid rgba(255,95,87,0.4)';
+          const cardGlow = c.color === 'blue' ? '0 0 40px rgba(0,207,255,0.18), 0 2px 16px rgba(0,0,0,0.5)' : c.color === 'teal' ? '0 0 40px rgba(0,245,212,0.18), 0 2px 16px rgba(0,0,0,0.5)' : '0 0 40px rgba(255,95,87,0.12), 0 2px 16px rgba(0,0,0,0.5)';
+          const barFill = util > 70 ? '#ff3b5c' : c.color === 'blue' ? '#00cfff' : c.color === 'teal' ? '#00f5d4' : '#ff5f57';
           return `
-            <div class="credit-card" style="background:${colorBg};border:${borderStyle};">
-              <div class="credit-card-bank" style="color:rgba(255,255,255,0.6);"><span data-edit-list="credit_cards|${c.id}|name" data-type="text">${escHtml(c.name)}</span></div>
-              <div class="credit-card-balance" style="color:${accentColor};"><span data-edit-list="credit_cards|${c.id}|balance" data-type="money">${fmtMoneyD(c.balance)}</span></div>
-              <div class="credit-card-limit" style="color:rgba(255,255,255,0.5);"><span data-edit-list="credit_cards|${c.id}|limit" data-type="money">${fmtMoney(c.limit)}</span> limit · <span data-edit-list="credit_cards|${c.id}|rate_info" data-type="text">${escHtml(c.rate_info || '')}</span></div>
+            <div class="credit-card" style="background:${colorBg};border:${borderStyle};box-shadow:${cardGlow};">
+              <div class="credit-card-bank" style="color:rgba(255,255,255,0.5);letter-spacing:0.12em;"><span data-edit-list="credit_cards|${c.id}|name" data-type="text">${escHtml(c.name)}</span></div>
+              <div class="credit-card-balance" style="color:${accentColor};text-shadow:0 0 20px ${accentColor}99, 0 0 40px ${accentColor}33;"><span data-edit-list="credit_cards|${c.id}|balance" data-type="money">${fmtMoneyD(c.balance)}</span></div>
+              <div class="credit-card-limit" style="color:rgba(255,255,255,0.4);"><span data-edit-list="credit_cards|${c.id}|limit" data-type="money">${fmtMoney(c.limit)}</span> limit · <span data-edit-list="credit_cards|${c.id}|rate_info" data-type="text">${escHtml(c.rate_info || '')}</span></div>
               <div class="credit-card-util">
-                <div class="credit-bar-track"><div class="credit-bar-fill" style="width:${Math.min(100, util)}%;background:${barFill};"></div></div>
-                <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:4px;font-family:'Manrope', sans-serif;">${util.toFixed(1)}% utilised</div>
+                <div class="credit-bar-track" style="background:rgba(255,255,255,0.08);"><div class="credit-bar-fill" style="width:${Math.min(100, util)}%;background:${barFill};box-shadow:0 0 8px ${barFill}88;"></div></div>
+                <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:4px;font-family:'Manrope', sans-serif;">${util.toFixed(1)}% utilised</div>
               </div>
             </div>`;
         }).join('')}
@@ -1723,7 +1730,7 @@ function initSpendingChart() {
   if (!ctx) return;
   if (spendingChart) spendingChart.destroy();
   const cats = ['Food','Shopping','Travel','Going Out','Beauty','Health','Other'];
-  const colors = { Food:'#4ade80', Shopping:'#00f5d4', Travel:'#60a5fa', 'Going Out':'#f87171', Beauty:'#fbbf24', Health:'#4ade80', Other:'#a78bfa' };
+  const colors = { Food:'#4ade80', Shopping:'#00f5d4', Travel:'#00cfff', 'Going Out':'#f87171', Beauty:'#fbbf24', Health:'#4ade80', Other:'#a78bfa' };
   const months = {};
   gAppData.spending.forEach(t => {
     const m = (t.date || '').slice(0, 7);
@@ -1753,7 +1760,7 @@ function initSavingsChart() {
     type: 'line',
     data: { labels: sorted.map(s => fmtMonth(s.month)), datasets: [
       { label: 'Saved this month', data: sorted.map(s => Number(s.savings_total) || 0), borderColor: '#00f5d4', backgroundColor: 'rgba(0,245,212,0.1)', tension: 0.3 },
-      { label: 'Cumulative', data: cumData, borderColor: '#60a5fa', backgroundColor: 'rgba(96,165,250,0.12)', tension: 0.3 },
+      { label: 'Cumulative', data: cumData, borderColor: '#00cfff', backgroundColor: 'rgba(0,207,255,0.08)', tension: 0.3 },
     ]},
     options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'top'}}, scales:{y:{ticks:{callback:v=>'£'+v}}} }
   });
