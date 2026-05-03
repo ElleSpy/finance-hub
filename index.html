@@ -648,7 +648,17 @@ function defaultData() {
       { id: id(), name: 'Claude Pro', amount: 0, status: 'paused' },
     ],
 
-    pots: [
+    pots_current: [
+      { id: id(), name: 'Car - Petrol', current: 0, monthly: 30, color: 'teal' },
+      { id: id(), name: 'Car - Costs', current: 215, monthly: 60, color: 'amber' },
+      { id: id(), name: 'Holidays', current: 0, monthly: 100, color: 'amber' },
+      { id: id(), name: 'Shopping', current: 0, monthly: 50, color: 'teal' },
+      { id: id(), name: 'Beauty', current: 0, monthly: 40, color: 'purple' },
+      { id: id(), name: 'Home', current: 95, monthly: 30, color: 'amber' },
+      { id: id(), name: 'Christmas', current: 0, monthly: 15, color: 'coral' },
+      { id: id(), name: 'Australia', current: 0, monthly: 20, color: 'teal' },
+    ],
+    pots_future: [
       { id: id(), name: 'Car - Petrol', current: 0, monthly: 30, color: 'teal' },
       { id: id(), name: 'Car - Costs', current: 215, monthly: 60, color: 'amber' },
       { id: id(), name: 'Holidays', current: 0, monthly: 100, color: 'amber' },
@@ -775,7 +785,13 @@ function id() { return 'i' + Date.now().toString(36) + Math.random().toString(36
 
 function ensureSchema(d) {
   // Make sure all top-level arrays exist (forwards-compatible)
-  ['fixed_current','fixed_future','bills_current','bills_future','subscriptions','pots','savings_goals','investments','pension','credit_cards','purchases','spending','airbnb_bookings','airbnb_rates','airbnb_yearly','miles','cashback','cashback_history','owed','snapshots','incoming_payments'].forEach(k => { if (!Array.isArray(d[k])) d[k] = []; });
+  ['fixed_current','fixed_future','bills_current','bills_future','subscriptions','pots_current','pots_future','savings_goals','investments','pension','credit_cards','purchases','spending','airbnb_bookings','airbnb_rates','airbnb_yearly','miles','cashback','cashback_history','owed','snapshots','incoming_payments'].forEach(k => { if (!Array.isArray(d[k])) d[k] = []; });
+  // Migrate legacy 'pots' array into pots_current/pots_future if present
+  if (Array.isArray(d.pots) && d.pots.length > 0) {
+    if (d.pots_current.length === 0) d.pots_current = d.pots.map(p => ({...p}));
+    if (d.pots_future.length === 0) d.pots_future = d.pots.map(p => ({...p, id: id()}));
+    d.pots = [];
+  }
   if (!d.meta) d.meta = { version: 3 };
   if (!d.income) d.income = { current_salary: 0, current_takehome: 0, future_salary: 0, future_takehome: 0, future_start_date: '', notes: '' };
   if (!d.mortgage) d.mortgage = { lender: '', balance: 0, monthly_current: 0, monthly_future: 0, was_fixed_until: '', notes: '' };
@@ -811,9 +827,9 @@ const sum = (arr, key) => arr.reduce((s, x) => s + (Number(x[key]) || 0), 0);
 function totalFixed(scenario)         { return sum(gAppData['fixed_' + scenario] || [], 'amount'); }
 function totalBills(scenario)         { return sum(gAppData['bills_' + scenario] || [], 'amount'); }
 function totalSubsActive()            { return sum(gAppData.subscriptions.filter(s => s.status === 'active'), 'amount'); }
-function totalPotsMonthly()           { return sum(gAppData.pots, 'monthly'); }
-function totalOutgoings(scenario)     { return totalFixed(scenario) + totalBills(scenario) + totalSubsActive() + totalPotsMonthly(); }
-function totalPotsCurrent()           { return sum(gAppData.pots, 'current'); }
+function totalPotsMonthly(scenario)   { return sum(gAppData[scenario === 'future' ? 'pots_future' : 'pots_current'] || [], 'monthly'); }
+function totalOutgoings(scenario)     { return totalFixed(scenario) + totalBills(scenario) + totalSubsActive() + totalPotsMonthly(scenario); }
+function totalPotsCurrent()           { return sum(gAppData.pots_current || [], 'current'); }
 function totalGoalsCurrent()          { return sum(gAppData.savings_goals, 'current'); }
 function totalSavings()               { return totalPotsCurrent() + totalGoalsCurrent(); }
 function totalInvestments()           { return sum(gAppData.investments, 'balance'); }
@@ -865,8 +881,8 @@ function updateItem(arrayName, itemId, field, value) {
 function deleteItem(arrayName, itemId) {
   if (!confirm('Delete this entry?')) return;
   gAppData[arrayName] = (gAppData[arrayName] || []).filter(x => x.id !== itemId);
-  // Mirror deletions: if removing from fixed/bills current or future, remove the same id from the other
-  const mirror = { fixed_current: 'fixed_future', fixed_future: 'fixed_current', bills_current: 'bills_future', bills_future: 'bills_current' };
+  // Mirror deletions: if removing from fixed/bills/pots current or future, remove the same id from the other
+  const mirror = { fixed_current: 'fixed_future', fixed_future: 'fixed_current', bills_current: 'bills_future', bills_future: 'bills_current', pots_current: 'pots_future', pots_future: 'pots_current' };
   if (mirror[arrayName]) {
     gAppData[mirror[arrayName]] = (gAppData[mirror[arrayName]] || []).filter(x => x.id !== itemId);
   }
@@ -880,8 +896,8 @@ function addItem(arrayName, item) {
   // New subscriptions default to active
   if (arrayName === 'subscriptions' && !item.status) item.status = 'active';
   gAppData[arrayName].push(item);
-  // Mirror additions: if adding to fixed/bills current or future, also add same item (same id) to the other
-  const mirror = { fixed_current: 'fixed_future', fixed_future: 'fixed_current', bills_current: 'bills_future', bills_future: 'bills_current' };
+  // Mirror additions: if adding to fixed/bills/pots current or future, also add same item (same id) to the other
+  const mirror = { fixed_current: 'fixed_future', fixed_future: 'fixed_current', bills_current: 'bills_future', bills_future: 'bills_current', pots_current: 'pots_future', pots_future: 'pots_current' };
   if (mirror[arrayName]) {
     if (!gAppData[mirror[arrayName]]) gAppData[mirror[arrayName]] = [];
     // Only add if not already present (avoid duplicates on re-render)
@@ -1024,7 +1040,8 @@ function migrateColours() {
   const remap = { blue: 'amber', text: 'teal', coral: 'coral', muted: 'teal' };
   const fix = c => remap[c] || c || 'teal';
   // pots — ensure current field exists
-  (gAppData.pots || []).forEach(p => { p.color = fix(p.color); if (p.current === undefined) p.current = 0; });
+  (gAppData.pots_current || []).forEach(p => { p.color = fix(p.color); if (p.current === undefined) p.current = 0; });
+  (gAppData.pots_future || []).forEach(p => { p.color = fix(p.color); if (p.current === undefined) p.current = 0; });
   // savings goals
   (gAppData.savings_goals || []).forEach(g => { g.color = fix(g.color); });
   // miles — assign cycling colours if stale
@@ -1098,7 +1115,7 @@ function renderDashboard() {
         <div class="stat-eyebrow">Monthly Outgoings</div>
         <div class="stat-val" style="color:var(--coral);">${fmtMoney(out)}</div>
         <div class="stat-label">Fixed + bills + subs + pots</div>
-        <div class="stat-sub">${fmtMoney(totalBills('current'))} bills · ${fmtMoney(totalSubsActive())} subs · ${fmtMoney(totalPotsMonthly())} pots</div>
+        <div class="stat-sub">${fmtMoney(totalBills('current'))} bills · ${fmtMoney(totalSubsActive())} subs · ${fmtMoney(totalPotsMonthly('current'))} pots</div>
       </div>
       <div class="stat-card-accent" style="--accent-color:var(--amber);">
         <div class="stat-eyebrow">Remaining</div>
@@ -1206,7 +1223,7 @@ function renderBudget() {
         ${renderListCard('Bills', gAppData.bills_current, 'Bills', 'current', false)}
         ${renderListCard('Subscriptions', gAppData.subscriptions, 'Subs', null, true)}
       </div>
-      ${renderPotsSection()}
+      ${renderPotsSection('current')}
     </div>
 
     <div id="bud-fut" style="display:none;">
@@ -1221,15 +1238,17 @@ function renderBudget() {
         ${renderListCard('Bills', gAppData.bills_future, 'Bills', 'future', false)}
         ${renderListCard('Subscriptions', gAppData.subscriptions, 'Subs', null, true)}
       </div>
-      ${renderPotsSection()}
+      ${renderPotsSection('future')}
     </div>
   `;
   document.getElementById('page-budget').innerHTML = html;
   attachEditHandlers(document.getElementById('page-budget'));
 }
 
-function renderPotsSection() {
-  const totalMonthlyPots = sum(gAppData.pots, 'monthly');
+function renderPotsSection(scenario) {
+  const arrName = scenario === 'future' ? 'pots_future' : 'pots_current';
+  const pots = gAppData[arrName] || [];
+  const totalMonthlyPots = sum(pots, 'monthly');
   return `
     <div style="margin-top:24px;">
       <div class="section-title">Monthly Spending Pots <span class="total-pill" style="font-size:18px;color:var(--teal);">${fmtMoney(totalMonthlyPots)}/mo</span></div>
@@ -1237,26 +1256,26 @@ function renderPotsSection() {
         <table class="data-table" style="margin-top:4px;">
           <thead><tr><th style="width:18px;"></th><th>Pot</th><th class="td-right">Monthly (£)</th><th class="td-right">Current Total</th><th class="td-right" style="color:var(--text3);">Per year</th><th></th></tr></thead>
           <tbody>
-            ${gAppData.pots.map((p, idx) => {
+            ${pots.map((p, idx) => {
               const yearly = (Number(p.monthly) || 0) * 12;
               return `
                 <tr class="drag-row" draggable="true"
-                  ondragstart="event.dataTransfer.setData('text/plain','pots:${idx}');event.currentTarget.style.opacity='0.4';"
+                  ondragstart="event.dataTransfer.setData('text/plain','${arrName}:${idx}');event.currentTarget.style.opacity='0.4';"
                   ondragend="event.currentTarget.style.opacity='1';document.querySelectorAll('.drag-row').forEach(r=>r.classList.remove('drag-over'));"
                   ondragover="event.preventDefault();event.currentTarget.classList.add('drag-over');"
                   ondragleave="event.currentTarget.classList.remove('drag-over');"
                   ondrop="event.preventDefault();event.currentTarget.classList.remove('drag-over');const [an,fi]=event.dataTransfer.getData('text/plain').split(':');reorderItem(an,+fi,${idx});">
                   <td style="width:18px;"><span class="drag-handle">⠿</span></td>
-                  <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--teal);margin-right:7px;vertical-align:middle;"></span><span data-edit-list="pots|${p.id}|name" data-type="text">${escHtml(p.name)}</span></td>
-                  <td class="td-mono td-right"><span data-edit-list="pots|${p.id}|monthly" data-type="money">${fmtMoney(p.monthly)}</span></td>
-                  <td class="td-mono td-right" style="color:var(--teal);"><span data-edit-list="pots|${p.id}|current" data-type="money">${fmtMoney(p.current || 0)}</span></td>
+                  <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--teal);margin-right:7px;vertical-align:middle;"></span><span data-edit-list="${arrName}|${p.id}|name" data-type="text">${escHtml(p.name)}</span></td>
+                  <td class="td-mono td-right"><span data-edit-list="${arrName}|${p.id}|monthly" data-type="money">${fmtMoney(p.monthly)}</span></td>
+                  <td class="td-mono td-right" style="color:var(--teal);"><span data-edit-list="${arrName}|${p.id}|current" data-type="money">${fmtMoney(p.current || 0)}</span></td>
                   <td class="td-mono td-right" style="color:var(--text3);">${fmtMoney(yearly)}</td>
-                  <td><button class="btn-row-del" onclick="deleteItem('pots','${p.id}')">✕</button></td>
+                  <td><button class="btn-row-del" onclick="deleteItem('${arrName}','${p.id}')">✕</button></td>
                 </tr>`;
             }).join('')}
           </tbody>
         </table>
-        <button class="btn-add" onclick="openAddModal('Add pot', 'pots', [['name','Name','text',''],['monthly','Monthly £','money',0],['current','Current total £','money',0]])">+ Add pot</button>
+        <button class="btn-add" onclick="openAddModal('Add pot', '${arrName}', [['name','Name','text',''],['monthly','Monthly £','money',0],['current','Current total £','money',0]])">+ Add pot</button>
       </div>
     </div>`;
 }
