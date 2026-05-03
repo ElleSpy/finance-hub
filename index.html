@@ -521,6 +521,7 @@ function launchApp() {
   // Ensure default scaffold exists
   if (!gAppData || Object.keys(gAppData).length === 0) gAppData = defaultData();
   ensureSchema(gAppData);
+  migrateColours();
   renderAll();
   setSyncStatus('ok', 'Synced');
 }
@@ -987,6 +988,30 @@ function toggleSidebar() {
 }
 
 /* ============================================================
+   COLOUR MIGRATION — rewrites stale colour values in Drive data
+   Runs once on every load. Safe to run repeatedly.
+   Palette: teal, coral, amber, purple, red — NO blue, NO text
+   ============================================================ */
+function migrateColours() {
+  const remap = { blue: 'amber', text: 'teal', coral: 'coral', muted: 'teal' };
+  const fix = c => remap[c] || c || 'teal';
+  // pots
+  (gAppData.pots || []).forEach(p => { p.color = fix(p.color); });
+  // savings goals
+  (gAppData.savings_goals || []).forEach(g => { g.color = fix(g.color); });
+  // miles — assign cycling colours if stale
+  const milesColors = ['teal','amber','purple','coral'];
+  (gAppData.miles || []).forEach((m, i) => { m.color = fix(m.color) === 'teal' && m.color === 'blue' ? milesColors[i % milesColors.length] : fix(m.color); });
+  // credit cards — map old names to new palette
+  const cardColors = ['teal','purple','amber'];
+  (gAppData.credit_cards || []).forEach((c, i) => {
+    if (!c.color || c.color === 'blue' || c.color === 'text') {
+      c.color = cardColors[i % cardColors.length];
+    }
+  });
+}
+
+/* ============================================================
    RENDERERS — one per page
    ============================================================ */
 function renderAll() {
@@ -1003,7 +1028,6 @@ function renderDashboard() {
   const inc = gAppData.income;
   const out = totalOutgoings('current');
   const rem = remainingCurrent();
-  const remColor = rem < 100 ? 'var(--amber)' : 'var(--teal)';
   const html = `
     <div class="page-eyebrow">Overview</div>
     <div class="page-title">Dashboard</div>
@@ -1021,9 +1045,9 @@ function renderDashboard() {
     </div>
 
     <div class="grid-3" style="margin-bottom:24px;">
-      <div class="stat-card-accent" style="--accent-color:var(--teal);">
+      <div class="stat-card-accent" style="--accent-color:var(--purple);">
         <div class="stat-eyebrow">Monthly Income</div>
-        <div class="stat-val" style="color:var(--teal);">${fmtMoney(inc.current_takehome)}</div>
+        <div class="stat-val" style="color:var(--purple);">${fmtMoney(inc.current_takehome)}</div>
         <div class="stat-label">Take-home · <span data-edit="income.current_salary" data-type="money">${fmtMoney(inc.current_salary)}</span> salary</div>
         <div class="stat-sub" data-edit="income.notes" data-type="text">${escHtml(inc.notes || '')}</div>
       </div>
@@ -1033,9 +1057,9 @@ function renderDashboard() {
         <div class="stat-label">Fixed + bills + subs + pots</div>
         <div class="stat-sub">${fmtMoney(totalBills('current'))} bills · ${fmtMoney(totalSubsActive())} subs · ${fmtMoney(totalPotsMonthly())} pots</div>
       </div>
-      <div class="stat-card-accent" style="--accent-color:${remColor};">
+      <div class="stat-card-accent" style="--accent-color:var(--amber);">
         <div class="stat-eyebrow">Remaining</div>
-        <div class="stat-val" style="color:${remColor};">${fmtMoneyD(rem)}</div>
+        <div class="stat-val" style="color:var(--amber);">${fmtMoneyD(rem)}</div>
         <div class="stat-label">After all fixed outgoings</div>
         <div class="stat-sub">Updates live as you edit</div>
       </div>
@@ -1132,7 +1156,7 @@ function renderBudget() {
         <div class="stat-card-accent" style="--accent-color:var(--purple);"><div class="stat-eyebrow">Current Salary</div><div class="stat-val" style="color:var(--purple);"><span data-edit="income.current_salary" data-type="money">${fmtMoney(gAppData.income.current_salary)}</span></div><div class="stat-label">Per year · click to edit</div></div>
         <div class="stat-card-accent" style="--accent-color:var(--teal);"><div class="stat-eyebrow">Take-home</div><div class="stat-val" style="color:var(--teal);"><span data-edit="income.current_takehome" data-type="money">${fmtMoney(gAppData.income.current_takehome)}</span></div><div class="stat-label">Per month · click to edit</div></div>
         <div class="stat-card-accent" style="--accent-color:var(--coral);"><div class="stat-eyebrow">Outgoings</div><div class="stat-val" style="color:var(--coral);">${fmtMoney(totalOutgoings('current'))}</div><div class="stat-label">Fixed + Bills + Subs + Pots</div></div>
-        <div class="stat-card-accent" style="--accent-color:${remainingCurrent() < 100 ? 'var(--amber)' : 'var(--teal)'};"><div class="stat-eyebrow">Remaining</div><div class="stat-val" style="color:${remainingCurrent() < 100 ? 'var(--amber)' : 'var(--teal)'};">${fmtMoneyD(remainingCurrent())}</div><div class="stat-label">After outgoings</div></div>
+        <div class="stat-card-accent" style="--accent-color:var(--amber);"><div class="stat-eyebrow">Remaining</div><div class="stat-val" style="color:var(--amber);">${fmtMoneyD(remainingCurrent())}</div><div class="stat-label">After outgoings</div></div>
       </div>
       <div class="grid-3">
         ${renderListCard('Fixed', gAppData.fixed_current, 'Fixed', 'current', false)}
@@ -1147,7 +1171,7 @@ function renderBudget() {
         <div class="stat-card-accent" style="--accent-color:var(--purple);"><div class="stat-eyebrow">Future Salary</div><div class="stat-val" style="color:var(--purple);"><span data-edit="income.future_salary" data-type="money">${fmtMoney(gAppData.income.future_salary)}</span></div><div class="stat-label">Per year · click to edit</div></div>
         <div class="stat-card-accent" style="--accent-color:var(--teal);"><div class="stat-eyebrow">Future Take-home</div><div class="stat-val" style="color:var(--teal);"><span data-edit="income.future_takehome" data-type="money">${fmtMoney(gAppData.income.future_takehome)}</span></div><div class="stat-label">Per month · click to edit</div></div>
         <div class="stat-card-accent" style="--accent-color:var(--coral);"><div class="stat-eyebrow">Outgoings</div><div class="stat-val" style="color:var(--coral);">${fmtMoney(totalOutgoings('future'))}</div><div class="stat-label">Fixed + Bills + Subs + Pots</div></div>
-        <div class="stat-card-accent" style="--accent-color:${remainingFuture() < 100 ? 'var(--amber)' : 'var(--teal)'};"><div class="stat-eyebrow">Remaining</div><div class="stat-val" style="color:${remainingFuture() < 100 ? 'var(--amber)' : 'var(--teal)'};">${fmtMoneyD(remainingFuture())}</div><div class="stat-label">After outgoings</div></div>
+        <div class="stat-card-accent" style="--accent-color:var(--amber);"><div class="stat-eyebrow">Remaining</div><div class="stat-val" style="color:var(--amber);">${fmtMoneyD(remainingFuture())}</div><div class="stat-label">After outgoings</div></div>
       </div>
       <div class="grid-3">
         ${renderListCard('Fixed', gAppData.fixed_future, 'Fixed', 'future', false)}
@@ -1199,7 +1223,7 @@ function renderSpending() {
     <div class="page-title">Spending</div>
     <div class="page-sub">Transaction log — totals roll up live</div>
 
-    <div style="background:var(--blue-light);border:1px solid var(--blue);border-radius:var(--radius-sm);padding:14px 18px;margin-bottom:20px;font-size:13px;color:var(--blue);">
+    <div style="background:var(--teal-light);border:1px solid rgba(0,245,212,0.3);border-radius:var(--radius-sm);padding:14px 18px;margin-bottom:20px;font-size:13px;color:var(--teal);">
       <strong>💡 Live bank connections</strong> — Monzo Plus includes a Data Export API, and Amex has an open banking feed.
       A direct integration isn't built in yet, but it's possible to add: Monzo's API can push new transactions here automatically.
       For now, log manually or paste from your bank export. <em>Ask Claude to wire up the Monzo API if you'd like it automated.</em>
@@ -1499,7 +1523,7 @@ function renderCredit() {
     <div id="cred-mortgage" style="display:none;">
       <div class="grid-2" style="margin-bottom:24px;">
         <div class="stat-card-accent" style="--accent-color:var(--coral);"><div class="stat-eyebrow">Mortgage Balance</div><div class="stat-val" style="color:var(--coral);"><span data-edit="mortgage.balance" data-type="money">${fmtMoney(gAppData.mortgage.balance)}</span></div><div class="stat-label"><span data-edit="mortgage.lender" data-type="text">${escHtml(gAppData.mortgage.lender)}</span></div></div>
-        <div class="stat-card-accent" style="--accent-color:var(--amber);"><div class="stat-eyebrow">Student Loan</div><div class="stat-val" style="color:var(--amber);"><span data-edit="student_loan.balance" data-type="money">${fmtMoney(gAppData.student_loan.balance)}</span></div><div class="stat-label"><span data-edit="student_loan.plan" data-type="text">${escHtml(gAppData.student_loan.plan)}</span> · <span data-edit="student_loan.rate" data-type="number">${gAppData.student_loan.rate}</span>% · <span data-edit="student_loan.monthly" data-type="money">${fmtMoney(gAppData.student_loan.monthly)}</span>/mo</div></div>
+        <div class="stat-card-accent" style="--accent-color:var(--coral);"><div class="stat-eyebrow">Student Loan</div><div class="stat-val" style="color:var(--coral);"><span data-edit="student_loan.balance" data-type="money">${fmtMoney(gAppData.student_loan.balance)}</span></div><div class="stat-label"><span data-edit="student_loan.plan" data-type="text">${escHtml(gAppData.student_loan.plan)}</span> · <span data-edit="student_loan.rate" data-type="number">${gAppData.student_loan.rate}</span>% · <span data-edit="student_loan.monthly" data-type="money">${fmtMoney(gAppData.student_loan.monthly)}</span>/mo</div></div>
       </div>
       <div class="grid-2">
         <div class="card">
@@ -1554,12 +1578,12 @@ function renderPerks() {
 
     <div id="perks-airbnb">
       <div class="grid-4" style="margin-bottom:24px;">
-        ${gAppData.airbnb_yearly.map(y => `
-          <div class="stat-card-accent" style="--accent-color:var(--teal);">
+        ${gAppData.airbnb_yearly.map((y, i) => { const aC = ['teal','purple','amber'][i % 3]; return `
+          <div class="stat-card-accent" style="--accent-color:var(--${aC});">
             <div class="stat-eyebrow"><span data-edit-list="airbnb_yearly|${y.id}|year" data-type="number">${y.year}</span> Total</div>
-            <div class="stat-val" style="font-size:22px;color:var(--teal);"><span data-edit-list="airbnb_yearly|${y.id}|total" data-type="money">${fmtMoney(y.total)}</span><button class="btn-row-del" onclick="deleteItem('airbnb_yearly','${y.id}')">✕</button></div>
-          </div>`).join('')}
-        <div class="stat-card-accent" style="--accent-color:var(--amber);"><div class="stat-eyebrow">${currentYear} Total (live)</div><div class="stat-val" style="font-size:22px;color:var(--amber);">${fmtMoney(totalAirbnbYear(currentYear))}</div><div class="stat-sub">From bookings list</div></div>
+            <div class="stat-val" style="font-size:22px;color:var(--${aC});"><span data-edit-list="airbnb_yearly|${y.id}|total" data-type="money">${fmtMoney(y.total)}</span><button class="btn-row-del" onclick="deleteItem('airbnb_yearly','${y.id}')">✕</button></div>
+          </div>`; }).join('')}
+        <div class="stat-card-accent" style="--accent-color:var(--teal);"><div class="stat-eyebrow">${currentYear} Total (live)</div><div class="stat-val" style="font-size:22px;color:var(--teal);">${fmtMoney(totalAirbnbYear(currentYear))}</div><div class="stat-sub">From bookings list</div></div>
       </div>
       <div class="grid-2">
         <div class="card">
@@ -1597,22 +1621,22 @@ function renderPerks() {
 
     <div id="perks-miles" style="display:none;">
       <div class="grid-4" style="margin-bottom:24px;">
-        ${gAppData.miles.map(m => `
-          <div class="stat-card-accent" style="--accent-color:var(--${m.color || 'teal'});">
+        ${gAppData.miles.map((m, i) => { const mC = ['teal','purple','amber','coral'][i % 4]; return `
+          <div class="stat-card-accent" style="--accent-color:var(--${mC});">
             <div class="stat-eyebrow"><span data-edit-list="miles|${m.id}|program" data-type="text">${escHtml(m.program)}</span></div>
-            <div class="stat-val" style="color:var(--${m.color || 'teal'});"><span data-edit-list="miles|${m.id}|balance" data-type="number">${(Number(m.balance)||0).toLocaleString()}</span><button class="btn-row-del" onclick="deleteItem('miles','${m.id}')">✕</button></div>
-          </div>`).join('')}
+            <div class="stat-val" style="color:var(--${mC});"><span data-edit-list="miles|${m.id}|balance" data-type="number">${(Number(m.balance)||0).toLocaleString()}</span><button class="btn-row-del" onclick="deleteItem('miles','${m.id}')">✕</button></div>
+          </div>`; }).join('')}
       </div>
       <div class="card">
         <div class="section-eyebrow">All Loyalty Programs <span class="total-pill">${gAppData.miles.length} programs</span></div>
         <table class="data-table" style="margin-top:14px;">
           <thead><tr><th>Program</th><th>Balance</th><th></th></tr></thead>
-          <tbody>${gAppData.miles.map(m => `
+          <tbody>${gAppData.miles.map((m, i) => { const mC = ['teal','purple','amber','coral'][i % 4]; return `
             <tr>
               <td><span data-edit-list="miles|${m.id}|program" data-type="text">${escHtml(m.program)}</span></td>
-              <td class="td-mono" style="color:var(--${m.color || 'teal'});"><span data-edit-list="miles|${m.id}|balance" data-type="number">${(Number(m.balance)||0).toLocaleString()}</span></td>
+              <td class="td-mono" style="color:var(--${mC});"><span data-edit-list="miles|${m.id}|balance" data-type="number">${(Number(m.balance)||0).toLocaleString()}</span></td>
               <td><button class="btn-row-del" onclick="deleteItem('miles','${m.id}')">✕</button></td>
-            </tr>`).join('')}
+            </tr>`; }).join('')}
           </tbody>
         </table>
         <button class="btn-add" onclick="openAddModal('Add miles program','miles',[['program','Program','text',''],['balance','Balance','number',0],['color','Colour','select','red|blue|amber|teal|purple|muted']])">+ Add program</button>
