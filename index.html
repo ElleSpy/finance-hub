@@ -1379,19 +1379,24 @@ function renderSavings() {
       <div class="card">
         <div class="section-eyebrow">Savings Goals <span class="total-pill">${fmtMoney(totalGoalsCurrent())} / ${fmtMoney(sum(gAppData.savings_goals,'target'))}</span></div>
         <div style="margin-top:16px;">
-          ${gAppData.savings_goals.map(g => {
+          ${gAppData.savings_goals.map((g, idx) => {
             const pct = g.target > 0 ? Math.min(100, (Number(g.current) / Number(g.target)) * 100) : 0;
             return `
-              <div class="goal-row">
+              <div class="goal-row drag-row" draggable="true"
+                ondragstart="event.dataTransfer.setData('text/plain','savings_goals:${idx}');event.currentTarget.style.opacity='0.4';"
+                ondragend="event.currentTarget.style.opacity='1';document.querySelectorAll('.goal-row').forEach(r=>r.classList.remove('drag-over'));"
+                ondragover="event.preventDefault();event.currentTarget.classList.add('drag-over');"
+                ondragleave="event.currentTarget.classList.remove('drag-over');"
+                ondrop="event.preventDefault();event.currentTarget.classList.remove('drag-over');const [an,fi]=event.dataTransfer.getData('text/plain').split(':');reorderItem(an,+fi,${idx});">
                 <div class="goal-header">
-                  <span class="goal-name"><span data-edit-list="savings_goals|${g.id}|name" data-type="text">${escHtml(g.name)}</span></span>
+                  <span class="goal-name"><span class="drag-handle" style="margin-right:4px;">⠿</span><span data-edit-list="savings_goals|${g.id}|name" data-type="text">${escHtml(g.name)}</span></span>
                   <span class="goal-amounts"><span data-edit-list="savings_goals|${g.id}|current" data-type="money" style="color:${pct>=100?'var(--teal)':pct===0?'var(--red)':'var(--text)'};">${fmtMoney(g.current)}</span> / <span data-edit-list="savings_goals|${g.id}|target" data-type="money">${fmtMoney(g.target)}</span><button class="btn-row-del" onclick="deleteItem('savings_goals','${g.id}')">✕</button></span>
                 </div>
                 <div class="goal-bar-track"><div class="goal-bar-fill" style="width:${pct}%;background:var(--${g.color || 'teal'});"></div></div>
                 <div class="goal-deadline">${g.deadline ? 'Due ' + fmtDate(g.deadline) : ''}${g.notes ? ' · ' + escHtml(g.notes) : ''}</div>
               </div>`;
           }).join('')}
-          <button class="btn-add" onclick="openAddModal('Add savings goal','savings_goals',[['name','Name','text',''],['current','Current £','money',0],['target','Target £','money',1000],['deadline','Deadline','date',''],['color','Colour','select','teal|blue|amber|coral|purple|red'],['notes','Notes','text','']])">+ Add savings goal</button>
+          <button class="btn-add" onclick="openAddModal('Add savings goal','savings_goals',[['name','Name','text',''],['current','Current £','money',0],['target','Target £','money',1000],['deadline','Deadline','date',''],['color','Colour','select','teal|amber|coral|purple|red'],['notes','Notes','text','']])">+ Add savings goal</button>
         </div>
       </div>
 
