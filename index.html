@@ -893,15 +893,26 @@ function addItem(arrayName, item) {
   showToast('+ Added');
 }
 function toggleSubStatus(itemId) {
-  const sub = (gAppData.subscriptions || []).find(s => s.id === itemId);
+  const subs = gAppData.subscriptions || [];
+  const sub = subs.find(s => s.id === itemId);
   if (!sub) return;
   if (sub.status === 'active') {
-    sub.paused_amount = sub.amount; // store real cost
+    sub.paused_amount = sub.amount;
     sub.amount = 0;
     sub.status = 'paused';
+    // Move to bottom of list
+    const idx = subs.indexOf(sub);
+    subs.splice(idx, 1);
+    subs.push(sub);
   } else {
-    sub.amount = sub.paused_amount || sub.amount; // restore
+    sub.amount = sub.paused_amount || sub.amount;
     sub.status = 'active';
+    // Move to just above the first paused item (or end of active block)
+    const idx = subs.indexOf(sub);
+    subs.splice(idx, 1);
+    const firstPaused = subs.findIndex(s => s.status === 'paused');
+    if (firstPaused === -1) subs.push(sub);
+    else subs.splice(firstPaused, 0, sub);
   }
   scheduleSave();
   renderAll();
@@ -1193,6 +1204,7 @@ function renderBudget() {
         ${renderListCard('Bills', gAppData.bills_future, 'Bills', 'future', false)}
         ${renderListCard('Subscriptions', gAppData.subscriptions, 'Subs', null, true)}
       </div>
+      ${renderPotsSection()}
     </div>
   `;
   document.getElementById('page-budget').innerHTML = html;
@@ -1468,14 +1480,22 @@ function renderCredit() {
             <div class="section-eyebrow">${escHtml(c.name)} Purchases <span class="total-pill" style="color:var(--red);">${fmtMoney(totalPurchasesForCard(c.id))}</span></div>
             <div style="margin-top:10px;">
               <table class="data-table">
-                <thead><tr><th>Item</th><th>Date</th><th>Amount</th><th></th></tr></thead>
-                <tbody>${gAppData.purchases.filter(p => p.card_id === c.id).sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(p => `
-                  <tr>
+                <thead><tr><th style="width:18px;"></th><th>Item</th><th>Amount</th><th></th></tr></thead>
+                <tbody>${gAppData.purchases.filter(p => p.card_id === c.id).map(p => {
+                  const realIdx = gAppData.purchases.indexOf(p);
+                  return `
+                  <tr class="drag-row" draggable="true"
+                    ondragstart="event.dataTransfer.setData('text/plain','purchases:${realIdx}');event.currentTarget.style.opacity='0.4';"
+                    ondragend="event.currentTarget.style.opacity='1';document.querySelectorAll('.drag-row').forEach(r=>r.classList.remove('drag-over'));"
+                    ondragover="event.preventDefault();event.currentTarget.classList.add('drag-over');"
+                    ondragleave="event.currentTarget.classList.remove('drag-over');"
+                    ondrop="event.preventDefault();event.currentTarget.classList.remove('drag-over');const [an,fi]=event.dataTransfer.getData('text/plain').split(':');reorderItem(an,+fi,${realIdx});">
+                    <td style="width:18px;"><span class="drag-handle">⠿</span></td>
                     <td><span data-edit-list="purchases|${p.id}|item" data-type="text">${escHtml(p.item)}</span></td>
-                    <td class="td-mono td-muted"><span data-edit-list="purchases|${p.id}|date" data-type="text">${p.date || '—'}</span></td>
                     <td class="td-red"><span data-edit-list="purchases|${p.id}|amount" data-type="money">${fmtMoney(p.amount)}</span></td>
                     <td><button class="btn-row-del" onclick="deleteItem('purchases','${p.id}')">✕</button></td>
-                  </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:18px;">No purchases yet</td></tr>'}
+                  </tr>`;
+                }).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:18px;">No purchases yet</td></tr>'}
                 </tbody>
               </table>
             </div>
