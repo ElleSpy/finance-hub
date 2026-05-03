@@ -336,7 +336,7 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
 
     <div class="nav-label">Assets</div>
     <div class="nav-item" onclick="showPage('savings',this)"><span class="nav-icon">🏦</span> Savings</div>
-    <div class="nav-item" onclick="showPage('credit',this)"><span class="nav-icon">📈</span> Credit & Investments</div>
+    <div class="nav-item" onclick="showPage('credit',this)"><span class="nav-icon">📈</span> Credit & Investing</div>
 
     <div class="nav-label">Extras</div>
     <div class="nav-item" onclick="showPage('perks',this)"><span class="nav-icon">✨</span> Perks</div>
@@ -724,7 +724,8 @@ const sum = (arr, key) => arr.reduce((s, x) => s + (Number(x[key]) || 0), 0);
 function totalFixed(scenario)         { return sum(gAppData['fixed_' + scenario] || [], 'amount'); }
 function totalBills(scenario)         { return sum(gAppData['bills_' + scenario] || [], 'amount'); }
 function totalSubsActive()            { return sum(gAppData.subscriptions.filter(s => s.status === 'active'), 'amount'); }
-function totalOutgoings(scenario)     { return totalFixed(scenario) + totalBills(scenario) + totalSubsActive(); }
+function totalPotsMonthly()           { return sum(gAppData.pots, 'monthly'); }
+function totalOutgoings(scenario)     { return totalFixed(scenario) + totalBills(scenario) + totalSubsActive() + totalPotsMonthly(); }
 function totalPotsCurrent()           { return sum(gAppData.pots, 'current'); }
 function totalGoalsCurrent()          { return sum(gAppData.savings_goals, 'current'); }
 function totalSavings()               { return totalPotsCurrent() + totalGoalsCurrent(); }
@@ -892,7 +893,7 @@ function renderDashboard() {
         <div class="stat-eyebrow">Monthly Outgoings</div>
         <div class="stat-val">${fmtMoney(out)}</div>
         <div class="stat-label">Fixed + bills + active subs</div>
-        <div class="stat-sub">${fmtMoney(totalBills('current'))} bills · ${fmtMoney(totalSubsActive())} subs</div>
+        <div class="stat-sub">${fmtMoney(totalBills('current'))} bills · ${fmtMoney(totalSubsActive())} subs · ${fmtMoney(totalPotsMonthly())} pots</div>
       </div>
       <div class="stat-card">
         <div class="stat-eyebrow">Remaining</div>
@@ -971,7 +972,7 @@ function renderBudget() {
     <div id="bud-cur">
       <div class="grid-3" style="margin-bottom:24px;">
         <div class="stat-card"><div class="stat-eyebrow">Take-home</div><div class="stat-val" style="color:var(--teal);">${fmtMoney(gAppData.income.current_takehome)}</div><div class="stat-label">Per month · <span data-edit="income.current_takehome" data-type="money">edit</span></div></div>
-        <div class="stat-card"><div class="stat-eyebrow">Total Outgoings</div><div class="stat-val">${fmtMoney(totalOutgoings('current'))}</div><div class="stat-label">Fixed + Bills + Subs</div></div>
+        <div class="stat-card"><div class="stat-eyebrow">Total Outgoings</div><div class="stat-val">${fmtMoney(totalOutgoings('current'))}</div><div class="stat-label">Fixed + Bills + Subs + Pots</div></div>
         <div class="stat-card"><div class="stat-eyebrow">Remaining</div><div class="stat-val" style="color:${remainingCurrent() < 100 ? 'var(--amber)' : 'var(--teal)'};">${fmtMoneyD(remainingCurrent())}</div><div class="stat-label">After outgoings</div></div>
       </div>
       <div class="grid-3">
@@ -985,7 +986,7 @@ function renderBudget() {
     <div id="bud-fut" style="display:none;">
       <div class="grid-3" style="margin-bottom:24px;">
         <div class="stat-card"><div class="stat-eyebrow">Target Take-home</div><div class="stat-val" style="color:var(--teal);">${fmtMoney(gAppData.income.future_takehome)}</div><div class="stat-label">Per month at £70k · <span data-edit="income.future_takehome" data-type="money">edit</span></div></div>
-        <div class="stat-card"><div class="stat-eyebrow">Target Outgoings</div><div class="stat-val">${fmtMoney(totalOutgoings('future'))}</div><div class="stat-label">Fixed + Bills + Subs</div></div>
+        <div class="stat-card"><div class="stat-eyebrow">Target Outgoings</div><div class="stat-val">${fmtMoney(totalOutgoings('future'))}</div><div class="stat-label">Fixed + Bills + Subs + Pots</div></div>
         <div class="stat-card"><div class="stat-eyebrow">Remaining</div><div class="stat-val" style="color:${remainingFuture() > 0 ? 'var(--teal)' : 'var(--amber)'};">${fmtMoneyD(remainingFuture())}</div><div class="stat-label">After outgoings</div></div>
       </div>
       <div class="grid-3">
@@ -1000,23 +1001,27 @@ function renderBudget() {
 }
 
 function renderPotsSection() {
+  const totalMonthlyPots = sum(gAppData.pots, 'monthly');
   return `
     <div style="margin-top:24px;">
-      <div class="section-title">Monthly Savings Pots <span class="total-pill" style="font-size:18px;color:var(--teal);">${fmtMoney(totalPotsCurrent())} balance · ${fmtMoney(sum(gAppData.pots,'monthly'))}/mo</span></div>
+      <div class="section-title">Monthly Spending Pots <span class="total-pill" style="font-size:18px;color:var(--teal);">${fmtMoney(totalMonthlyPots)}/mo</span></div>
       <div class="card">
-        ${gAppData.pots.map(p => {
-          const yearly = (Number(p.monthly) || 0) * 12;
-          const pct = yearly > 0 ? Math.min(100, (Number(p.current) / yearly) * 100) : 0;
-          return `
-            <div class="pot-row">
-              <div class="pot-header">
-                <span class="pot-name"><span data-edit-list="pots|${p.id}|name" data-type="text">${escHtml(p.name)}</span></span>
-                <span class="pot-amounts"><span data-edit-list="pots|${p.id}|current" data-type="money">${fmtMoney(p.current)}</span> / <span data-edit-list="pots|${p.id}|monthly" data-type="money">${fmtMoney(p.monthly)}</span>/mo (${fmtMoney(yearly)}/yr)<button class="btn-row-del" onclick="deleteItem('pots','${p.id}')">✕</button></span>
-              </div>
-              <div class="goal-bar-track"><div class="goal-bar-fill" style="width:${pct}%;background:var(--${p.color || 'teal'});"></div></div>
-            </div>`;
-        }).join('')}
-        <button class="btn-add" onclick="openAddModal('Add pot', 'pots', [['name','Name','text',''],['current','Current £','money',0],['monthly','Monthly £','money',0],['color','Colour','select','teal|blue|amber|coral|purple|red']])">+ Add pot</button>
+        <table class="data-table" style="margin-top:4px;">
+          <thead><tr><th>Pot</th><th class="td-right">Monthly</th><th class="td-right td-muted" style="font-style:italic;">Per year (FYI)</th><th></th></tr></thead>
+          <tbody>
+            ${gAppData.pots.map(p => {
+              const yearly = (Number(p.monthly) || 0) * 12;
+              return `
+                <tr>
+                  <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--${p.color||'teal'});margin-right:7px;vertical-align:middle;"></span><span data-edit-list="pots|${p.id}|name" data-type="text">${escHtml(p.name)}</span></td>
+                  <td class="td-mono td-right"><span data-edit-list="pots|${p.id}|monthly" data-type="money">${fmtMoney(p.monthly)}</span>/mo</td>
+                  <td class="td-mono td-right td-muted" style="font-style:italic;font-size:12px;">${fmtMoney(yearly)}/yr</td>
+                  <td><button class="btn-row-del" onclick="deleteItem('pots','${p.id}')">✕</button></td>
+                </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+        <button class="btn-add" onclick="openAddModal('Add pot', 'pots', [['name','Name','text',''],['monthly','Monthly £','money',0],['color','Colour','select','teal|blue|amber|coral|purple|red']])">+ Add pot</button>
       </div>
     </div>`;
 }
@@ -1192,14 +1197,14 @@ function deleteSnapshot(month) {
 function renderCredit() {
   const html = `
     <div class="page-eyebrow">Assets</div>
-    <div class="page-title">Credit & Investments</div>
+    <div class="page-title">Credit & Investing</div>
     <div class="page-sub">Live balances, totals, and per-card purchases</div>
 
     <div class="tab-bar">
-      <span class="etab active" onclick="switchCreditTab(this,'credit')">Credit & Debt</span>
+      <span class="etab active" onclick="switchCreditTab(this,'credit')">Credit Cards</span>
       <span class="etab" onclick="switchCreditTab(this,'invest')">Investments</span>
       <span class="etab" onclick="switchCreditTab(this,'pension')">Pension</span>
-      <span class="etab" onclick="switchCreditTab(this,'mortgage')">Mortgage & Loans</span>
+      <span class="etab" onclick="switchCreditTab(this,'mortgage')">Mortgage & Student Loan</span>
     </div>
 
     <div id="cred-credit">
@@ -1213,7 +1218,7 @@ function renderCredit() {
               <div class="credit-card-balance"><span data-edit-list="credit_cards|${c.id}|balance" data-type="money">${fmtMoneyD(c.balance)}</span></div>
               <div class="credit-card-limit"><span data-edit-list="credit_cards|${c.id}|limit" data-type="money">${fmtMoney(c.limit)}</span> limit · <span data-edit-list="credit_cards|${c.id}|rate_info" data-type="text">${escHtml(c.rate_info || '')}</span></div>
               <div class="credit-card-util">
-                <div class="credit-bar-track"><div class="credit-bar-fill" style="width:${Math.min(100, util)}%;background:${util > 70 ? '#F4816A' : util > 30 ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.7)'};"></div></div>
+                <div class="credit-bar-track"><div class="credit-bar-fill" style="width:${Math.min(100, util)}%;background:${util > 70 ? '#F4816A' : 'rgba(255,255,255,0.7)'};"></div></div>
                 <div style="font-size:10px;color:rgba(255,255,255,0.5);margin-top:4px;font-family:'DM Mono',monospace;">${util.toFixed(1)}% utilised</div>
               </div>
             </div>`;
@@ -1221,7 +1226,7 @@ function renderCredit() {
       </div>
 
       <div class="card" style="margin-bottom:20px;">
-        <div class="section-eyebrow">Total Credit Debt <span class="total-pill" style="color:var(--red);">-${fmtMoney(totalDebt())}</span></div>
+        <div class="section-eyebrow">Credit Cards <span class="total-pill" style="color:var(--red);">-${fmtMoney(totalDebt())}</span></div>
         <div style="margin-top:14px;">
           ${gAppData.credit_cards.map(c => `
             <div class="invest-row">
@@ -1236,7 +1241,7 @@ function renderCredit() {
         ${gAppData.credit_cards.map(c => `
           <div class="card">
             <div class="section-eyebrow">${escHtml(c.name)} Purchases <span class="total-pill" style="color:var(--red);">${fmtMoney(totalPurchasesForCard(c.id))}</span></div>
-            <div style="max-height:340px;overflow-y:auto;margin-top:10px;">
+            <div style="margin-top:10px;">
               <table class="data-table">
                 <thead><tr><th>Item</th><th>Date</th><th>Amount</th><th></th></tr></thead>
                 <tbody>${gAppData.purchases.filter(p => p.card_id === c.id).sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(p => `
@@ -1255,18 +1260,10 @@ function renderCredit() {
     </div>
 
     <div id="cred-invest" style="display:none;">
-      <div class="grid-${Math.min(3, gAppData.investments.length)}" style="margin-bottom:24px;">
-        ${gAppData.investments.map(i => `
-          <div class="stat-card">
-            <div class="stat-eyebrow">${escHtml(i.name)}</div>
-            <div class="stat-val" style="color:var(--teal);"><span data-edit-list="investments|${i.id}|balance" data-type="money">${fmtMoney(i.balance)}</span></div>
-            <div class="stat-label">${escHtml(i.notes || '')}</div>
-          </div>`).join('')}
-        <div class="stat-card" style="background:var(--text);color:#fff;">
-          <div class="stat-eyebrow" style="color:rgba(255,255,255,0.5);">Total Investments</div>
-          <div class="stat-val" style="color:var(--teal-mid);">${fmtMoney(totalInvestments())}</div>
-          <div class="stat-label" style="color:rgba(255,255,255,0.6);">Live total · all accounts</div>
-        </div>
+      <div class="stat-card" style="background:var(--text);color:#fff;margin-bottom:24px;">
+        <div class="stat-eyebrow" style="color:rgba(255,255,255,0.5);">Total Investments</div>
+        <div class="stat-val" style="color:var(--teal-mid);">${fmtMoney(totalInvestments())}</div>
+        <div class="stat-label" style="color:rgba(255,255,255,0.6);">Live total · updates as you edit below</div>
       </div>
       <div class="card">
         <div class="section-eyebrow">Investment Accounts <span class="total-pill">${fmtMoney(totalInvestments())}</span></div>
