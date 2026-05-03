@@ -163,6 +163,12 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
 .data-table { width:100%;border-collapse:collapse;font-size:13px; }
 .data-table th { font-family:'DM Mono',monospace;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border); }
 .data-table th.td-right { text-align:right; }
+.drag-handle { cursor:grab;color:var(--text3);padding:0 6px 0 0;font-size:13px;user-select:none;opacity:0.4; }
+.drag-handle:hover { opacity:1; }
+.drag-row.drag-over { background:var(--teal-light);border-radius:6px; }
+.sub-toggle { font-size:10px;font-weight:600;font-family:'DM Mono',monospace;padding:2px 8px;border-radius:999px;border:1px solid;cursor:pointer;background:none;transition:all 0.15s; }
+.sub-toggle.active { color:var(--teal);border-color:var(--teal-mid); }
+.sub-toggle.paused { color:var(--text3);border-color:var(--border); }
 .data-table td { padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text); }
 .data-table tr:last-child td { border-bottom:none; }
 .data-table tr:hover td { background:var(--bg2); }
@@ -703,6 +709,8 @@ function ensureSchema(d) {
   if (!d.income) d.income = { current_salary: 0, current_takehome: 0, future_salary: 0, future_takehome: 0, future_start_date: '', notes: '' };
   if (!d.mortgage) d.mortgage = { lender: '', balance: 0, monthly_current: 0, monthly_future: 0, was_fixed_until: '', notes: '' };
   if (!d.student_loan) d.student_loan = { plan: '', rate: 0, balance: 0, repayment_threshold: 0, monthly: 0, writeoff: '', goal: '' };
+  // Ensure all subscriptions have a status
+  (d.subscriptions || []).forEach(s => { if (!s.status) s.status = 'active'; });
   // Migrate any cards that were saved with opening_balance (old computed format) back to plain balance
   d.credit_cards.forEach(c => {
     if (c.opening_balance !== undefined && c.balance === undefined) {
@@ -786,6 +794,11 @@ function updateItem(arrayName, itemId, field, value) {
 function deleteItem(arrayName, itemId) {
   if (!confirm('Delete this entry?')) return;
   gAppData[arrayName] = (gAppData[arrayName] || []).filter(x => x.id !== itemId);
+  // Mirror deletions: if removing from fixed/bills current or future, remove the same id from the other
+  const mirror = { fixed_current: 'fixed_future', fixed_future: 'fixed_current', bills_current: 'bills_future', bills_future: 'bills_current' };
+  if (mirror[arrayName]) {
+    gAppData[mirror[arrayName]] = (gAppData[mirror[arrayName]] || []).filter(x => x.id !== itemId);
+  }
   scheduleSave();
   renderAll();
   showToast('Deleted');
@@ -793,10 +806,43 @@ function deleteItem(arrayName, itemId) {
 function addItem(arrayName, item) {
   if (!gAppData[arrayName]) gAppData[arrayName] = [];
   item.id = id();
+  // New subscriptions default to active
+  if (arrayName === 'subscriptions' && !item.status) item.status = 'active';
   gAppData[arrayName].push(item);
+  // Mirror additions: if adding to fixed/bills current or future, also add same item (same id) to the other
+  const mirror = { fixed_current: 'fixed_future', fixed_future: 'fixed_current', bills_current: 'bills_future', bills_future: 'bills_current' };
+  if (mirror[arrayName]) {
+    if (!gAppData[mirror[arrayName]]) gAppData[mirror[arrayName]] = [];
+    // Only add if not already present (avoid duplicates on re-render)
+    if (!gAppData[mirror[arrayName]].find(x => x.id === item.id)) {
+      gAppData[mirror[arrayName]].push({ ...item });
+    }
+  }
   scheduleSave();
   renderAll();
   showToast('+ Added');
+}
+function toggleSubStatus(itemId) {
+  const sub = (gAppData.subscriptions || []).find(s => s.id === itemId);
+  if (!sub) return;
+  if (sub.status === 'active') {
+    sub.paused_amount = sub.amount; // store real cost
+    sub.amount = 0;
+    sub.status = 'paused';
+  } else {
+    sub.amount = sub.paused_amount || sub.amount; // restore
+    sub.status = 'active';
+  }
+  scheduleSave();
+  renderAll();
+}
+function reorderItem(arrayName, fromIdx, toIdx) {
+  const arr = gAppData[arrayName];
+  if (!arr || fromIdx === toIdx) return;
+  const [moved] = arr.splice(fromIdx, 1);
+  arr.splice(toIdx, 0, moved);
+  scheduleSave();
+  renderAll();
 }
 
 /* ============================================================
@@ -967,18 +1013,38 @@ function renderDashboard() {
 /* ----- BUDGET ----- */
 function renderBudget() {
   const renderListCard = (title, arr, totalLabel, scenario, isSubs) => {
+    const arrName = isSubs ? 'subscriptions' : (scenario ? (title.startsWith('Fixed') ? 'fixed_' : 'bills_') + scenario : '');
     const total = isSubs ? totalSubsActive() : sum(arr, 'amount');
+    const rows = arr.map((item, idx) => {
+      const nameField = `<span data-edit-list="${arrName}|${item.id}|name" data-type="text">${escHtml(item.name)}</span>`;
+      const amtField = isSubs && item.status === 'paused'
+        ? `<span style="color:var(--text3);font-family:'DM Mono',monospace;">${fmtMoney(item.paused_amount || 0)}</span>`
+        : `<span data-edit-list="${arrName}|${item.id}|amount" data-type="money">${fmtMoney(item.amount)}</span>`;
+      const toggleBtn = isSubs
+        ? `<button class="sub-toggle ${item.status === 'active' ? 'active' : 'paused'}" onclick="toggleSubStatus('${item.id}')">${item.status === 'active' ? 'Active' : 'Paused'}</button>`
+        : '';
+      return `<tr class="drag-row" draggable="true"
+          ondragstart="event.dataTransfer.setData('text/plain','${arrName}:${idx}');event.currentTarget.style.opacity='0.4';"
+          ondragend="event.currentTarget.style.opacity='1';document.querySelectorAll('.drag-row').forEach(r=>r.classList.remove('drag-over'));"
+          ondragover="event.preventDefault();event.currentTarget.classList.add('drag-over');"
+          ondragleave="event.currentTarget.classList.remove('drag-over');"
+          ondrop="event.preventDefault();event.currentTarget.classList.remove('drag-over');const [an,fi]=event.dataTransfer.getData('text/plain').split(':');reorderItem(an,+fi,${idx});">
+          <td style="width:18px;"><span class="drag-handle">⠿</span></td>
+          <td>${nameField}${isSubs && item.status === 'paused' ? `<span style="font-size:11px;color:var(--text3);margin-left:6px;">(paused)</span>` : ''}</td>
+          <td class="td-mono td-right" style="white-space:nowrap;">${amtField}</td>
+          <td style="white-space:nowrap;">${toggleBtn}<button class="btn-row-del" onclick="deleteItem('${arrName}','${item.id}')">✕</button></td>
+        </tr>`;
+    }).join('');
+    const addAction = isSubs
+      ? `openAddModal('Add subscription','subscriptions',[['name','Name','text',''],['amount','Monthly £','money',0]])`
+      : `openAddModal('Add line item','${arrName}',[['name','Name','text',''],['amount','Amount £','money',0]])`;
     return `
       <div class="card">
         <div class="section-eyebrow">${title} <span class="total-pill">${fmtMoney(total)}</span></div>
         <table class="data-table" style="margin-top:12px;">
-          ${arr.map(item => `
-            <tr>
-              <td><span data-edit-list="${arr === gAppData.subscriptions ? 'subscriptions' : (scenario ? (title.startsWith('Fixed') ? 'fixed_' : 'bills_') + scenario : '')}|${item.id}|name" data-type="text">${escHtml(item.name)}</span>${isSubs && item.status === 'paused' ? ' <span class="pill-sm pill-muted">Paused</span>' : ''}</td>
-              <td class="td-mono td-right" style="white-space:nowrap;"><span data-edit-list="${arr === gAppData.subscriptions ? 'subscriptions' : (scenario ? (title.startsWith('Fixed') ? 'fixed_' : 'bills_') + scenario : '')}|${item.id}|amount" data-type="money">${fmtMoney(item.amount)}</span><button class="btn-row-del" onclick="deleteItem('${arr === gAppData.subscriptions ? 'subscriptions' : (scenario ? (title.startsWith('Fixed') ? 'fixed_' : 'bills_') + scenario : '')}','${item.id}')">✕</button></td>
-            </tr>`).join('')}
+          <tbody>${rows}</tbody>
         </table>
-        <button class="btn-add" onclick="${isSubs ? `openAddModal('Add subscription', 'subscriptions', [['name','Name','text',''],['amount','Monthly £','money',0],['status','Status','select','active|paused']])` : `openAddModal('Add line item', '${(title.startsWith('Fixed') ? 'fixed_' : 'bills_') + scenario}', [['name','Name','text',''],['amount','Amount £','money',0]])`}">+ Add</button>
+        <button class="btn-add" onclick="${addAction}">+ Add</button>
       </div>`;
   };
 
@@ -1034,10 +1100,16 @@ function renderPotsSection() {
         <table class="data-table" style="margin-top:4px;">
           <thead><tr><th>Pot</th><th class="td-right">Monthly</th><th class="td-right td-muted" style="font-style:italic;">Per year (FYI)</th><th></th></tr></thead>
           <tbody>
-            ${gAppData.pots.map(p => {
+            ${gAppData.pots.map((p, idx) => {
               const yearly = (Number(p.monthly) || 0) * 12;
               return `
-                <tr>
+                <tr class="drag-row" draggable="true"
+                  ondragstart="event.dataTransfer.setData('text/plain','pots:${idx}');event.currentTarget.style.opacity='0.4';"
+                  ondragend="event.currentTarget.style.opacity='1';document.querySelectorAll('.drag-row').forEach(r=>r.classList.remove('drag-over'));"
+                  ondragover="event.preventDefault();event.currentTarget.classList.add('drag-over');"
+                  ondragleave="event.currentTarget.classList.remove('drag-over');"
+                  ondrop="event.preventDefault();event.currentTarget.classList.remove('drag-over');const [an,fi]=event.dataTransfer.getData('text/plain').split(':');reorderItem(an,+fi,${idx});">
+                  <td style="width:18px;"><span class="drag-handle">⠿</span></td>
                   <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--${p.color||'teal'});margin-right:7px;vertical-align:middle;"></span><span data-edit-list="pots|${p.id}|name" data-type="text">${escHtml(p.name)}</span></td>
                   <td class="td-mono td-right"><span data-edit-list="pots|${p.id}|monthly" data-type="money">${fmtMoney(p.monthly)}</span>/mo</td>
                   <td class="td-mono td-right td-muted" style="font-style:italic;font-size:12px;">${fmtMoney(yearly)}/yr</td>
