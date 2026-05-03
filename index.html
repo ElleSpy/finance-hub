@@ -1417,6 +1417,7 @@ function renderSpending() {
       <button id="monzo-sync-btn" class="btn-teal" style="padding:9px 18px;font-size:13px;" onclick="syncMonzo()">⟳ Sync Monzo</button>
       <button class="btn-teal" style="padding:9px 18px;font-size:13px;background:var(--card-high);color:var(--text2);border:1px solid var(--border);" onclick="document.getElementById('amex-csv-input').click()">↑ Import Amex CSV</button>
       <input type="file" id="amex-csv-input" accept=".csv" style="display:none" onchange="importAmexCSV(event)">
+      <button class="btn-teal" style="padding:9px 18px;font-size:13px;background:var(--red-light);color:var(--red);border:1px solid rgba(255,59,92,0.3);" onclick="clearMonzoTransactions()">✕ Clear Monzo</button>
     </div>
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
@@ -1486,20 +1487,64 @@ function getCatColor(c) {
   return ({ Food:'teal', Shopping:'blue', Travel:'purple', 'Going Out':'coral', Beauty:'amber', Health:'teal', Subscriptions:'blue', Other:'' })[c] || 'teal';
 }
 function renderMonthlyBreakdown() {
-  const cats = ['Food','Shopping','Travel','Going Out','Beauty','Health','Other'];
+  const cats = ['Food','Shopping','Travel','Going Out','Beauty','Health','Subscriptions','Other'];
+  const catColors = { Food:'teal', Shopping:'blue', Travel:'purple', 'Going Out':'coral', Beauty:'amber', Health:'teal', Subscriptions:'blue', Other:'text3' };
+  const catIcons  = { Food:'🛒', Shopping:'🛍️', Travel:'✈️', 'Going Out':'🍸', Beauty:'💅', Health:'💪', Subscriptions:'📱', Other:'📦' };
+
   const months = {};
   gAppData.spending.forEach(t => {
     const m = (t.date || '').slice(0, 7);
-    if (!m) return;
-    if (!months[m]) months[m] = { total: 0 };
-    cats.forEach(c => { if (!months[m][c]) months[m][c] = 0; });
-    if (cats.includes(t.category)) months[m][t.category] += t.amount;
-    else months[m].Other += t.amount;
+    if (!m || m === 'Invalid' || m.length < 7) return;
+    if (!months[m]) { months[m] = { total: 0 }; cats.forEach(c => months[m][c] = 0); }
+    const cat = cats.includes(t.category) ? t.category : 'Other';
+    months[m][cat] += t.amount;
     months[m].total += t.amount;
   });
-  const sortedMonths = Object.keys(months).sort();
-  if (sortedMonths.length === 0) return '<div style="text-align:center;color:var(--text3);padding:24px;">No transactions yet</div>';
-  return `<table class="data-table"><thead><tr><th>Month</th>${cats.map(c => `<th>${c}</th>`).join('')}<th>Total</th></tr></thead><tbody>${sortedMonths.map(m => `<tr><td class="td-mono">${fmtMonth(m)}</td>${cats.map(c => `<td class="td-mono">${fmtMoney(months[m][c])}</td>`).join('')}<td class="td-mono" style="font-weight:600;">${fmtMoney(months[m].total)}</td></tr>`).join('')}</tbody></table>`;
+
+  const sortedMonths = Object.keys(months).sort().reverse();
+  if (sortedMonths.length === 0) return '<div style="text-align:center;color:var(--text3);padding:40px;">No transactions yet — sync Monzo to get started</div>';
+
+  // Use the most recent month by default, stored in window._activeMonth
+  if (!window._activeMonth || !months[window._activeMonth]) window._activeMonth = sortedMonths[0];
+  const m = window._activeMonth;
+  const data = months[m];
+  const maxCat = Math.max(...cats.map(c => data[c] || 0), 1);
+
+  return `
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px;">
+      ${sortedMonths.map(mo => `
+        <button onclick="window._activeMonth='${mo}';renderSpending();" style="padding:8px 16px;border-radius:999px;border:1.5px solid ${mo===m?'var(--teal)':'var(--border)'};background:${mo===m?'var(--teal-light)':'transparent'};color:${mo===m?'var(--teal)':'var(--text2)'};font-family:'Manrope',sans-serif;font-size:13px;font-weight:${mo===m?'600':'400'};cursor:pointer;">
+          ${fmtMonth(mo)}
+        </button>`).join('')}
+    </div>
+
+    <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:28px;">
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:42px;font-weight:700;color:var(--red);">${fmtMoney(data.total)}</div>
+      <div style="font-size:13px;color:var(--text3);">total spent in ${fmtMonth(m)}</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;">
+      ${cats.filter(c => data[c] > 0).map(c => {
+        const pct = Math.round((data[c] / data.total) * 100);
+        const barPct = Math.round((data[c] / maxCat) * 100);
+        const col = catColors[c];
+        return `
+          <div style="background:var(--card-high);border-radius:var(--radius-sm);padding:16px 18px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:18px;">${catIcons[c]}</span>
+                <span style="font-size:13px;font-weight:600;color:var(--text2);">${c}</span>
+              </div>
+              <span style="font-size:11px;color:var(--text3);">${pct}%</span>
+            </div>
+            <div style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;color:var(--${col});margin-bottom:10px;">${fmtMoney(data[c])}</div>
+            <div style="height:4px;background:var(--border);border-radius:2px;">
+              <div style="height:4px;width:${barPct}%;background:var(--${col});border-radius:2px;"></div>
+            </div>
+          </div>`;
+      }).join('')}
+    </div>
+  `;
 }
 
 /* ----- SAVINGS ----- */
@@ -2074,11 +2119,14 @@ const MONZO_CATEGORY_MAP = {
   'entertainment': 'Going Out',
   'personal care': 'Beauty',
   'health':        'Health',
+  'medical':       'Health',
+  'fitness':       'Health',
   'bills':         'Subscriptions',
   'finances':      'Other',
-  'transfers':     null,   // skip pot/account transfers
-  'savings':       null,   // skip savings moves
-  'income':        null,   // skip income
+  'charity':       'Other',
+  'transfers':     null,
+  'savings':       null,
+  'income':        null,
 };
 
 async function syncMonzo() {
@@ -2110,8 +2158,12 @@ async function syncMonzo() {
     // Existing transaction IDs for dedup (stored in t.monzoId)
     const existingIds = new Set((gAppData.spending || []).map(t => t.monzoId).filter(Boolean));
 
-    let added = 0, skipped = 0;
+    let added = 0, updated = 0, skipped = 0;
     const newTxns = [];
+
+    // Build a map of existing monzoId → transaction for category updates
+    const existingByMonzoId = {};
+    (gAppData.spending || []).forEach(t => { if (t.monzoId) existingByMonzoId[t.monzoId] = t; });
 
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
@@ -2121,20 +2173,34 @@ async function syncMonzo() {
       const monzoCat= (row[iCategory] || '').trim().toLowerCase();
       const rawAmt  = parseFloat((row[iAmount] || '0').replace(/[^0-9.\-]/g,''));
 
-      // Skip pot transfers, savings, income — only record spending (negative amounts)
+      // Skip pot transfers, savings, income
       const mappedCat = MONZO_CATEGORY_MAP[monzoCat];
-      if (mappedCat === null) { skipped++; continue; }
-      if (rawAmt >= 0) { skipped++; continue; } // skip refunds/credits for now
-
-      // Skip already-imported
-      if (txId && existingIds.has(txId)) { skipped++; continue; }
+      if (mappedCat === null || mappedCat === undefined) { skipped++; continue; }
+      if (rawAmt >= 0) { skipped++; continue; }
 
       // Convert DD/MM/YYYY → YYYY-MM-DD
       let isoDate = '';
       if (rawDate) {
         const parts = rawDate.split('/');
-        if (parts.length === 3) isoDate = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
-        else isoDate = rawDate;
+        if (parts.length === 3 && parts[2].length === 4) {
+          isoDate = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+        } else {
+          isoDate = rawDate;
+        }
+      }
+
+      // Only import 2026 onwards
+      if (!isoDate.startsWith('2026')) { skipped++; continue; }
+
+      // If already imported, update category if it changed
+      if (txId && existingByMonzoId[txId]) {
+        const existing = existingByMonzoId[txId];
+        if (existing.category !== mappedCat) {
+          existing.category = mappedCat;
+          updated++;
+        }
+        skipped++;
+        continue;
       }
 
       newTxns.push({
@@ -2142,27 +2208,40 @@ async function syncMonzo() {
         monzoId:  txId,
         date:     isoDate,
         name:     name,
-        category: mappedCat || 'Other',
+        category: mappedCat,
         where:    'Monzo',
         amount:   Math.abs(rawAmt),
       });
       added++;
     }
 
-    if (newTxns.length > 0) {
+    if (newTxns.length > 0 || updated > 0) {
       if (!Array.isArray(gAppData.spending)) gAppData.spending = [];
       gAppData.spending.push(...newTxns);
       scheduleSave();
       renderSpending();
     }
 
-    showToast(added > 0 ? `✓ Imported ${added} new Monzo transactions` : '✓ Already up to date');
+    const msg = [];
+    if (added > 0) msg.push(`${added} new`);
+    if (updated > 0) msg.push(`${updated} updated`);
+    showToast(msg.length > 0 ? `✓ ${msg.join(', ')} transactions` : '✓ Already up to date');
   } catch(e) {
     console.error('Monzo sync failed', e);
     showToast('Monzo sync failed — check console');
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = '⟳ Sync Monzo'; }
   }
+}
+
+function clearMonzoTransactions() {
+  const count = (gAppData.spending || []).filter(t => t.where === 'Monzo').length;
+  if (count === 0) { showToast('No Monzo transactions to clear'); return; }
+  if (!confirm(`Remove all ${count} Monzo transactions? This cannot be undone.`)) return;
+  gAppData.spending = (gAppData.spending || []).filter(t => t.where !== 'Monzo');
+  scheduleSave();
+  renderSpending();
+  showToast(`✓ Cleared ${count} Monzo transactions`);
 }
 
 /* ============================================================
