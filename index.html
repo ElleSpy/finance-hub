@@ -183,7 +183,7 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
 .td-right { text-align:right; }
 
 /* SECTION HEADERS */
-.section-eyebrow { font-family:'Manrope', sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);margin-bottom:4px;padding-bottom:8px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:baseline; }
+.section-eyebrow { font-family:'Manrope', sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);margin-bottom:4px;padding-left:12px;padding-bottom:8px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:baseline; }
 .section-eyebrow .total-pill { color:var(--on-surface,#e5e2e1);font-size:13px;font-family:'Space Grotesk', sans-serif;text-transform:none;letter-spacing:0;font-weight:700; }
 .section-title { font-family:'Space Grotesk', sans-serif;font-size:22px;font-weight:500;margin-bottom:16px;display:flex;justify-content:space-between;align-items:baseline; }
 
@@ -1063,6 +1063,27 @@ function renderAll() {
   const activePageId = activePage ? activePage.id.replace('page-', '') : null;
   const activeNavEl = document.querySelector('.nav-item.active');
 
+  // Snapshot active sub-tabs before re-render destroys DOM
+  const subTabState = {};
+  // Budget: current or future
+  const budFut = document.getElementById('bud-fut');
+  if (budFut) subTabState.budget = budFut.style.display === 'block' ? 'future' : 'current';
+  // Spending: log or monthly
+  const spendMonthly = document.getElementById('spend-monthly');
+  if (spendMonthly) subTabState.spending = spendMonthly.style.display === 'block' ? 'monthly' : 'log';
+  // Credit: which panel is visible
+  ['credit','invest','pension','mortgage'].forEach(t => {
+    const el = document.getElementById('cred-' + t);
+    if (el && el.style.display !== 'none' && el.style.display !== '') subTabState.credit = t;
+  });
+  if (!subTabState.credit) subTabState.credit = 'credit';
+  // Perks: which panel is visible
+  ['airbnb','miles','cashback'].forEach(t => {
+    const el = document.getElementById('perks-' + t);
+    if (el && el.style.display !== 'none' && el.style.display !== '') subTabState.perks = t;
+  });
+  if (!subTabState.perks) subTabState.perks = 'airbnb';
+
   renderDashboard();
   renderBudget();
   renderSpending();
@@ -1080,6 +1101,32 @@ function renderAll() {
     if (activeNavEl) {
       const navItems = document.querySelectorAll('.nav-item');
       navItems.forEach(n => { if (n.textContent.trim() === activeNavEl.textContent.trim()) n.classList.add('active'); });
+    }
+  }
+
+  // Restore sub-tab state
+  if (subTabState.budget === 'future') {
+    const el = document.querySelectorAll('#page-budget .etab')[1];
+    if (el) switchTab(el, '#bud-fut', '#bud-cur');
+  }
+  if (subTabState.spending === 'monthly') {
+    const el = document.querySelectorAll('#page-spending .etab')[1];
+    if (el) switchTab(el, '#spend-monthly', '#spend-log');
+  }
+  if (subTabState.credit && subTabState.credit !== 'credit') {
+    const creditTabMap = { invest: 1, pension: 2, mortgage: 3 };
+    const idx = creditTabMap[subTabState.credit];
+    if (idx !== undefined) {
+      const el = document.querySelectorAll('#page-credit .etab')[idx];
+      if (el) switchCreditTab(el, subTabState.credit);
+    }
+  }
+  if (subTabState.perks && subTabState.perks !== 'airbnb') {
+    const perksTabMap = { miles: 1, cashback: 2 };
+    const idx = perksTabMap[subTabState.perks];
+    if (idx !== undefined) {
+      const el = document.querySelectorAll('#page-perks .etab')[idx];
+      if (el) switchPerksTab(el, subTabState.perks);
     }
   }
 }
@@ -1529,7 +1576,7 @@ function renderCredit() {
             }
             const colTotal = (gAppData.incoming_payments||[]).filter(x=>x.col===col).reduce((s,x)=>s+(Number(x.amount)||0),0);
             return `<div>
-              <table class="data-table data-table-center" style="width:100%;">
+              <table class="data-table" style="width:100%;">
                 <thead><tr><th style="font-size:10px;">What</th><th style="font-size:10px;">Amount</th><th style="font-size:10px;">Notes</th></tr></thead>
                 <tbody>${rows.join('')}</tbody>
                 <tfoot><tr><td colspan="3" style="font-size:12px;font-weight:700;color:var(--teal);padding-top:8px;">${fmtMoney(colTotal)}</td></tr></tfoot>
@@ -1545,15 +1592,15 @@ function renderCredit() {
           <div class="card">
             <div class="section-eyebrow">${escHtml(c.name)} Purchases <span class="total-pill" style="color:var(--red);">${fmtMoney(totalPurchasesForCard(c.id))}</span></div>
             <div style="margin-top:10px;">
-              <table class="data-table data-table-center">
-                <thead><tr><th>Item</th><th>Amount</th><th></th></tr></thead>
+              <table class="data-table">
+                <thead><tr><th>Item</th><th class="td-right">Amount</th><th></th></tr></thead>
                 <tbody>${gAppData.purchases.filter(p => p.card_id === c.id).sort((a,b) => (Number(b.amount)||0) - (Number(a.amount)||0)).map(p => `
                   <tr style="${p.paid ? 'opacity:0.45;' : ''}">
                     <td>
                       <span data-edit-list="purchases|${p.id}|item" data-type="text" style="${p.paid ? 'text-decoration:line-through;color:var(--text3);' : ''}">${escHtml(p.item)}</span>
                       <div style="font-size:11px;color:var(--text3);margin-top:2px;"><span data-edit-list="purchases|${p.id}|notes" data-type="text" style="min-width:40px;display:inline-block;" title="Click to add note">${escHtml(p.notes || '')}</span>${!p.notes ? `<span style="opacity:0.3;pointer-events:none;font-size:11px;">note…</span>` : ''}</div>
                     </td>
-                    <td class="td-red" style="${p.paid ? 'text-decoration:line-through;color:var(--text3);' : ''}"><span data-edit-list="purchases|${p.id}|amount" data-type="money">${fmtMoney(p.amount)}</span></td>
+                    <td class="td-red td-right" style="${p.paid ? 'text-decoration:line-through;color:var(--text3);' : ''}"><span data-edit-list="purchases|${p.id}|amount" data-type="money">${fmtMoney(p.amount)}</span></td>
                     <td style="white-space:nowrap;">
                       <button onclick="togglePurchasePaid('${p.id}')" title="${p.paid ? 'Mark unpaid' : 'Mark paying off'}" style="background:none;border:none;cursor:pointer;font-size:13px;color:${p.paid ? 'var(--teal)' : 'var(--text3)'};padding:2px 4px;border-radius:4px;transition:color 0.15s;" onmouseover="this.style.color='var(--teal)'" onmouseout="this.style.color='${p.paid ? 'var(--teal)' : 'var(--text3)'}'">${p.paid ? '✓' : '○'}</button>
                       <button class="btn-row-del" onclick="deleteItem('purchases','${p.id}')">✕</button>
