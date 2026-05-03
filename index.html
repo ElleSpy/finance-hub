@@ -995,8 +995,8 @@ function toggleSidebar() {
 function migrateColours() {
   const remap = { blue: 'amber', text: 'teal', coral: 'coral', muted: 'teal' };
   const fix = c => remap[c] || c || 'teal';
-  // pots
-  (gAppData.pots || []).forEach(p => { p.color = fix(p.color); });
+  // pots — ensure current field exists
+  (gAppData.pots || []).forEach(p => { p.color = fix(p.color); if (p.current === undefined) p.current = 0; });
   // savings goals
   (gAppData.savings_goals || []).forEach(g => { g.color = fix(g.color); });
   // miles — assign cycling colours if stale
@@ -1206,7 +1206,7 @@ function renderPotsSection() {
       <div class="section-title">Monthly Spending Pots <span class="total-pill" style="font-size:18px;color:var(--teal);">${fmtMoney(totalMonthlyPots)}/mo</span></div>
       <div class="card">
         <table class="data-table" style="margin-top:4px;">
-          <thead><tr><th>Pot</th><th class="td-right">Monthly</th><th class="td-right td-muted" style="font-style:italic;">Per year (FYI)</th><th></th></tr></thead>
+          <thead><tr><th style="width:18px;"></th><th>Pot</th><th class="td-right">Monthly (£)</th><th class="td-right">Current Total</th><th class="td-right td-muted" style="font-style:italic;">Per year</th><th></th></tr></thead>
           <tbody>
             ${gAppData.pots.map((p, idx) => {
               const yearly = (Number(p.monthly) || 0) * 12;
@@ -1218,15 +1218,16 @@ function renderPotsSection() {
                   ondragleave="event.currentTarget.classList.remove('drag-over');"
                   ondrop="event.preventDefault();event.currentTarget.classList.remove('drag-over');const [an,fi]=event.dataTransfer.getData('text/plain').split(':');reorderItem(an,+fi,${idx});">
                   <td style="width:18px;"><span class="drag-handle">⠿</span></td>
-                  <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--${p.color||'teal'});margin-right:7px;vertical-align:middle;"></span><span data-edit-list="pots|${p.id}|name" data-type="text">${escHtml(p.name)}</span></td>
-                  <td class="td-mono td-right"><span data-edit-list="pots|${p.id}|monthly" data-type="money">${fmtMoney(p.monthly)}</span>/mo</td>
-                  <td class="td-mono td-right td-muted" style="font-style:italic;font-size:12px;">${fmtMoney(yearly)}/yr</td>
+                  <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--teal);margin-right:7px;vertical-align:middle;"></span><span data-edit-list="pots|${p.id}|name" data-type="text">${escHtml(p.name)}</span></td>
+                  <td class="td-mono td-right"><span data-edit-list="pots|${p.id}|monthly" data-type="money">${fmtMoney(p.monthly)}</span></td>
+                  <td class="td-mono td-right" style="color:var(--teal);"><span data-edit-list="pots|${p.id}|current" data-type="money">${fmtMoney(p.current || 0)}</span></td>
+                  <td class="td-mono td-right td-muted" style="font-style:italic;font-size:12px;">${fmtMoney(yearly)}</td>
                   <td><button class="btn-row-del" onclick="deleteItem('pots','${p.id}')">✕</button></td>
                 </tr>`;
             }).join('')}
           </tbody>
         </table>
-        <button class="btn-add" onclick="openAddModal('Add pot', 'pots', [['name','Name','text',''],['monthly','Monthly £','money',0],['color','Colour','select','teal|blue|amber|coral|purple|red']])">+ Add pot</button>
+        <button class="btn-add" onclick="openAddModal('Add pot', 'pots', [['name','Name','text',''],['monthly','Monthly £','money',0],['current','Current total £','money',0]])">+ Add pot</button>
       </div>
     </div>`;
 }
@@ -1332,21 +1333,16 @@ function renderSavings() {
     <div class="page-title">Savings</div>
     <div class="page-sub">Goals, pots, and history — all totals computed live</div>
 
-    <div class="grid-3" style="margin-bottom:24px;">
+    <div class="grid-2" style="margin-bottom:24px;">
       <div class="stat-card-accent" style="--accent-color:var(--teal);">
         <div class="stat-eyebrow">Total Savings</div>
-        <div class="stat-val" style="color:var(--teal);">${fmtMoney(totalSavings())}</div>
-        <div class="stat-label">Goals + Pots combined</div>
+        <div class="stat-val" style="color:var(--teal);">${fmtMoney(totalGoalsCurrent())}</div>
+        <div class="stat-label">Across all savings goals</div>
       </div>
       <div class="stat-card-accent" style="--accent-color:var(--amber);">
-        <div class="stat-eyebrow">Savings Goals</div>
-        <div class="stat-val" style="color:var(--amber);">${fmtMoney(totalGoalsCurrent())}</div>
-        <div class="stat-label">${(() => { const t = sum(gAppData.savings_goals,'target'); const c = totalGoalsCurrent(); return t > 0 ? Math.round(c / t * 100) + '% of target' : 'of target'; })()}</div>
-      </div>
-      <div class="stat-card-accent" style="--accent-color:var(--purple);">
-        <div class="stat-eyebrow">Spending Pots</div>
-        <div class="stat-val" style="color:var(--purple);">${fmtMoney(totalPotsCurrent())}</div>
-        <div class="stat-label">Across all pots</div>
+        <div class="stat-eyebrow">Target</div>
+        <div class="stat-val" style="color:var(--amber);">${fmtMoney(sum(gAppData.savings_goals,'target'))}</div>
+        <div class="stat-label">${(() => { const t = sum(gAppData.savings_goals,'target'); const c = totalGoalsCurrent(); return t > 0 ? Math.round(c / t * 100) + '% of total target' : 'Set targets on goals below'; })()}</div>
       </div>
     </div>
 
