@@ -165,6 +165,7 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
 .data-table { width:100%;border-collapse:collapse;font-size:13px; }
 .data-table th { font-family:'Manrope', sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border); }
 .data-table th.td-right { text-align:right; }
+.data-table-center th, .data-table-center td { text-align:center; }
 .drag-handle { cursor:grab;color:var(--text3);padding:0 6px 0 0;font-size:13px;user-select:none;opacity:0.4; }
 .drag-handle:hover { opacity:1; }
 .drag-row.drag-over { background:var(--teal-light);border-radius:6px; }
@@ -1490,24 +1491,24 @@ function renderCredit() {
               const eid = entry ? entry.id : null;
               if (!entry) {
                 rows.push(`<tr style="opacity:0.3;">
-                  <td style="font-size:12px;color:var(--text3);text-align:center;">—</td>
-                  <td style="font-size:12px;color:var(--text3);text-align:center;">—</td>
-                  <td style="font-size:12px;color:var(--text3);text-align:center;">—</td>
+                  <td style="font-size:12px;color:var(--text3);">—</td>
+                  <td style="font-size:12px;color:var(--text3);">—</td>
+                  <td style="font-size:12px;color:var(--text3);">—</td>
                 </tr>`);
               } else {
                 rows.push(`<tr>
-                  <td style="font-size:12px;text-align:center;"><span data-edit-list="incoming_payments|${eid}|name" data-type="text">${escHtml(entry.name||'')}</span></td>
-                  <td style="font-size:12px;text-align:center;"><span data-edit-list="incoming_payments|${eid}|amount" data-type="money" style="color:var(--teal);">${fmtMoney(entry.amount||0)}</span></td>
-                  <td style="font-size:11px;color:var(--text3);text-align:center;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><span data-edit-list="incoming_payments|${eid}|notes" data-type="text">${escHtml(entry.notes||'')}</span><button class="btn-row-del" onclick="deleteItem('incoming_payments','${eid}')">✕</button></td>
+                  <td style="font-size:12px;"><span data-edit-list="incoming_payments|${eid}|name" data-type="text">${escHtml(entry.name||'')}</span></td>
+                  <td style="font-size:12px;"><span data-edit-list="incoming_payments|${eid}|amount" data-type="money" style="color:var(--teal);">${fmtMoney(entry.amount||0)}</span></td>
+                  <td style="font-size:11px;color:var(--text3);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><span data-edit-list="incoming_payments|${eid}|notes" data-type="text">${escHtml(entry.notes||'')}</span><button class="btn-row-del" onclick="deleteItem('incoming_payments','${eid}')">✕</button></td>
                 </tr>`);
               }
             }
             const colTotal = (gAppData.incoming_payments||[]).filter(x=>x.col===col).reduce((s,x)=>s+(Number(x.amount)||0),0);
             return `<div>
-              <table class="data-table" style="width:100%;">
-                <thead><tr><th style="font-size:10px;text-align:center;">What</th><th style="font-size:10px;text-align:center;">Amount</th><th style="font-size:10px;text-align:center;">Notes</th></tr></thead>
+              <table class="data-table data-table-center" style="width:100%;">
+                <thead><tr><th style="font-size:10px;">What</th><th style="font-size:10px;">Amount</th><th style="font-size:10px;">Notes</th></tr></thead>
                 <tbody>${rows.join('')}</tbody>
-                <tfoot><tr><td colspan="3" style="font-size:12px;font-weight:700;color:var(--teal);text-align:center;padding-top:8px;">${fmtMoney(colTotal)}</td></tr></tfoot>
+                <tfoot><tr><td colspan="3" style="font-size:12px;font-weight:700;color:var(--teal);padding-top:8px;">${fmtMoney(colTotal)}</td></tr></tfoot>
               </table>
               <button class="btn-add" style="margin-top:6px;font-size:11px;padding:4px 10px;" onclick="addIncomingEntry(${col})">+ Add</button>
             </div>`;
@@ -1520,16 +1521,16 @@ function renderCredit() {
           <div class="card">
             <div class="section-eyebrow">${escHtml(c.name)} Purchases <span class="total-pill" style="color:var(--red);">${fmtMoney(totalPurchasesForCard(c.id))}</span></div>
             <div style="margin-top:10px;">
-              <table class="data-table">
-                <thead><tr><th style="text-align:center;">Item</th><th style="text-align:center;">Amount</th><th></th></tr></thead>
+              <table class="data-table data-table-center">
+                <thead><tr><th>Item</th><th>Amount</th><th></th></tr></thead>
                 <tbody>${gAppData.purchases.filter(p => p.card_id === c.id).sort((a,b) => (Number(b.amount)||0) - (Number(a.amount)||0)).map(p => `
                   <tr style="${p.paid ? 'opacity:0.45;' : ''}">
-                    <td style="text-align:center;">
+                    <td>
                       <span data-edit-list="purchases|${p.id}|item" data-type="text" style="${p.paid ? 'text-decoration:line-through;color:var(--text3);' : ''}">${escHtml(p.item)}</span>
                       <div style="font-size:11px;color:var(--text3);margin-top:2px;"><span data-edit-list="purchases|${p.id}|notes" data-type="text" style="min-width:40px;display:inline-block;" title="Click to add note">${escHtml(p.notes || '')}</span>${!p.notes ? `<span style="opacity:0.3;pointer-events:none;font-size:11px;">note…</span>` : ''}</div>
                     </td>
-                    <td class="td-red" style="text-align:center;${p.paid ? 'text-decoration:line-through;color:var(--text3);' : ''}"><span data-edit-list="purchases|${p.id}|amount" data-type="money">${fmtMoney(p.amount)}</span></td>
-                    <td style="text-align:center;white-space:nowrap;">
+                    <td class="td-red" style="${p.paid ? 'text-decoration:line-through;color:var(--text3);' : ''}"><span data-edit-list="purchases|${p.id}|amount" data-type="money">${fmtMoney(p.amount)}</span></td>
+                    <td style="white-space:nowrap;">
                       <button onclick="togglePurchasePaid('${p.id}')" title="${p.paid ? 'Mark unpaid' : 'Mark paying off'}" style="background:none;border:none;cursor:pointer;font-size:13px;color:${p.paid ? 'var(--teal)' : 'var(--text3)'};padding:2px 4px;border-radius:4px;transition:color 0.15s;" onmouseover="this.style.color='var(--teal)'" onmouseout="this.style.color='${p.paid ? 'var(--teal)' : 'var(--text3)'}'">${p.paid ? '✓' : '○'}</button>
                       <button class="btn-row-del" onclick="deleteItem('purchases','${p.id}')">✕</button>
                     </td>
