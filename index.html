@@ -1480,22 +1480,13 @@ function renderCredit() {
             <div class="section-eyebrow">${escHtml(c.name)} Purchases <span class="total-pill" style="color:var(--red);">${fmtMoney(totalPurchasesForCard(c.id))}</span></div>
             <div style="margin-top:10px;">
               <table class="data-table">
-                <thead><tr><th style="width:18px;"></th><th>Item</th><th>Amount</th><th></th></tr></thead>
-                <tbody>${gAppData.purchases.filter(p => p.card_id === c.id).map(p => {
-                  const realIdx = gAppData.purchases.indexOf(p);
-                  return `
-                  <tr class="drag-row" draggable="true"
-                    ondragstart="event.dataTransfer.setData('text/plain','purchases:${realIdx}');event.currentTarget.style.opacity='0.4';"
-                    ondragend="event.currentTarget.style.opacity='1';document.querySelectorAll('.drag-row').forEach(r=>r.classList.remove('drag-over'));"
-                    ondragover="event.preventDefault();event.currentTarget.classList.add('drag-over');"
-                    ondragleave="event.currentTarget.classList.remove('drag-over');"
-                    ondrop="event.preventDefault();event.currentTarget.classList.remove('drag-over');const [an,fi]=event.dataTransfer.getData('text/plain').split(':');reorderItem(an,+fi,${realIdx});">
-                    <td style="width:18px;"><span class="drag-handle">⠿</span></td>
+                <thead><tr><th>Item</th><th>Amount</th><th></th></tr></thead>
+                <tbody>${gAppData.purchases.filter(p => p.card_id === c.id).sort((a,b) => (Number(b.amount)||0) - (Number(a.amount)||0)).map(p => `
+                  <tr>
                     <td><span data-edit-list="purchases|${p.id}|item" data-type="text">${escHtml(p.item)}</span></td>
                     <td class="td-red"><span data-edit-list="purchases|${p.id}|amount" data-type="money">${fmtMoney(p.amount)}</span></td>
                     <td><button class="btn-row-del" onclick="deleteItem('purchases','${p.id}')">✕</button></td>
-                  </tr>`;
-                }).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:18px;">No purchases yet</td></tr>'}
+                  </tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text3);padding:18px;">No purchases yet</td></tr>'}
                 </tbody>
               </table>
             </div>
