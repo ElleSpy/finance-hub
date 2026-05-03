@@ -817,7 +817,7 @@ function totalGoalsCurrent()          { return sum(gAppData.savings_goals, 'curr
 function totalSavings()               { return totalPotsCurrent() + totalGoalsCurrent(); }
 function totalInvestments()           { return sum(gAppData.investments, 'balance'); }
 function totalPension()               { return sum(gAppData.pension, 'balance'); }
-function totalDebt()                  { return Math.abs(sum(gAppData.credit_cards.filter(c => c.balance < 0), 'balance')); }
+function totalDebt()                  { return (gAppData.credit_cards || []).reduce((s, c) => s + totalPurchasesForCard(c.id), 0); }
 function totalMortgage()              { return Number(gAppData.mortgage.balance) || 0; }
 function netWorth()                   { return totalSavings() + totalInvestments() - totalDebt(); }
 function totalPurchasesForCard(cid)   { return sum(gAppData.purchases.filter(p => p.card_id === cid), 'amount'); }
@@ -891,6 +891,13 @@ function addItem(arrayName, item) {
   scheduleSave();
   renderAll();
   showToast('+ Added');
+}
+function togglePurchasePaid(itemId) {
+  const p = (gAppData.purchases || []).find(x => x.id === itemId);
+  if (!p) return;
+  p.paid = !p.paid;
+  scheduleSave();
+  renderAll();
 }
 function toggleSubStatus(itemId) {
   const subs = gAppData.subscriptions || [];
@@ -1436,10 +1443,9 @@ function renderCredit() {
     <div id="cred-credit">
       <div class="grid-${gAppData.credit_cards.length === 3 ? '3' : '2'}" style="margin-bottom:24px;">
         ${gAppData.credit_cards.map(c => {
-          const util = (Math.abs(c.balance) / Math.max(1, c.limit)) * 100;
-          // colour mapping: teal=#00f5d4, purple=#d44dff, amber=#ffe600 — no blue, no coral
-          // legacy 'blue', 'text', 'coral' all remap: blue→amber, text/coral→teal
-          const col = c.color === 'purple' ? 'purple' : (c.color === 'amber' || c.color === 'blue') ? 'amber' : 'teal';
+          const cardTotal = totalPurchasesForCard(c.id);
+          const util = (cardTotal / Math.max(1, c.limit)) * 100;
+          const col = c.color === 'purple' ? 'purple' : c.color === 'amber' ? 'amber' : 'teal';
           const colorBg = col === 'purple'
             ? 'linear-gradient(145deg,#130820 0%,#220a36 100%)'
             : col === 'amber'
@@ -1452,7 +1458,7 @@ function renderCredit() {
           return `
             <div class="credit-card" style="background:${colorBg};border:${borderStyle};box-shadow:${cardGlow};">
               <div class="credit-card-bank" style="color:rgba(255,255,255,0.5);letter-spacing:0.12em;"><span data-edit-list="credit_cards|${c.id}|name" data-type="text">${escHtml(c.name)}</span></div>
-              <div class="credit-card-balance" style="color:${accentColor};text-shadow:0 0 20px ${accentColor}99, 0 0 40px ${accentColor}33;"><span data-edit-list="credit_cards|${c.id}|balance" data-type="money">${fmtMoneyD(c.balance)}</span></div>
+              <div class="credit-card-balance" style="color:${accentColor};text-shadow:0 0 20px ${accentColor}99, 0 0 40px ${accentColor}33;">-${fmtMoney(cardTotal)}</div>
               <div class="credit-card-limit" style="color:rgba(255,255,255,0.4);"><span data-edit-list="credit_cards|${c.id}|limit" data-type="money">${fmtMoney(c.limit)}</span> limit · <span data-edit-list="credit_cards|${c.id}|rate_info" data-type="text">${escHtml(c.rate_info || '')}</span></div>
               <div class="credit-card-util">
                 <div class="credit-bar-track" style="background:rgba(255,255,255,0.08);"><div class="credit-bar-fill" style="width:${Math.min(100, util)}%;background:${barFill};box-shadow:0 0 8px ${barFill}88;"></div></div>
@@ -1465,11 +1471,14 @@ function renderCredit() {
       <div class="card" style="margin-bottom:20px;">
         <div class="section-eyebrow">Credit Cards <span class="total-pill" style="color:var(--red);">-${fmtMoney(totalDebt())}</span></div>
         <div style="margin-top:14px;">
-          ${gAppData.credit_cards.map(c => `
+          ${gAppData.credit_cards.map(c => {
+            const t = totalPurchasesForCard(c.id);
+            return `
             <div class="invest-row">
               <div><div class="invest-name">${escHtml(c.name)}</div><div class="invest-sub">${escHtml(c.rate_info || '')}</div></div>
-              <div class="invest-val" style="color:${c.balance < 0 ? 'var(--red)' : 'var(--teal)'};">${fmtMoneyD(c.balance)}<button class="btn-row-del" onclick="deleteItem('credit_cards','${c.id}')">✕</button></div>
-            </div>`).join('')}
+              <div class="invest-val" style="color:var(--red);">-${fmtMoney(t)}<button class="btn-row-del" onclick="deleteItem('credit_cards','${c.id}')">✕</button></div>
+            </div>`;
+          }).join('')}
           <button class="btn-add" onclick="openAddModal('Add credit card','credit_cards',[['name','Card name','text',''],['balance','Balance £ (negative if owed)','money',0],['limit','Limit £','money',1000],['color','Colour','select','teal|purple|amber'],['rate_info','Rate info','text','']])">+ Add credit card</button>
         </div>
       </div>
@@ -1480,12 +1489,20 @@ function renderCredit() {
             <div class="section-eyebrow">${escHtml(c.name)} Purchases <span class="total-pill" style="color:var(--red);">${fmtMoney(totalPurchasesForCard(c.id))}</span></div>
             <div style="margin-top:10px;">
               <table class="data-table">
-                <thead><tr><th>Item</th><th>Amount</th><th></th></tr></thead>
+                <thead><tr><th>Item</th><th class="td-right">Amount</th><th></th></tr></thead>
                 <tbody>${gAppData.purchases.filter(p => p.card_id === c.id).sort((a,b) => (Number(b.amount)||0) - (Number(a.amount)||0)).map(p => `
-                  <tr>
-                    <td><span data-edit-list="purchases|${p.id}|item" data-type="text">${escHtml(p.item)}</span></td>
-                    <td class="td-red"><span data-edit-list="purchases|${p.id}|amount" data-type="money">${fmtMoney(p.amount)}</span></td>
-                    <td><button class="btn-row-del" onclick="deleteItem('purchases','${p.id}')">✕</button></td>
+                  <tr style="${p.paid ? 'opacity:0.45;' : ''}">
+                    <td>
+                      <div style="display:flex;align-items:baseline;gap:6px;">
+                        <span data-edit-list="purchases|${p.id}|item" data-type="text" style="${p.paid ? 'text-decoration:line-through;color:var(--text3);' : ''}">${escHtml(p.item)}</span>
+                      </div>
+                      <div style="font-size:11px;color:var(--text3);margin-top:2px;"><span data-edit-list="purchases|${p.id}|notes" data-type="text" style="min-width:40px;display:inline-block;" title="Click to add note">${escHtml(p.notes || '')}</span>${!p.notes ? `<span style="opacity:0.3;pointer-events:none;font-size:11px;">note…</span>` : ''}</div>
+                    </td>
+                    <td class="td-red td-right" style="${p.paid ? 'text-decoration:line-through;color:var(--text3);' : ''}"><span data-edit-list="purchases|${p.id}|amount" data-type="money">${fmtMoney(p.amount)}</span></td>
+                    <td style="white-space:nowrap;">
+                      <button onclick="togglePurchasePaid('${p.id}')" title="${p.paid ? 'Mark unpaid' : 'Mark paying off'}" style="background:none;border:none;cursor:pointer;font-size:13px;color:${p.paid ? 'var(--teal)' : 'var(--text3)'};padding:2px 4px;border-radius:4px;transition:color 0.15s;" onmouseover="this.style.color='var(--teal)'" onmouseout="this.style.color='${p.paid ? 'var(--teal)' : 'var(--text3)'}'">${p.paid ? '✓' : '○'}</button>
+                      <button class="btn-row-del" onclick="deleteItem('purchases','${p.id}')">✕</button>
+                    </td>
                   </tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text3);padding:18px;">No purchases yet</td></tr>'}
                 </tbody>
               </table>
