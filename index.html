@@ -230,6 +230,18 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
 
+/* INLINE EDITABLE */
+[contenteditable="true"] { outline: none; cursor: text; transition: background 0.12s, box-shadow 0.12s; border-radius: 4px; padding: 0 3px; margin: 0 -3px; }
+[contenteditable="true"]:hover { background: #FFF8E5; box-shadow: inset 0 0 0 1px #F0D89B; }
+[contenteditable="true"]:focus { background: #FFFBEB; box-shadow: inset 0 0 0 1.5px var(--teal); }
+.btn-add-row { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; background: var(--bg2); color: var(--text2); border: 1.5px dashed var(--border); border-radius: 999px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+.btn-add-row:hover { background: var(--teal-light); color: var(--teal); border-color: var(--teal); border-style: solid; }
+.btn-row-del { background: none; border: none; color: var(--text3); font-size: 13px; cursor: pointer; padding: 2px 6px; border-radius: 4px; opacity: 0; transition: opacity 0.15s, color 0.15s; }
+tr:hover .btn-row-del, .invest-row:hover .btn-row-del, .pot-row:hover .btn-row-del, .spending-row:hover .btn-row-del { opacity: 1; }
+.btn-row-del:hover { color: var(--red); background: var(--red-light); }
+.edit-hint { position: fixed; bottom: 24px; right: 24px; background: var(--text); color: rgba(255,255,255,0.85); padding: 8px 14px; border-radius: 999px; font-size: 11px; font-family: 'DM Mono', monospace; box-shadow: var(--shadow-lg); z-index: 400; opacity: 0.92; }
+.edit-hint span { color: var(--teal-mid); font-weight: 600; }
+
 /* RESPONSIVE */
 @media (max-width: 900px) {
   .sidebar { transform: translateX(-240px); transition: transform 0.25s; }
@@ -290,10 +302,16 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
 
   <div class="sidebar-footer">
     <div class="sync-info" id="sync-info">Last updated: —</div>
+    <div style="font-size:9px;color:rgba(255,255,255,0.32);font-family:'DM Mono',monospace;line-height:1.5;margin-bottom:10px;">
+      Saved in this browser only. To use on another device, Export JSON here → Import on the other device.
+    </div>
     <button class="btn-export" onclick="exportData()">↓ Export JSON Backup</button>
     <div style="margin-top:6px;">
       <button class="btn-export" onclick="document.getElementById('import-input').click()">↑ Import JSON</button>
       <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(event)">
+    </div>
+    <div style="margin-top:6px;">
+      <button class="btn-export" onclick="resetAllEdits()" style="color:rgba(255,180,180,0.7);">↺ Reset to defaults</button>
     </div>
   </div>
 </nav>
@@ -924,43 +942,31 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
 
     <!-- INVESTMENTS -->
     <div id="credit-invest" style="display:none;">
-      <div class="grid-3" style="margin-bottom:24px;">
+      <div class="grid-2" style="margin-bottom:24px;">
         <div class="stat-card">
           <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:8px;">Trading212 S&S ISA</div>
           <div class="stat-val" style="color:var(--teal);">£1,093.93</div>
           <div class="stat-label">Stocks & Shares ISA</div>
         </div>
         <div class="stat-card">
-          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:8px;">Cash (not ISA)</div>
-          <div class="stat-val" style="color:var(--teal);">£621.71</div>
-          <div class="stat-label">Trading212 cash</div>
-        </div>
-        <div class="stat-card">
           <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:8px;">Total Investments</div>
-          <div class="stat-val" style="color:var(--blue);">£1,715.64</div>
-          <div class="stat-label">ISA + Cash combined</div>
+          <div class="stat-val" style="color:var(--blue);">£1,093.93</div>
+          <div class="stat-label">ISA balance</div>
         </div>
       </div>
 
       <div class="grid-2">
         <div class="card">
           <div class="section-eyebrow">Investment Accounts</div>
-          <div style="margin-top:14px;">
-            <div class="invest-row">
+          <div style="margin-top:14px;" data-rows-container="invest-accounts">
+            <div class="invest-row" data-row="true">
               <div>
                 <div class="invest-name">Trading212 S&S ISA</div>
                 <div class="invest-sub">Stocks & Shares ISA · £20/mo target (new job)</div>
               </div>
               <div class="invest-val" style="color:var(--teal);">£1,093.93</div>
             </div>
-            <div class="invest-row">
-              <div>
-                <div class="invest-name">Cash (not ISA)</div>
-                <div class="invest-sub">Trading212 cash savings</div>
-              </div>
-              <div class="invest-val" style="color:var(--blue);">£621.71</div>
-            </div>
-            <div class="invest-row">
+            <div class="invest-row" data-row="true">
               <div>
                 <div class="invest-name">Plum</div>
                 <div class="invest-sub">Round-ups account</div>
@@ -968,6 +974,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
               <div class="invest-val" style="color:var(--text2);">£0.00</div>
             </div>
           </div>
+          <button class="btn-add-row" data-add-invest="invest-accounts" style="margin-top:10px;">+ Add account</button>
         </div>
 
         <div class="tip-box" style="height:fit-content;">
@@ -1338,6 +1345,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
 const KEYS = {
   spending: 'money_hub_spending_v1',
   meta: 'money_hub_meta_v1',
+  edits: 'money_hub_edits_v2',
 };
 
 function loadData(key) {
@@ -1626,6 +1634,353 @@ function escHtml(str) {
 }
 
 // ══════════════════════════════════
+// INLINE EDITING ENGINE
+// ══════════════════════════════════
+// Makes every label, money value, table cell, etc. editable in place.
+// Persists edits + added rows + deleted rows to localStorage so they
+// survive a page reload. Excludes spending log rows (handled separately).
+
+const EDITABLE_SELECTOR = [
+  '.stat-val', '.stat-label', '.stat-sub',
+  '.nw-val', '.nw-item-val', '.nw-item-label', '.nw-sub',
+  '.invest-name', '.invest-sub', '.invest-val',
+  '.credit-card-balance', '.credit-card-limit', '.credit-card-bank',
+  '.pot-name', '.pot-amounts',
+  '.card-title', '.card-sub',
+  '.section-eyebrow', '.section-title',
+  '.tip-item', '.tip-box-title',
+  '.page-title', '.page-sub', '.page-eyebrow',
+  '.goal-bar-label span',
+  '.data-table td', '.data-table th',
+  '.badge', '.pill-sm'
+].join(', ');
+
+// Containers we DO NOT auto-tag (dynamically rendered by JS)
+const SKIP_PARENTS = ['#spending-tbody', '#spending-table-wrap'];
+
+function isInsideSkipped(el) {
+  return SKIP_PARENTS.some(sel => {
+    const parent = document.querySelector(sel);
+    return parent && parent.contains(el);
+  });
+}
+
+function loadEdits() {
+  try { return JSON.parse(localStorage.getItem(KEYS.edits)) || { text: {}, added: {}, deleted: [] }; }
+  catch { return { text: {}, added: {}, deleted: [] }; }
+}
+function saveEdits(edits) {
+  localStorage.setItem(KEYS.edits, JSON.stringify(edits));
+  updateSyncInfo();
+}
+
+// Walk the DOM in document order and assign stable sequential IDs to
+// every editable element. Order is stable as long as static HTML is
+// not rearranged.
+function tagEditables() {
+  let counter = 0;
+  document.querySelectorAll(EDITABLE_SELECTOR).forEach(el => {
+    if (el.hasAttribute('data-edit-id')) return;
+    if (isInsideSkipped(el)) return;
+    if (el.querySelector('input, select, button, .pill-sm')) return; // skip wrappers w/ controls
+    el.setAttribute('data-edit-id', 'e' + counter);
+    el.setAttribute('contenteditable', 'true');
+    el.setAttribute('spellcheck', 'false');
+    el.addEventListener('blur', onEditBlur);
+    el.addEventListener('keydown', onEditKey);
+    counter++;
+  });
+}
+
+function onEditKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.target.blur(); }
+  if (e.key === 'Escape') { e.target.blur(); }
+}
+
+function onEditBlur(e) {
+  const id = e.target.getAttribute('data-edit-id');
+  if (!id) return;
+  const val = e.target.innerHTML.trim();
+  const edits = loadEdits();
+  edits.text = edits.text || {};
+  edits.text[id] = val;
+  saveEdits(edits);
+  showToast('✓ Saved');
+}
+
+function applyTextEdits() {
+  const edits = loadEdits();
+  Object.entries(edits.text || {}).forEach(([id, val]) => {
+    const el = document.querySelector(`[data-edit-id="${id}"]`);
+    if (el) el.innerHTML = val;
+  });
+}
+
+// ══════════════════════════════════
+// ADD ROW TO TABLES
+// ══════════════════════════════════
+// Each .data-table that lives outside the dynamic spending render gets
+// a "+ Add row" button below it. New rows are saved per-table-id.
+
+function tagTables() {
+  let tCounter = 0;
+  document.querySelectorAll('.data-table').forEach(table => {
+    if (isInsideSkipped(table)) return;
+    // Skip the dynamic spending log table (it already has its own delete column)
+    if (table.querySelector('#spending-tbody')) return;
+    if (table.hasAttribute('data-table-id')) return;
+    const tid = 't' + tCounter++;
+    table.setAttribute('data-table-id', tid);
+    const tbody = table.querySelector('tbody') || table;
+    // give every existing row a stable id within this table
+    let rCounter = 0;
+    tbody.querySelectorAll('tr').forEach(tr => {
+      if (!tr.hasAttribute('data-row-id')) tr.setAttribute('data-row-id', tid + '_r' + rCounter++);
+      // add delete handle as last cell IF not already there
+      if (!tr.querySelector('.btn-row-del')) {
+        const td = document.createElement('td');
+        td.style.width = '24px';
+        td.style.padding = '4px';
+        const btn = document.createElement('button');
+        btn.className = 'btn-row-del';
+        btn.textContent = '✕';
+        btn.title = 'Delete row';
+        btn.contentEditable = 'false';
+        btn.onclick = () => deleteEditableRow(tid, tr.getAttribute('data-row-id'));
+        td.appendChild(btn);
+        tr.appendChild(td);
+      }
+    });
+    // add the + Add Row button after the table
+    const addBtn = document.createElement('button');
+    addBtn.className = 'btn-add-row';
+    addBtn.textContent = '+ Add row';
+    addBtn.style.marginTop = '10px';
+    addBtn.onclick = () => addEditableRow(tid);
+    table.parentNode.insertBefore(addBtn, table.nextSibling);
+  });
+}
+
+function addEditableRow(tableId) {
+  const table = document.querySelector(`[data-table-id="${tableId}"]`);
+  if (!table) return;
+  const tbody = table.querySelector('tbody') || table;
+  // figure out column count from header or first row
+  const head = table.querySelector('thead tr');
+  const cols = head ? head.children.length : (tbody.querySelector('tr')?.children.length - 1 || 2);
+  const newId = tableId + '_n' + Date.now();
+  const tr = document.createElement('tr');
+  tr.setAttribute('data-row-id', newId);
+  tr.setAttribute('data-added', 'true');
+  let html = '';
+  for (let i = 0; i < cols; i++) {
+    html += `<td contenteditable="true" data-cell-edit="${newId}_c${i}">—</td>`;
+  }
+  html += `<td style="width:24px;padding:4px;"><button class="btn-row-del" contenteditable="false" title="Delete row">✕</button></td>`;
+  tr.innerHTML = html;
+  tbody.appendChild(tr);
+  // wire delete
+  tr.querySelector('.btn-row-del').onclick = () => deleteEditableRow(tableId, newId);
+  // wire cell editing
+  tr.querySelectorAll('[data-cell-edit]').forEach(td => {
+    td.addEventListener('blur', onAddedCellBlur);
+    td.addEventListener('keydown', onEditKey);
+    // focus first cell to invite editing
+  });
+  tr.querySelector('[data-cell-edit]').focus();
+  // persist the empty row so it survives reload
+  const edits = loadEdits();
+  edits.added = edits.added || {};
+  edits.added[tableId] = edits.added[tableId] || [];
+  edits.added[tableId].push({ id: newId, cells: Array(cols).fill('—') });
+  saveEdits(edits);
+  showToast('+ Row added');
+}
+
+function onAddedCellBlur(e) {
+  const cellId = e.target.getAttribute('data-cell-edit');
+  const [rowId, cIdx] = cellId.split('_c');
+  const tableId = rowId.split('_n')[0];
+  const idx = parseInt(cIdx);
+  const edits = loadEdits();
+  edits.added = edits.added || {};
+  edits.added[tableId] = edits.added[tableId] || [];
+  const row = edits.added[tableId].find(r => r.id === rowId);
+  if (row) {
+    row.cells[idx] = e.target.innerHTML.trim();
+    saveEdits(edits);
+    showToast('✓ Saved');
+  }
+}
+
+function deleteEditableRow(tableId, rowId) {
+  const tr = document.querySelector(`tr[data-row-id="${rowId}"]`);
+  if (tr) tr.remove();
+  const edits = loadEdits();
+  edits.deleted = edits.deleted || [];
+  if (!edits.deleted.includes(rowId)) edits.deleted.push(rowId);
+  edits.added = edits.added || {};
+  if (edits.added[tableId]) {
+    edits.added[tableId] = edits.added[tableId].filter(r => r.id !== rowId);
+  }
+  saveEdits(edits);
+  showToast('Row deleted');
+}
+
+function applyRowChanges() {
+  const edits = loadEdits();
+  // Re-add saved new rows
+  Object.entries(edits.added || {}).forEach(([tableId, rows]) => {
+    const table = document.querySelector(`[data-table-id="${tableId}"]`);
+    if (!table) return;
+    const tbody = table.querySelector('tbody') || table;
+    rows.forEach(rowSpec => {
+      // skip if already exists
+      if (document.querySelector(`tr[data-row-id="${rowSpec.id}"]`)) return;
+      const tr = document.createElement('tr');
+      tr.setAttribute('data-row-id', rowSpec.id);
+      tr.setAttribute('data-added', 'true');
+      let html = '';
+      rowSpec.cells.forEach((val, i) => {
+        html += `<td contenteditable="true" data-cell-edit="${rowSpec.id}_c${i}">${val}</td>`;
+      });
+      html += `<td style="width:24px;padding:4px;"><button class="btn-row-del" contenteditable="false" title="Delete row">✕</button></td>`;
+      tr.innerHTML = html;
+      tbody.appendChild(tr);
+      tr.querySelector('.btn-row-del').onclick = () => deleteEditableRow(tableId, rowSpec.id);
+      tr.querySelectorAll('[data-cell-edit]').forEach(td => {
+        td.addEventListener('blur', onAddedCellBlur);
+        td.addEventListener('keydown', onEditKey);
+      });
+    });
+  });
+  // Hide saved-deleted rows
+  (edits.deleted || []).forEach(rowId => {
+    const tr = document.querySelector(`tr[data-row-id="${rowId}"], .invest-row[data-row-id="${rowId}"], .pot-row[data-row-id="${rowId}"]`);
+    if (tr) tr.remove();
+  });
+}
+
+// ══════════════════════════════════
+// ADD-ROW for non-table sections (Investment Accounts etc)
+// ══════════════════════════════════
+
+function wireAddInvestButtons() {
+  document.querySelectorAll('[data-add-invest]').forEach(btn => {
+    const containerKey = btn.getAttribute('data-add-invest');
+    btn.onclick = () => {
+      const container = document.querySelector(`[data-rows-container="${containerKey}"]`);
+      if (!container) return;
+      const newId = 'inv_' + Date.now();
+      const row = document.createElement('div');
+      row.className = 'invest-row';
+      row.setAttribute('data-row-id', newId);
+      row.setAttribute('data-added', 'true');
+      row.innerHTML = `
+        <div>
+          <div class="invest-name" contenteditable="true" data-cell-edit="${newId}_c0">New account</div>
+          <div class="invest-sub" contenteditable="true" data-cell-edit="${newId}_c1">Notes…</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="invest-val" contenteditable="true" data-cell-edit="${newId}_c2">£0.00</div>
+          <button class="btn-row-del" contenteditable="false" title="Delete row">✕</button>
+        </div>`;
+      container.appendChild(row);
+      row.querySelector('.btn-row-del').onclick = () => deleteEditableRow(containerKey, newId);
+      row.querySelectorAll('[data-cell-edit]').forEach(td => {
+        td.addEventListener('blur', onAddedCellBlur);
+        td.addEventListener('keydown', onEditKey);
+      });
+      row.querySelector('.invest-name').focus();
+      const edits = loadEdits();
+      edits.added = edits.added || {};
+      edits.added[containerKey] = edits.added[containerKey] || [];
+      edits.added[containerKey].push({ id: newId, cells: ['New account', 'Notes…', '£0.00'], type: 'invest' });
+      saveEdits(edits);
+      showToast('+ Account added');
+    };
+  });
+}
+
+function applyInvestAdded() {
+  const edits = loadEdits();
+  Object.entries(edits.added || {}).forEach(([key, rows]) => {
+    const container = document.querySelector(`[data-rows-container="${key}"]`);
+    if (!container) return;
+    rows.forEach(rowSpec => {
+      if (rowSpec.type !== 'invest') return;
+      if (document.querySelector(`[data-row-id="${rowSpec.id}"]`)) return;
+      const row = document.createElement('div');
+      row.className = 'invest-row';
+      row.setAttribute('data-row-id', rowSpec.id);
+      row.setAttribute('data-added', 'true');
+      const c = rowSpec.cells;
+      row.innerHTML = `
+        <div>
+          <div class="invest-name" contenteditable="true" data-cell-edit="${rowSpec.id}_c0">${c[0]}</div>
+          <div class="invest-sub" contenteditable="true" data-cell-edit="${rowSpec.id}_c1">${c[1]}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="invest-val" contenteditable="true" data-cell-edit="${rowSpec.id}_c2">${c[2]}</div>
+          <button class="btn-row-del" contenteditable="false" title="Delete row">✕</button>
+        </div>`;
+      container.appendChild(row);
+      row.querySelector('.btn-row-del').onclick = () => deleteEditableRow(key, rowSpec.id);
+      row.querySelectorAll('[data-cell-edit]').forEach(td => {
+        td.addEventListener('blur', onAddedCellBlur);
+        td.addEventListener('keydown', onEditKey);
+      });
+    });
+  });
+}
+
+// ══════════════════════════════════
+// RESET
+// ══════════════════════════════════
+
+function resetAllEdits() {
+  if (!confirm('Reset every edit you have made and return the app to default values? Your spending transactions will be kept.')) return;
+  localStorage.removeItem(KEYS.edits);
+  showToast('Reset — reloading…');
+  setTimeout(() => location.reload(), 600);
+}
+
+// Extend export/import to include edits
+const _origExport = exportData;
+exportData = function() {
+  const data = {
+    exported: new Date().toISOString(),
+    version: 2,
+    spending: loadData(KEYS.spending),
+    edits: loadEdits(),
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'money-hub-backup-' + new Date().toISOString().split('T')[0] + '.json';
+  a.click();
+  showToast('✓ Backup exported');
+};
+
+const _origImport = importData;
+importData = function(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.spending) saveData(KEYS.spending, data.spending);
+      if (data.edits) localStorage.setItem(KEYS.edits, JSON.stringify(data.edits));
+      showToast('✓ Imported — reloading');
+      setTimeout(() => location.reload(), 600);
+    } catch { showToast('Error importing file'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+};
+
+// ══════════════════════════════════
 // INIT
 // ══════════════════════════════════
 
@@ -1633,6 +1988,19 @@ document.addEventListener('DOMContentLoaded', function() {
   initDefaultSpending();
   updateSyncInfo();
   renderSpendingLog();
+  // Edit layer
+  tagEditables();
+  tagTables();
+  applyTextEdits();
+  applyRowChanges();
+  applyInvestAdded();
+  wireAddInvestButtons();
+  // Edit hint
+  const hint = document.createElement('div');
+  hint.className = 'edit-hint';
+  hint.innerHTML = '<span>✎</span> Click any value to edit · auto-saves locally';
+  document.body.appendChild(hint);
+  setTimeout(() => { hint.style.transition = 'opacity 0.6s'; hint.style.opacity = '0'; setTimeout(() => hint.remove(), 800); }, 6000);
 });
 </script>
 </body>
