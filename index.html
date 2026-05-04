@@ -1419,7 +1419,9 @@ function renderSpending() {
       <input type="file" id="amex-csv-input" accept=".csv" style="display:none" onchange="importAmexCSV(event)">
       <button class="btn-teal" style="padding:9px 18px;font-size:13px;background:var(--card-high);color:var(--text2);border:1px solid var(--border);" onclick="document.getElementById('lloyds-csv-input').click()">↑ Import Lloyds CSV</button>
       <input type="file" id="lloyds-csv-input" accept=".csv" style="display:none" onchange="importLloydsCSV(event)">
-      <button class="btn-teal" style="padding:9px 18px;font-size:13px;background:var(--red-light);color:var(--red);border:1px solid rgba(255,59,92,0.3);" onclick="clearMonzoTransactions()">✕ Clear Monzo</button>
+      <button class="btn-teal" style="padding:9px 18px;font-size:13px;background:var(--red-light);color:var(--red);border:1px solid rgba(255,59,92,0.3);" onclick="clearBankTransactions('Monzo')">✕ Clear Monzo</button>
+      <button class="btn-teal" style="padding:9px 18px;font-size:13px;background:var(--red-light);color:var(--red);border:1px solid rgba(255,59,92,0.3);" onclick="clearBankTransactions('Lloyds')">✕ Clear Lloyds</button>
+      <button class="btn-teal" style="padding:9px 18px;font-size:13px;background:var(--red-light);color:var(--red);border:1px solid rgba(255,59,92,0.3);" onclick="clearBankTransactions('Amex')">✕ Clear Amex</button>
     </div>
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
@@ -2236,14 +2238,14 @@ async function syncMonzo() {
   }
 }
 
-function clearMonzoTransactions() {
-  const count = (gAppData.spending || []).filter(t => t.where === 'Monzo').length;
-  if (count === 0) { showToast('No Monzo transactions to clear'); return; }
-  if (!confirm(`Remove all ${count} Monzo transactions? This cannot be undone.`)) return;
-  gAppData.spending = (gAppData.spending || []).filter(t => t.where !== 'Monzo');
+function clearBankTransactions(bank) {
+  const count = (gAppData.spending || []).filter(t => t.where === bank).length;
+  if (count === 0) { showToast(`No ${bank} transactions to clear`); return; }
+  if (!confirm(`Remove all ${count} ${bank} transactions? This cannot be undone.`)) return;
+  gAppData.spending = (gAppData.spending || []).filter(t => t.where !== bank);
   scheduleSave();
   renderSpending();
-  showToast(`✓ Cleared ${count} Monzo transactions`);
+  showToast(`✓ Cleared ${count} ${bank} transactions`);
 }
 
 /* ============================================================
@@ -2457,17 +2459,20 @@ function parseCSVRow(line) {
   return result;
 }
 
-function guessAmexCategory(desc) {
-  const d = desc.toLowerCase();
-  if (/tesco|sainsbury|waitrose|asda|aldi|lidl|morrisons|marks|m&s|co-op/.test(d)) return 'Food';
-  if (/amazon|argos|asos|primark|next|h&m|topshop|zara|tkmaxx/.test(d)) return 'Shopping';
-  if (/train|tfl|tube|uber|lyft|bus|rail|ryanair|easyjet|british airways|heathrow/.test(d)) return 'Travel';
-  if (/restaurant|cafe|coffee|bar|pub|eat|pizza|nando|wagamama|mcdonalds|kfc|starbucks|pret/.test(d)) return 'Going Out';
-  if (/boots|superdrug|salon|spa|beauty|hair|nails/.test(d)) return 'Beauty';
-  if (/gym|doctor|pharmacy|health|dental|optician/.test(d)) return 'Health';
-  if (/netflix|spotify|apple|disney|sky|broadband|bt|vodafone|virgin|ee|o2/.test(d)) return 'Subscriptions';
+function guessCategory(desc) {
+  // Strip common bank prefixes like CRV*, SP , DD , SO , BGC etc
+  const d = desc.toLowerCase().replace(/^(crv\*|sp |dd |so |bgc |bacs |fpd |tpd |int |ref |tfr |fb\*|sq \*|izettle\*|paypal\*|pp\.|goog|google)/,'').trim();
+  if (/tesco|sainsbury|waitrose|asda|aldi|lidl|morrisons|marks.spencer|m&s|co-op|coop|iceland|ocado|wholefood|greggs|farmfoods/.test(d)) return 'Food';
+  if (/amazon|argos|asos|primark|next|h&m|topshop|zara|tkmaxx|tk maxx|ebay|vinted|etsy|liberty|johnlewis|john lewis|very|boohoo|prettylittlething|shein|river island|gap|uniqlo|nike|adidas|schuh|office|clarks|new look|dorothy perkins|phase eight|whistles|reiss|cos |& other stories|mango|urban outfitters/.test(d)) return 'Shopping';
+  if (/train|tfl|tube|uber|lyft|bus |rail|ryanair|easyjet|british airways|heathrow|gatwick|luton|stansted|jet2|holiday|travel|rac |aa |parking|ncp|eurostar|avanti|gwr|lner|thameslink|southern|southeastern|c2c|chiltern|crosscountry|transpennine|petrol|bp |shell|esso|texaco|gulf/.test(d)) return 'Travel';
+  if (/restaurant|cafe|coffee|bar |pub |eat |pizza|nando|wagamama|mcdonalds|kfc|starbucks|pret|costa|caffe nero|subway|burger king|five guys|honest burger|pizza express|bills |the ivy|deliveroo|just eat|ubereats|uber eats|wetherspoon|mitchell|greene king|youngs |fullers |ei group|craft union|stonegate/.test(d)) return 'Going Out';
+  if (/boots|superdrug|salon|spa |beauty|hair |nails|lush |glossybox|lookfantastic|cult beauty|space nk|charlotte tilbury|sephora|the ordinary|fenty|elemis/.test(d)) return 'Beauty';
+  if (/david lloyd|puregym|pure gym|gym |nuffield|virgin active|everyone active|leisure centre|physio|doctor|pharmacy|chemist|dental|dentist|optician|specsavers|vision express|bupa|axa health|vitality|nuffield health|holland barrett/.test(d)) return 'Health';
+  if (/netflix|spotify|apple|disney|sky |now tv|amazon prime|youtube|adobe|microsoft|office 365|icloud|dropbox|broadband|bt |vodafone|virgin media|ee |o2 |three |talktalk|plusnet|utilita|bulb|octopus|british gas|edf|eon |sse |scottish power|water|council tax|tv licence/.test(d)) return 'Subscriptions';
   return 'Other';
 }
+// Keep old name as alias so existing calls still work
+function guessAmexCategory(desc) { return guessCategory(desc); }
 
 function exportData() {
   const blob = new Blob([JSON.stringify(gAppData, null, 2)], { type: 'application/json' });
