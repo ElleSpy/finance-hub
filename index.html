@@ -548,6 +548,7 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
     <div class="nav-label">Planning</div>
     <div class="nav-item" onclick="showPage('budget',this)"><span class="nav-icon">💷</span> Budget</div>
     <div class="nav-item" onclick="showPage('spending',this)"><span class="nav-icon">🛒</span> Spending</div>
+    <div class="nav-item" onclick="showPage('flat',this)"><span class="nav-icon">🏠</span> My Flat</div>
 
     <div class="nav-label">Assets</div>
     <div class="nav-item" onclick="showPage('savings',this)"><span class="nav-icon">🏦</span> Savings</div>
@@ -580,6 +581,7 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
   <div class="page active" id="page-dashboard"></div>
   <div class="page" id="page-budget"></div>
   <div class="page" id="page-spending"></div>
+  <div class="page" id="page-flat"></div>
   <div class="page" id="page-savings"></div>
   <div class="page" id="page-credit"></div>
   <div class="page" id="page-perks"></div>
@@ -742,6 +744,17 @@ function defaultData() {
     income: { current_salary: 51000, current_takehome: 3057, future_salary: 70000, future_takehome: 4280, future_start_date: '2026-06-15', notes: 'New job from June 15 → £70k' },
     bonus: { amount: 0, notes: '' },
     bonus_allocations: [],
+    flat: {
+      value: 0,
+      mortgage_balance: 0,
+      laura_pct: 50,
+      steve_pct: 50,
+      mortgage_rate: 4.5,
+      mortgage_term_remaining: 25,
+      buyout_legal_cost: 1500,
+      stamp_duty_threshold: 250000,
+      notes: ''
+    },
 
     fixed_current: [
       { id: id(), name: 'Mortgage (Lloyds)', amount: 580 },
@@ -944,6 +957,7 @@ function ensureSchema(d) {
   if (!d.income.note4 && d.income.note4 !== '') d.income.note4 = '';
   if (!d.mortgage) d.mortgage = { lender: '', balance: 0, monthly_current: 0, monthly_future: 0, was_fixed_until: '', notes: '' };
   if (!d.student_loan) d.student_loan = { plan: '', rate: 0, balance: 0, repayment_threshold: 0, monthly: 0, writeoff: '', goal: '' };
+  if (!d.flat) d.flat = { value: 0, mortgage_balance: 0, laura_pct: 50, steve_pct: 50, mortgage_rate: 4.5, mortgage_term_remaining: 25, buyout_legal_cost: 1500, stamp_duty_threshold: 250000, notes: '' };
   // Ensure all subscriptions have a status
   (d.subscriptions || []).forEach(s => { if (!s.status) s.status = 'active'; });
   // Migrate any cards that were saved with opening_balance (old computed format) back to plain balance
@@ -1294,6 +1308,7 @@ function renderAll() {
   renderDashboard();
   renderBudget();
   renderSpending();
+  renderFlat();
   renderSavings();
   renderCredit();
   renderPerks();
@@ -1465,6 +1480,34 @@ function updateSafetyNet() {
     box.querySelector('#sn-count').textContent = count + ' item' + (count !== 1 ? 's' : '') + ' ticked';
   }
 }
+function applyFutureToCurrent() {
+  if (!confirm('Copy future tab values into current tab? Only non-blank future values will overwrite current ones.')) return;
+  // Income
+  if (gAppData.income.future_takehome) gAppData.income.current_takehome = gAppData.income.future_takehome;
+  if (gAppData.income.future_salary)   gAppData.income.current_salary   = gAppData.income.future_salary;
+  // Fixed — match by id, only copy amount if future amount is non-zero
+  (gAppData.fixed_future || []).forEach(f => {
+    const cur = (gAppData.fixed_current || []).find(c => c.id === f.id);
+    if (cur && Number(f.amount)) cur.amount = f.amount;
+    if (cur && f.name) cur.name = f.name;
+  });
+  // Bills — same logic
+  (gAppData.bills_future || []).forEach(f => {
+    const cur = (gAppData.bills_current || []).find(c => c.id === f.id);
+    if (cur && Number(f.amount)) cur.amount = f.amount;
+    if (cur && f.name) cur.name = f.name;
+  });
+  // Pots — copy monthly target if non-zero; never overwrite current pot balance
+  (gAppData.pots_future || []).forEach(f => {
+    const cur = (gAppData.pots_current || []).find(c => c.id === f.id);
+    if (cur && Number(f.monthly)) cur.monthly = f.monthly;
+    if (cur && f.name) cur.name = f.name;
+    // current (balance) is never touched
+  });
+  scheduleSave();
+  renderAll();
+  showToast('Future values applied to current ✓');
+}
 function renderBudget() {
   const renderListCard = (title, arr, totalLabel, scenario, isSubs, showSafety) => {
     const arrName = isSubs ? 'subscriptions' : (scenario ? (title.startsWith('Fixed') ? 'fixed_' : 'bills_') + scenario : '');
@@ -1588,6 +1631,11 @@ function renderBudget() {
         ${renderListCard('Subscriptions', gAppData.subscriptions, 'Subs', null, true, false)}
       </div>
       ${renderPotsSection('future')}
+      <div style="margin-top:20px;display:flex;justify-content:flex-end;">
+        <button onclick="applyFutureToCurrent()" style="display:flex;align-items:center;gap:8px;padding:10px 20px;background:var(--teal-light);border:1px solid rgba(0,245,212,0.35);border-radius:var(--radius-sm);color:var(--teal);font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='rgba(0,245,212,0.2)'" onmouseout="this.style.background='var(--teal-light)'">
+          ↓ Apply future to current
+        </button>
+      </div>
     </div>
 
     <div id="bud-bonus" style="display:none;">
@@ -2142,6 +2190,214 @@ function switchCreditTab(el, tab) {
     const e = document.getElementById('cred-' + t);
     if (e) e.style.display = t === tab ? 'block' : 'none';
   });
+}
+
+/* ----- MY FLAT ----- */
+function renderFlat() {
+  const f = gAppData.flat || {};
+  const val       = Number(f.value) || 0;
+  const mortBal   = Number(f.mortgage_balance) || 0;
+  const lauraPct  = Number(f.laura_pct) || 50;
+  const stevePct  = Number(f.steve_pct) || 50;
+  const rate      = Number(f.mortgage_rate) || 4.5;
+  const term      = Number(f.mortgage_term_remaining) || 25;
+  const legalCost = Number(f.buyout_legal_cost) || 1500;
+
+  const equity        = Math.max(0, val - mortBal);
+  const lauraEquity   = equity * (lauraPct / 100);
+  const steveEquity   = equity * (stevePct / 100);
+  const buyoutCost    = steveEquity + legalCost;
+
+  // Stamp duty: 5% on purchase price above £250k (simplified SDLT, primary residence rates)
+  // 0% up to £250k, 5% on £250k–£925k
+  const sdtThresh = Number(f.stamp_duty_threshold) || 250000;
+  let stampDuty = 0;
+  if (buyoutCost > sdtThresh) stampDuty = (buyoutCost - sdtThresh) * 0.05;
+
+  // Mortgage affordability: 4.5× current gross salary
+  const grossSalary = Number(gAppData.income.current_salary) || 0;
+  const maxBorrow   = grossSalary * 4.5;
+
+  // Monthly payment on remaining mortgage (or on buyout mortgage amount)
+  // Using formula: M = P[r(1+r)^n] / [(1+r)^n - 1]
+  const calcMonthlyPayment = (principal, annualRate, years) => {
+    if (!principal || !annualRate || !years) return 0;
+    const r = (annualRate / 100) / 12;
+    const n = years * 12;
+    if (r === 0) return principal / n;
+    return principal * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+  };
+
+  const currentMonthly = calcMonthlyPayment(mortBal, rate, term);
+
+  // Buyout scenario: Laura takes on full mortgage (remaining balance) to buy out Steve
+  // The "new mortgage" needed = existing mortgage balance (she keeps) + Steve's equity (she pays him)
+  const newMortgagePrincipal = mortBal + steveEquity;
+  const newMonthlyPayment    = calcMonthlyPayment(newMortgagePrincipal, rate, term);
+
+  // Gap: how much more than she can borrow does the buyout scenario need?
+  const borrowGap = newMortgagePrincipal - maxBorrow;
+
+  const fmtPct = n => (Number(n) || 0).toFixed(1) + '%';
+
+  const html = `
+    <div class="page-eyebrow">Planning</div>
+    <div class="page-title">My Flat</div>
+    <div class="page-sub">Buyout calculator · equity split · mortgage affordability</div>
+
+    <div class="hero-cards-row cols-3" style="margin-bottom:24px;">
+      <div class="hero-card hero-card-teal">
+        <div class="hero-card-label">Property Value</div>
+        <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 20px rgba(0,245,212,0.5);" data-private>
+          <span data-edit="flat.value" data-type="money">${fmtMoney(val)}</span>
+        </div>
+        <div class="hero-card-sub">Tap to update estimate</div>
+      </div>
+      <div class="hero-card hero-card-amber">
+        <div class="hero-card-label">Total Equity</div>
+        <div class="hero-card-val" style="color:var(--amber);text-shadow:0 0 20px rgba(255,230,0,0.4);" data-private>${fmtMoney(equity)}</div>
+        <div class="hero-card-sub">Value minus mortgage balance</div>
+      </div>
+      <div class="hero-card hero-card-coral">
+        <div class="hero-card-label">Buyout Cost</div>
+        <div class="hero-card-val" style="color:var(--coral);text-shadow:0 0 20px rgba(255,95,87,0.4);" data-private>${fmtMoney(buyoutCost)}</div>
+        <div class="hero-card-sub">Steve's share + legal (${fmtMoney(legalCost)})</div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:24px;">
+
+      <div class="card">
+        <div class="section-eyebrow">Ownership &amp; Mortgage</div>
+
+        <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px;">
+
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+            <span style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.09em;font-family:'Manrope',sans-serif;">Mortgage Balance</span>
+            <span class="td-mono" style="font-size:15px;" data-private><span data-edit="flat.mortgage_balance" data-type="money">${fmtMoney(mortBal)}</span></span>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+            <span style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.09em;font-family:'Manrope',sans-serif;">Laura's Share</span>
+            <span class="td-mono" style="font-size:15px;">
+              <span data-edit="flat.laura_pct" data-type="number">${lauraPct}</span>%
+              <span style="color:var(--text3);font-size:12px;margin-left:8px;" data-private>(${fmtMoney(lauraEquity)})</span>
+            </span>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+            <span style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.09em;font-family:'Manrope',sans-serif;">Steve's Share</span>
+            <span class="td-mono" style="font-size:15px;">
+              <span data-edit="flat.steve_pct" data-type="number">${stevePct}</span>%
+              <span style="color:var(--text3);font-size:12px;margin-left:8px;" data-private>(${fmtMoney(steveEquity)})</span>
+            </span>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+            <span style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.09em;font-family:'Manrope',sans-serif;">Mortgage Rate</span>
+            <span class="td-mono" style="font-size:15px;"><span data-edit="flat.mortgage_rate" data-type="number">${rate}</span>% p.a.</span>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+            <span style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.09em;font-family:'Manrope',sans-serif;">Term Remaining</span>
+            <span class="td-mono" style="font-size:15px;"><span data-edit="flat.mortgage_term_remaining" data-type="number">${term}</span> years</span>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+            <span style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.09em;font-family:'Manrope',sans-serif;">Legal Cost Estimate</span>
+            <span class="td-mono" style="font-size:15px;"><span data-edit="flat.buyout_legal_cost" data-type="money">${fmtMoney(legalCost)}</span></span>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;">
+            <span style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.09em;font-family:'Manrope',sans-serif;">Stamp Duty Threshold</span>
+            <span class="td-mono" style="font-size:15px;"><span data-edit="flat.stamp_duty_threshold" data-type="money">${fmtMoney(sdtThresh)}</span></span>
+          </div>
+
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:16px;">
+
+        <div class="card">
+          <div class="section-eyebrow">Current Mortgage</div>
+          <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.09em;font-family:'Manrope',sans-serif;">Monthly payment</span>
+              <span class="td-mono" style="font-size:18px;color:var(--teal);" data-private>${fmtMoney(currentMonthly)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.09em;font-family:'Manrope',sans-serif;">Total remaining</span>
+              <span class="td-mono" style="font-size:15px;" data-private>${fmtMoney(mortBal)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.09em;font-family:'Manrope',sans-serif;">At rate / term</span>
+              <span class="td-mono" style="font-size:13px;color:var(--text3);">${rate}% · ${term}yr</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="border:1px solid rgba(0,245,212,0.2);">
+          <div class="section-eyebrow">Buyout Scenario</div>
+          <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.09em;font-family:'Manrope',sans-serif;">New mortgage needed</span>
+              <span class="td-mono" style="font-size:15px;" data-private>${fmtMoney(newMortgagePrincipal)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.09em;font-family:'Manrope',sans-serif;">Est. monthly payment</span>
+              <span class="td-mono" style="font-size:18px;color:var(--teal);" data-private>${fmtMoney(newMonthlyPayment)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.09em;font-family:'Manrope',sans-serif;">Stamp duty (est.)</span>
+              <span class="td-mono" style="font-size:15px;color:var(--amber);" data-private>${fmtMoney(stampDuty)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.09em;font-family:'Manrope',sans-serif;">Total buyout incl. stamp duty</span>
+              <span class="td-mono" style="font-size:15px;font-weight:600;" data-private>${fmtMoney(buyoutCost + stampDuty)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="border:1px solid ${borrowGap > 0 ? 'rgba(255,95,87,0.3)' : 'rgba(0,245,212,0.2)'};">
+          <div class="section-eyebrow">Affordability Check</div>
+          <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.09em;font-family:'Manrope',sans-serif;">Salary (gross)</span>
+              <span class="td-mono" style="font-size:15px;" data-private>${fmtMoney(grossSalary)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.09em;font-family:'Manrope',sans-serif;">Max borrow (4.5×)</span>
+              <span class="td-mono" style="font-size:18px;color:var(--teal);" data-private>${fmtMoney(maxBorrow)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.09em;font-family:'Manrope',sans-serif;">New mortgage needed</span>
+              <span class="td-mono" style="font-size:15px;" data-private>${fmtMoney(newMortgagePrincipal)}</span>
+            </div>
+            <div style="border-top:1px solid var(--border);padding-top:10px;display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.09em;font-family:'Manrope',sans-serif;">${borrowGap > 0 ? 'Shortfall' : 'Headroom'}</span>
+              <span class="td-mono" style="font-size:18px;font-weight:700;color:${borrowGap > 0 ? 'var(--coral)' : 'var(--teal)'};" data-private>${fmtMoney(Math.abs(borrowGap))}</span>
+            </div>
+            ${borrowGap > 0 ? `<div style="font-size:11px;color:var(--text3);margin-top:4px;">You'd need a higher salary or a lower buyout price to qualify at 4.5× on your own.</div>` : `<div style="font-size:11px;color:var(--text3);margin-top:4px;">Looks affordable on current salary — you have headroom on the lender's 4.5× limit.</div>`}
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-eyebrow">Notes</div>
+      <div style="margin-top:12px;">
+        <textarea
+          style="width:100%;min-height:100px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;color:var(--text);font-family:'Manrope',sans-serif;font-size:13px;line-height:1.6;resize:vertical;"
+          placeholder="Estate agent valuations, solicitor quotes, timeline notes…"
+          onchange="gAppData.flat.notes=this.value;scheduleSave();"
+          oninput="gAppData.flat.notes=this.value;"
+        >${escHtml(f.notes || '')}</textarea>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('page-flat').innerHTML = html;
 }
 
 /* ----- PERKS ----- */
