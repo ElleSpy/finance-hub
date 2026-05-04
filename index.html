@@ -2356,12 +2356,28 @@ function importLloydsCSV(event) {
       const lines = e.target.result.split('\n').map(l => l.trim()).filter(Boolean);
       if (lines.length < 2) { showToast('CSV appears empty'); return; }
 
-      // Find header row
+      // Find header row and parse column positions dynamically
       let startIdx = 0;
+      let headerCols = [];
       for (let i = 0; i < Math.min(5, lines.length); i++) {
-        if (lines[i].toLowerCase().includes('transaction date') || lines[i].toLowerCase().includes('date')) {
-          startIdx = i + 1; break;
+        const parsed = parseCSVRow(lines[i]).map(h => h.replace(/"/g,'').trim().toLowerCase());
+        if (parsed.some(h => h.includes('transaction date') || h === 'date')) {
+          headerCols = parsed;
+          startIdx = i + 1;
+          break;
         }
+      }
+
+      if (!headerCols.length) { showToast('Could not find header row in CSV'); return; }
+
+      // Find columns by name
+      const iDate = headerCols.findIndex(h => h.includes('transaction date') || h === 'date');
+      const iDesc = headerCols.findIndex(h => h.includes('description'));
+      const iAmt  = headerCols.findIndex(h => h.includes('amount'));
+
+      if (iDate === -1 || iDesc === -1 || iAmt === -1) {
+        showToast('Unexpected CSV format — could not find required columns');
+        return;
       }
 
       const existingKeys = new Set(
@@ -2375,29 +2391,28 @@ function importLloydsCSV(event) {
 
       for (let i = startIdx; i < lines.length; i++) {
         const cols = parseCSVRow(lines[i]);
-        if (cols.length < 6) continue;
+        if (cols.length < 3) continue;
 
-        // Lloyds columns: Date(0), Type(1), SortCode(2), AccNum(3), Description(4), Debit(5), Credit(6)
-        const rawDate   = (cols[0] || '').trim().replace(/"/g, '');
-        const desc      = (cols[4] || '').trim().replace(/"/g, '');
-        const debit     = parseFloat((cols[5] || '').trim().replace(/[^0-9.]/g, '')) || 0;
-        const credit    = parseFloat((cols[6] || '').trim().replace(/[^0-9.]/g, '')) || 0;
+        const rawDate = (cols[iDate] || '').replace(/"/g,'').trim();
+        const desc    = (cols[iDesc] || '').replace(/"/g,'').trim();
+        const rawAmt  = parseFloat((cols[iAmt]  || '0').replace(/"/g,'').trim());
 
-        if (!rawDate || !desc) continue;
-        if (debit === 0 && credit === 0) continue;
-        if (debit === 0) continue; // skip credits/refunds
+        if (!rawDate || !desc || isNaN(rawAmt)) continue;
 
-        // Lloyds date format: DD/MM/YYYY
+        // Positive = spending, negative = payment received — skip credits
+        if (rawAmt <= 0) continue;
+
+        // Convert DD/MM/YYYY → YYYY-MM-DD
         let isoDate = rawDate;
         const parts = rawDate.split('/');
         if (parts.length === 3 && parts[2].length === 4) {
           isoDate = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
         }
 
-        // Only 2026 onwards
+        // 2026 onwards only
         if (!isoDate.startsWith('2026')) continue;
 
-        const key = `${isoDate}|${desc}|${debit}`;
+        const key = `${isoDate}|${desc}|${rawAmt}`;
         if (existingKeys.has(key)) continue;
         existingKeys.add(key);
 
@@ -2405,9 +2420,9 @@ function importLloydsCSV(event) {
           id:       'lloyds_' + Date.now() + '_' + i,
           date:     isoDate,
           name:     desc,
-          category: guessAmexCategory(desc), // reuse the same keyword guesser
+          category: guessAmexCategory(desc),
           where:    'Lloyds',
-          amount:   debit,
+          amount:   rawAmt,
         });
         added++;
       }
