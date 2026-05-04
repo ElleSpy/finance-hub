@@ -1939,10 +1939,7 @@ function deleteSnapshot(month) {
 function renderCredit() {
   const html = `
     <div class="page-eyebrow">Assets</div>
-    <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-      <div class="page-title">Credit & Investing</div>
-      <div style="font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:var(--red);">Total owed: <span data-private>-${fmtMoney(totalDebt())}</span></div>
-    </div>
+    <div class="page-title">Credit & Investing</div>
     <div class="page-sub">Live balances, totals, and per-card purchases</div>
 
     <div class="tab-bar">
@@ -1953,6 +1950,9 @@ function renderCredit() {
     </div>
 
     <div id="cred-credit">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:var(--red);">Total owed: <span data-private>-${fmtMoney(totalDebt())}</span></div>
+      </div>
       <div class="grid-${gAppData.credit_cards.length === 3 ? '3' : '2'}" style="margin-bottom:24px;">
         ${gAppData.credit_cards.map(c => {
           const cardTotal = totalPurchasesForCard(c.id);
