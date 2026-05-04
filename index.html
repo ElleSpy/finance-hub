@@ -1393,6 +1393,7 @@ function renderDashboard() {
         <div class="hero-card-val" style="color:var(--coral);text-shadow:0 0 20px rgba(255,95,87,0.45);">${fmtMoney(out)}</div>
         <div class="hero-card-sub">Fixed + bills + subs + pots</div>
         <div class="hero-card-breakdown">
+          <div><div class="hero-card-breakdown-item-label">Fixed</div><div class="hero-card-breakdown-item-val" style="color:rgba(255,255,255,0.6);">${fmtMoney(totalFixed('current'))}</div></div>
           <div><div class="hero-card-breakdown-item-label">Bills</div><div class="hero-card-breakdown-item-val" style="color:rgba(255,255,255,0.6);">${fmtMoney(totalBills('current'))}</div></div>
           <div><div class="hero-card-breakdown-item-label">Subs</div><div class="hero-card-breakdown-item-val" style="color:rgba(255,255,255,0.6);">${fmtMoney(totalSubsActive())}</div></div>
           <div><div class="hero-card-breakdown-item-label">Pots</div><div class="hero-card-breakdown-item-val" style="color:rgba(255,255,255,0.6);">${fmtMoney(totalPotsMonthly('current'))}</div></div>
