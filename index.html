@@ -740,6 +740,8 @@ function defaultData() {
   return {
     meta: { version: 3, created: new Date().toISOString() },
     income: { current_salary: 51000, current_takehome: 3057, future_salary: 70000, future_takehome: 4280, future_start_date: '2026-06-15', notes: 'New job from June 15 → £70k' },
+    bonus: { amount: 0, notes: '' },
+    bonus_allocations: [],
 
     fixed_current: [
       { id: id(), name: 'Mortgage (Lloyds)', amount: 580 },
@@ -933,6 +935,8 @@ function ensureSchema(d) {
   }
   if (!d.meta) d.meta = { version: 3 };
   if (!d.income) d.income = { current_salary: 0, current_takehome: 0, future_salary: 0, future_takehome: 0, future_start_date: '', notes: '', note1: '', note2: '', note3: '', note4: '' };
+  if (!d.bonus) d.bonus = { amount: 0, notes: '' };
+  if (!d.bonus_allocations) d.bonus_allocations = [];
   if (!d.income.note1 && d.income.note1 !== '') d.income.note1 = '';
   if (!d.income.note2 && d.income.note2 !== '') d.income.note2 = '';
   if (!d.income.note3 && d.income.note3 !== '') d.income.note3 = '';
@@ -1420,17 +1424,44 @@ function renderDashboard() {
 }
 
 /* ----- BUDGET ----- */
+window._safetyTicked = window._safetyTicked || {};
+function updateSafetyNet() {
+  const box = document.getElementById('safety-net-box');
+  if (!box) return;
+  let total = 0;
+  document.querySelectorAll('.safety-cb:checked').forEach(cb => {
+    total += Number(cb.dataset.amount) || 0;
+  });
+  const count = document.querySelectorAll('.safety-cb:checked').length;
+  if (count === 0) {
+    box.style.opacity = '0.35';
+    box.querySelector('#sn-monthly').textContent = '—';
+    box.querySelector('#sn-3mo').textContent = '—';
+    box.querySelector('#sn-count').textContent = '0 items ticked';
+  } else {
+    box.style.opacity = '1';
+    box.querySelector('#sn-monthly').textContent = '£' + total.toLocaleString('en-GB', {minimumFractionDigits:2, maximumFractionDigits:2});
+    box.querySelector('#sn-3mo').textContent = '£' + (total * 3).toLocaleString('en-GB', {minimumFractionDigits:2, maximumFractionDigits:2});
+    box.querySelector('#sn-count').textContent = count + ' item' + (count !== 1 ? 's' : '') + ' ticked';
+  }
+}
 function renderBudget() {
-  const renderListCard = (title, arr, totalLabel, scenario, isSubs) => {
+  const renderListCard = (title, arr, totalLabel, scenario, isSubs, showSafety) => {
     const arrName = isSubs ? 'subscriptions' : (scenario ? (title.startsWith('Fixed') ? 'fixed_' : 'bills_') + scenario : '');
     const total = isSubs ? totalSubsActive() : sum(arr, 'amount');
     const rows = arr.map((item, idx) => {
       const nameField = `<span data-edit-list="${arrName}|${item.id}|name" data-type="text">${escHtml(item.name)}</span>`;
+      const itemAmt = isSubs && item.status === 'paused' ? (item.paused_amount || 0) : (item.amount || 0);
       const amtField = isSubs && item.status === 'paused'
         ? `<span style="color:var(--text3);font-family:'Manrope', sans-serif;">${fmtMoney(item.paused_amount || 0)}</span>`
         : `<span data-edit-list="${arrName}|${item.id}|amount" data-type="money">${fmtMoney(item.amount)}</span>`;
       const toggleBtn = isSubs
         ? `<button class="sub-toggle ${item.status === 'active' ? 'active' : 'paused'}" onclick="toggleSubStatus('${item.id}')">${item.status === 'active' ? 'Active' : 'Paused'}</button>`
+        : '';
+      const safetyKey = arrName + '|' + item.id;
+      const cbChecked = window._safetyTicked[safetyKey] ? 'checked' : '';
+      const safetyCb = showSafety
+        ? `<input type="checkbox" class="safety-cb" data-amount="${itemAmt}" data-key="${safetyKey}" ${cbChecked} onchange="window._safetyTicked[this.dataset.key]=this.checked;updateSafetyNet();" style="width:14px;height:14px;accent-color:var(--teal);cursor:pointer;flex-shrink:0;margin-left:4px;vertical-align:middle;">`
         : '';
       return `<tr class="drag-row" draggable="true"
           ondragstart="event.dataTransfer.setData('text/plain','${arrName}:${idx}');event.currentTarget.style.opacity='0.4';"
@@ -1441,7 +1472,7 @@ function renderBudget() {
           <td style="width:18px;"><span class="drag-handle">⠿</span></td>
           <td>${nameField}${isSubs && item.status === 'paused' ? `<span style="font-size:11px;color:var(--text3);margin-left:6px;">(paused)</span>` : ''}</td>
           <td class="td-mono td-right" style="white-space:nowrap;">${amtField}</td>
-          <td style="white-space:nowrap;">${toggleBtn}<button class="btn-row-del" onclick="deleteItem('${arrName}','${item.id}')">✕</button></td>
+          <td style="white-space:nowrap;">${toggleBtn}<button class="btn-row-del" onclick="deleteItem('${arrName}','${item.id}')">✕</button>${safetyCb}</td>
         </tr>`;
     }).join('');
     const addAction = isSubs
@@ -1463,8 +1494,9 @@ function renderBudget() {
     <div class="page-sub">Live monthly outgoings — totals update as you edit</div>
 
     <div class="tab-bar">
-      <span class="etab active" onclick="switchTab(this,'#bud-cur','#bud-fut')">Current (£${(gAppData.income.current_salary/1000).toFixed(0)}k)</span>
-      <span class="etab" onclick="switchTab(this,'#bud-fut','#bud-cur')">Future (£${(gAppData.income.future_salary/1000).toFixed(0)}k)</span>
+      <span class="etab active" onclick="switchBudgetTab(this,'bud-cur')">Current (£${(gAppData.income.current_salary/1000).toFixed(0)}k)</span>
+      <span class="etab" onclick="switchBudgetTab(this,'bud-fut')">Future (£${(gAppData.income.future_salary/1000).toFixed(0)}k)</span>
+      <span class="etab" onclick="switchBudgetTab(this,'bud-bonus')">Bonus</span>
     </div>
 
     <div id="bud-cur">
@@ -1488,9 +1520,23 @@ function renderBudget() {
         </div>
       </div>
       <div class="grid-3">
-        ${renderListCard('Fixed', gAppData.fixed_current, 'Fixed', 'current', false)}
-        ${renderListCard('Bills', gAppData.bills_current, 'Bills', 'current', false)}
-        ${renderListCard('Subscriptions', gAppData.subscriptions, 'Subs', null, true)}
+        ${renderListCard('Fixed', gAppData.fixed_current, 'Fixed', 'current', false, true)}
+        ${renderListCard('Bills', gAppData.bills_current, 'Bills', 'current', false, true)}
+        ${renderListCard('Subscriptions', gAppData.subscriptions, 'Subs', null, true, true)}
+      </div>
+      <div id="safety-net-box" style="margin-top:20px;display:flex;align-items:center;gap:20px;padding:14px 20px;background:var(--card-high);border:1px solid var(--border);border-radius:var(--radius-sm);opacity:0.35;transition:opacity 0.2s;">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;font-family:'Manrope',sans-serif;white-space:nowrap;">Safety net</div>
+        <div style="display:flex;gap:24px;flex:1;flex-wrap:wrap;">
+          <div>
+            <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;font-family:'Manrope',sans-serif;">Monthly</div>
+            <div id="sn-monthly" style="font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:var(--teal);">—</div>
+          </div>
+          <div>
+            <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;font-family:'Manrope',sans-serif;">3 months</div>
+            <div id="sn-3mo" style="font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:var(--teal);">—</div>
+          </div>
+        </div>
+        <div id="sn-count" style="font-size:11px;color:var(--text3);font-family:'Manrope',sans-serif;white-space:nowrap;">0 items ticked</div>
       </div>
       ${renderPotsSection('current')}
     </div>
@@ -1517,11 +1563,62 @@ function renderBudget() {
         </div>
       </div>
       <div class="grid-3">
-        ${renderListCard('Fixed', gAppData.fixed_future, 'Fixed', 'future', false)}
-        ${renderListCard('Bills', gAppData.bills_future, 'Bills', 'future', false)}
-        ${renderListCard('Subscriptions', gAppData.subscriptions, 'Subs', null, true)}
+        ${renderListCard('Fixed', gAppData.fixed_future, 'Fixed', 'future', false, false)}
+        ${renderListCard('Bills', gAppData.bills_future, 'Bills', 'future', false, false)}
+        ${renderListCard('Subscriptions', gAppData.subscriptions, 'Subs', null, true, false)}
       </div>
       ${renderPotsSection('future')}
+    </div>
+
+    <div id="bud-bonus" style="display:none;">
+      ${(() => {
+        const bonus = gAppData.bonus || { amount: 0, notes: '' };
+        const allocs = gAppData.bonus_allocations || [];
+        const allocTotal = allocs.reduce((s, a) => s + (Number(a.amount) || 0), 0);
+        const remaining = (Number(bonus.amount) || 0) - allocTotal;
+        const allocRows = allocs.map((a, idx) => `
+          <tr class="drag-row" draggable="true"
+            ondragstart="event.dataTransfer.setData('text/plain','bonus_allocations:${idx}');event.currentTarget.style.opacity='0.4';"
+            ondragend="event.currentTarget.style.opacity='1';document.querySelectorAll('.drag-row').forEach(r=>r.classList.remove('drag-over'));"
+            ondragover="event.preventDefault();event.currentTarget.classList.add('drag-over');"
+            ondragleave="event.currentTarget.classList.remove('drag-over');"
+            ondrop="event.preventDefault();event.currentTarget.classList.remove('drag-over');const [an,fi]=event.dataTransfer.getData('text/plain').split(':');reorderItem(an,+fi,${idx});">
+            <td style="width:18px;"><span class="drag-handle">⠿</span></td>
+            <td><span data-edit-list="bonus_allocations|${a.id}|name" data-type="text">${escHtml(a.name)}</span></td>
+            <td class="td-mono td-right"><span data-edit-list="bonus_allocations|${a.id}|amount" data-type="money">${fmtMoney(a.amount)}</span></td>
+            <td><button class="btn-row-del" onclick="deleteItem('bonus_allocations','${a.id}')">✕</button></td>
+          </tr>`).join('');
+        return `
+          <div class="grid-2" style="align-items:start;">
+            <div class="hero-card hero-card-teal" style="height:100%;">
+              <div class="hero-card-label">Bonus</div>
+              <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 20px rgba(0,245,212,0.5);"><span data-edit="bonus.amount" data-type="money">${fmtMoney(bonus.amount)}</span></div>
+              <div class="hero-card-sub">Click to edit your bonus amount</div>
+              <div class="hero-card-breakdown">
+                <div>
+                  <div class="hero-card-breakdown-item-label">Allocated</div>
+                  <div class="hero-card-breakdown-item-val" style="color:var(--coral);">${fmtMoney(allocTotal)}</div>
+                </div>
+                <div>
+                  <div class="hero-card-breakdown-item-label">Unallocated</div>
+                  <div class="hero-card-breakdown-item-val" style="color:${remaining < 0 ? 'var(--red)' : remaining === 0 ? 'var(--teal)' : 'rgba(255,255,255,0.6)'};">${fmtMoney(remaining)}</div>
+                </div>
+              </div>
+              ${bonus.amount > 0 ? `
+              <div class="hero-card-bar" style="margin-top:16px;">
+                <div class="hero-card-bar-track"><div class="hero-card-bar-fill" style="width:${Math.min(100,(allocTotal/Math.max(1,bonus.amount))*100)}%;background:${allocTotal > bonus.amount ? 'var(--red)' : 'var(--teal)'};box-shadow:0 0 8px rgba(0,245,212,0.4);"></div></div>
+                <div class="hero-card-bar-label">${Math.round((allocTotal/Math.max(1,bonus.amount))*100)}% allocated</div>
+              </div>` : ''}
+            </div>
+            <div class="card">
+              <div class="section-eyebrow">Allocations <span class="total-pill">${fmtMoney(allocTotal)}</span></div>
+              <table class="data-table" style="margin-top:12px;">
+                <tbody>${allocRows}</tbody>
+              </table>
+              <button class="btn-add" onclick="openAddModal('Add allocation','bonus_allocations',[['name','Where to','text',''],['amount','Amount £','money',0]])">+ Add</button>
+            </div>
+          </div>`;
+      })()}
     </div>
   `;
   document.getElementById('page-budget').innerHTML = html;
@@ -2159,6 +2256,15 @@ function switchTab(el, showSel, hideSel) {
   el.classList.add('active');
   document.querySelector(showSel).style.display = 'block';
   document.querySelector(hideSel).style.display = 'none';
+}
+/* budget three-tab switcher */
+function switchBudgetTab(el, tab) {
+  el.parentElement.querySelectorAll('.etab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  ['bud-cur','bud-fut','bud-bonus'].forEach(t => {
+    const e = document.getElementById(t);
+    if (e) e.style.display = t === tab ? 'block' : 'none';
+  });
 }
 
 /* ============================================================
