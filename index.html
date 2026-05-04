@@ -77,6 +77,13 @@ body { font-family: 'Manrope', sans-serif; background: var(--bg); color: var(--t
 .btn-export { width:100%;padding:8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:var(--radius-sm);color:rgba(255,255,255,0.6);font-size:11px;cursor:pointer;font-family:'Manrope', sans-serif;transition:all 0.15s; }
 .btn-export:hover { background:rgba(255,255,255,0.14);color:#fff; }
 
+/* PRIVACY MODE */
+.btn-privacy { width:100%;padding:8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:var(--radius-sm);color:rgba(255,255,255,0.6);font-size:11px;cursor:pointer;font-family:'Manrope', sans-serif;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:6px; }
+.btn-privacy:hover { background:rgba(255,255,255,0.14);color:#fff; }
+.btn-privacy.active { background:rgba(255,230,0,0.15);border-color:rgba(255,230,0,0.4);color:var(--amber); }
+.privacy-on [data-private] { color:transparent !important;text-shadow:none !important;background:rgba(255,255,255,0.12);border-radius:4px;letter-spacing:-1px;user-select:none;pointer-events:none;display:inline-block;min-width:60px; }
+.privacy-on [data-private]::after { content:'••••••';color:rgba(255,255,255,0.25);letter-spacing:2px;font-size:0.85em; }
+
 /* HAMBURGER */
 .hamburger { display:none;position:fixed;top:14px;left:14px;z-index:200;background:#0e0e0e;border:none;border-radius:8px;padding:8px 10px;cursor:pointer;color:#e5e2e1;font-size:16px; }
 .sidebar-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:90; }
@@ -505,6 +512,9 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
     </div>
     <div style="margin-top:6px;">
       <button class="btn-export" onclick="snapshotNow()" title="Press on payday once you've updated your balances — locks in this month's savings, investments and debt for your trend charts">📸 Save monthly snapshot</button>
+    </div>
+    <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);">
+      <button class="btn-privacy" id="btn-privacy" onclick="togglePrivacy()">👁 Hide totals</button>
     </div>
   </div>
 </nav>
@@ -1139,6 +1149,15 @@ function toggleSidebar() {
   document.getElementById('sidebar-overlay').classList.toggle('open');
 }
 
+let privacyOn = false;
+function togglePrivacy() {
+  privacyOn = !privacyOn;
+  document.body.classList.toggle('privacy-on', privacyOn);
+  const btn = document.getElementById('btn-privacy');
+  btn.classList.toggle('active', privacyOn);
+  btn.textContent = privacyOn ? '👁 Show totals' : '👁 Hide totals';
+}
+
 /* ============================================================
    COLOUR MIGRATION — rewrites stale colour values in Drive data
    Runs once on every load. Safe to run repeatedly.
@@ -1250,12 +1269,12 @@ function renderDashboard() {
 
     <div class="networth-banner">
       <div class="nw-label">Estimated Net Worth</div>
-      <div class="nw-val" style="color:var(--teal);text-shadow:0 0 28px rgba(0,245,212,0.6), 0 0 60px rgba(0,245,212,0.2);">${fmtMoneyD(netWorth())}</div>
+      <div class="nw-val" style="color:var(--teal);text-shadow:0 0 28px rgba(0,245,212,0.6), 0 0 60px rgba(0,245,212,0.2);"><span data-private>${fmtMoneyD(netWorth())}</span></div>
       <div class="nw-sub">Savings + investments minus credit debt · live</div>
       <div class="nw-breakdown">
-        <div><div class="nw-item-label">Savings</div><div class="nw-item-val" style="color:var(--teal);">${fmtMoney(totalSavings())}</div></div>
-        <div><div class="nw-item-label">Investments</div><div class="nw-item-val" style="color:var(--amber);">${fmtMoney(totalInvestments())}</div></div>
-        <div><div class="nw-item-label">Credit Debt</div><div class="nw-item-val nw-negative">-${fmtMoney(totalDebt())}</div></div>
+        <div><div class="nw-item-label">Savings</div><div class="nw-item-val" style="color:var(--teal);"><span data-private>${fmtMoney(totalSavings())}</span></div></div>
+        <div><div class="nw-item-label">Investments</div><div class="nw-item-val" style="color:var(--amber);"><span data-private>${fmtMoney(totalInvestments())}</span></div></div>
+        <div><div class="nw-item-label">Credit Debt</div><div class="nw-item-val nw-negative"><span data-private>-${fmtMoney(totalDebt())}</span></div></div>
       </div>
     </div>
 
@@ -1268,13 +1287,13 @@ function renderDashboard() {
       </div>
       <div class="stat-card-accent" style="--accent-color:var(--coral);">
         <div class="stat-eyebrow">Monthly Outgoings</div>
-        <div class="stat-val" style="color:var(--coral);">${fmtMoney(out)}</div>
+        <div class="stat-val" style="color:var(--coral);"><span data-private>${fmtMoney(out)}</span></div>
         <div class="stat-label">Fixed + bills + subs + pots</div>
         <div class="stat-sub">${fmtMoney(totalBills('current'))} bills · ${fmtMoney(totalSubsActive())} subs · ${fmtMoney(totalPotsMonthly('current'))} pots</div>
       </div>
       <div class="stat-card-accent" style="--accent-color:var(--amber);">
         <div class="stat-eyebrow">Remaining</div>
-        <div class="stat-val" style="color:var(--amber);">${fmtMoneyD(rem)}</div>
+        <div class="stat-val" style="color:var(--amber);"><span data-private>${fmtMoneyD(rem)}</span></div>
         <div class="stat-label">After all fixed outgoings</div>
         <div class="stat-sub">Updates live as you edit</div>
       </div>
@@ -1601,12 +1620,12 @@ function renderSavings() {
     <div class="grid-2 stats-grid" style="margin-bottom:24px;">
       <div class="stat-card-accent" style="--accent-color:var(--teal);">
         <div class="stat-eyebrow">Total Savings</div>
-        <div class="stat-val" style="color:var(--teal);">${fmtMoney(totalGoalsCurrent())}</div>
+        <div class="stat-val" style="color:var(--teal);"><span data-private>${fmtMoney(totalGoalsCurrent())}</span></div>
         <div class="stat-label">Across all savings goals</div>
       </div>
       <div class="stat-card-accent" style="--accent-color:var(--amber);">
         <div class="stat-eyebrow">Target</div>
-        <div class="stat-val" style="color:var(--amber);">${fmtMoney(sum(gAppData.savings_goals,'target'))}</div>
+        <div class="stat-val" style="color:var(--amber);"><span data-private>${fmtMoney(sum(gAppData.savings_goals,'target'))}</span></div>
         <div class="stat-label">${(() => { const t = sum(gAppData.savings_goals,'target'); const c = totalGoalsCurrent(); return t > 0 ? Math.round(c / t * 100) + '% of total target' : 'Set targets on goals below'; })()}</div>
       </div>
     </div>
@@ -1683,7 +1702,7 @@ function renderCredit() {
     <div class="page-eyebrow">Assets</div>
     <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;">
       <div class="page-title">Credit & Investing</div>
-      <div style="font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:var(--red);">Total owed: -${fmtMoney(totalDebt())}</div>
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:var(--red);">Total owed: <span data-private>-${fmtMoney(totalDebt())}</span></div>
     </div>
     <div class="page-sub">Live balances, totals, and per-card purchases</div>
 
@@ -1712,7 +1731,7 @@ function renderCredit() {
           return `
             <div class="credit-card" style="background:${colorBg};border:${borderStyle};box-shadow:${cardGlow};">
               <div class="credit-card-bank" style="color:rgba(255,255,255,0.5);letter-spacing:0.12em;"><span data-edit-list="credit_cards|${c.id}|name" data-type="text">${escHtml(c.name)}</span></div>
-              <div class="credit-card-balance" style="color:${accentColor};text-shadow:0 0 20px ${accentColor}99, 0 0 40px ${accentColor}33;">-${fmtMoney(cardTotal)}</div>
+              <div class="credit-card-balance" style="color:${accentColor};text-shadow:0 0 20px ${accentColor}99, 0 0 40px ${accentColor}33;"><span data-private>-${fmtMoney(cardTotal)}</span></div>
               <div class="credit-card-limit" style="color:rgba(255,255,255,0.4);"><span data-edit-list="credit_cards|${c.id}|limit" data-type="money">${fmtMoney(c.limit)}</span> limit · <span data-edit-list="credit_cards|${c.id}|rate_info" data-type="text">${escHtml(c.rate_info || '')}</span></div>
               <div class="credit-card-util">
                 <div class="credit-bar-track" style="background:rgba(255,255,255,0.08);"><div class="credit-bar-fill" style="width:${Math.min(100, util)}%;background:${barFill};box-shadow:0 0 8px ${barFill}88;"></div></div>
@@ -1786,11 +1805,11 @@ function renderCredit() {
 
     <div id="cred-invest" style="display:none;">
       <div class="grid-2 stats-grid" style="margin-bottom:24px;">
-        <div class="stat-card-accent" style="--accent-color:var(--teal);"><div class="stat-eyebrow">Total Investments</div><div class="stat-val" style="color:var(--teal);">${fmtMoney(totalInvestments())}</div><div class="stat-label">Live total · all accounts</div></div>
+        <div class="stat-card-accent" style="--accent-color:var(--teal);"><div class="stat-eyebrow">Total Investments</div><div class="stat-val" style="color:var(--teal);"><span data-private>${fmtMoney(totalInvestments())}</span></div><div class="stat-label">Live total · all accounts</div></div>
         <div class="stat-card-accent" style="--accent-color:var(--amber);"><div class="stat-eyebrow">Monthly Target</div><div class="stat-val" style="color:var(--amber);">${fmtMoney(sum(gAppData.investments,'monthly_target'))}</div><div class="stat-label">Across all accounts</div></div>
       </div>
       <div class="card">
-        <div class="section-eyebrow">Investment Accounts <span class="total-pill">${fmtMoney(totalInvestments())}</span></div>
+        <div class="section-eyebrow">Investment Accounts <span class="total-pill" data-private>${fmtMoney(totalInvestments())}</span></div>
         <div style="margin-top:14px;">
           ${gAppData.investments.map(i => `
             <div class="invest-row">
@@ -1804,11 +1823,11 @@ function renderCredit() {
 
     <div id="cred-pension" style="display:none;">
       <div class="grid-2 stats-grid" style="margin-bottom:24px;">
-        <div class="stat-card-accent" style="--accent-color:var(--teal);"><div class="stat-eyebrow">Total Pension Value</div><div class="stat-val" style="color:var(--teal);">${fmtMoney(totalPension())}</div><div class="stat-label">Live total · all pots</div></div>
+        <div class="stat-card-accent" style="--accent-color:var(--teal);"><div class="stat-eyebrow">Total Pension Value</div><div class="stat-val" style="color:var(--teal);"><span data-private>${fmtMoney(totalPension())}</span></div><div class="stat-label">Live total · all pots</div></div>
         <div class="stat-card-accent" style="--accent-color:var(--amber);"><div class="stat-eyebrow">Total Monthly Contributions</div><div class="stat-val" style="color:var(--amber);">${fmtMoney(sum(gAppData.pension,'monthly_contribution') + sum(gAppData.pension,'employer_contribution'))}</div><div class="stat-label">Me + Employer</div></div>
       </div>
       <div class="card">
-        <div class="section-eyebrow">Pension Pots <span class="total-pill">${fmtMoney(totalPension())}</span></div>
+        <div class="section-eyebrow">Pension Pots <span class="total-pill" data-private>${fmtMoney(totalPension())}</span></div>
         <div style="margin-top:14px;">
           ${gAppData.pension.map(p => `
             <div class="invest-row">
@@ -1822,8 +1841,8 @@ function renderCredit() {
 
     <div id="cred-mortgage" style="display:none;">
       <div class="grid-2 stats-grid" style="margin-bottom:24px;">
-        <div class="stat-card-accent" style="--accent-color:var(--coral);"><div class="stat-eyebrow">Mortgage Balance</div><div class="stat-val" style="color:var(--coral);"><span data-edit="mortgage.balance" data-type="money">${fmtMoney(gAppData.mortgage.balance)}</span></div><div class="stat-label"><span data-edit="mortgage.lender" data-type="text">${escHtml(gAppData.mortgage.lender)}</span></div></div>
-        <div class="stat-card-accent" style="--accent-color:var(--coral);"><div class="stat-eyebrow">Student Loan</div><div class="stat-val" style="color:var(--coral);"><span data-edit="student_loan.balance" data-type="money">${fmtMoney(gAppData.student_loan.balance)}</span></div><div class="stat-label"><span data-edit="student_loan.plan" data-type="text">${escHtml(gAppData.student_loan.plan)}</span> · <span data-edit="student_loan.rate" data-type="number">${gAppData.student_loan.rate}</span>% · <span data-edit="student_loan.monthly" data-type="money">${fmtMoney(gAppData.student_loan.monthly)}</span>/mo</div></div>
+        <div class="stat-card-accent" style="--accent-color:var(--coral);"><div class="stat-eyebrow">Mortgage Balance</div><div class="stat-val" style="color:var(--coral);"><span data-private><span data-edit="mortgage.balance" data-type="money">${fmtMoney(gAppData.mortgage.balance)}</span></span></div><div class="stat-label"><span data-edit="mortgage.lender" data-type="text">${escHtml(gAppData.mortgage.lender)}</span></div></div>
+        <div class="stat-card-accent" style="--accent-color:var(--coral);"><div class="stat-eyebrow">Student Loan</div><div class="stat-val" style="color:var(--coral);"><span data-private><span data-edit="student_loan.balance" data-type="money">${fmtMoney(gAppData.student_loan.balance)}</span></span></div><div class="stat-label"><span data-edit="student_loan.plan" data-type="text">${escHtml(gAppData.student_loan.plan)}</span> · <span data-edit="student_loan.rate" data-type="number">${gAppData.student_loan.rate}</span>% · <span data-edit="student_loan.monthly" data-type="money">${fmtMoney(gAppData.student_loan.monthly)}</span>/mo</div></div>
       </div>
       <div class="grid-2">
         <div class="card">
