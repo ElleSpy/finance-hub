@@ -281,6 +281,41 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
 .nw-positive { color:var(--teal); }
 .nw-negative { color:#F4816A; }
 
+/* HERO CARDS — credit-card style used on dashboard, budget, savings */
+.hero-cards-row { display:grid;gap:16px;margin-bottom:24px; }
+.hero-cards-row.cols-2 { grid-template-columns:1fr 1fr; }
+.hero-cards-row.cols-3 { grid-template-columns:1fr 1fr 1fr; }
+.hero-card { border-radius:var(--radius);padding:22px 24px;color:#e5e2e1;position:relative;overflow:hidden; }
+.hero-card::before { content:'';position:absolute;top:-50px;right:-50px;width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,0.04);pointer-events:none; }
+.hero-card::after { content:'';position:absolute;bottom:-30px;left:-30px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,0.025);pointer-events:none; }
+.hero-card-label { font-size:10px;color:rgba(255,255,255,0.4);font-family:'Manrope', sans-serif;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px; }
+.hero-card-val { font-family:'Space Grotesk', sans-serif;font-size:36px;font-weight:700;line-height:1.1; }
+.hero-card-sub { font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px; }
+.hero-card-bar { margin-top:14px; }
+.hero-card-bar-track { height:3px;background:rgba(255,255,255,0.1);border-radius:999px;overflow:hidden; }
+.hero-card-bar-fill { height:100%;border-radius:999px; }
+.hero-card-bar-label { font-size:10px;color:rgba(255,255,255,0.3);margin-top:4px;font-family:'Manrope', sans-serif; }
+.hero-card-breakdown { display:flex;gap:20px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.07);flex-wrap:wrap; }
+.hero-card-breakdown-item-label { font-size:9px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.1em; }
+.hero-card-breakdown-item-val { font-family:'Space Grotesk', sans-serif;font-size:15px;font-weight:600;margin-top:2px; }
+/* teal variant */
+.hero-card-teal { background:linear-gradient(145deg,#021310 0%,#042e26 100%);border:1px solid rgba(0,245,212,0.4);box-shadow:0 0 40px rgba(0,245,212,0.15), 0 2px 16px rgba(0,0,0,0.5); }
+/* coral/red variant */
+.hero-card-coral { background:linear-gradient(145deg,#1a0a08 0%,#2e1208 100%);border:1px solid rgba(255,95,87,0.4);box-shadow:0 0 40px rgba(255,95,87,0.14), 0 2px 16px rgba(0,0,0,0.5); }
+/* amber variant */
+.hero-card-amber { background:linear-gradient(145deg,#181200 0%,#2e2100 100%);border:1px solid rgba(255,230,0,0.38);box-shadow:0 0 40px rgba(255,230,0,0.13), 0 2px 16px rgba(0,0,0,0.5); }
+/* purple variant */
+.hero-card-purple { background:linear-gradient(145deg,#130820 0%,#220a36 100%);border:1px solid rgba(212,77,255,0.4);box-shadow:0 0 40px rgba(212,77,255,0.16), 0 2px 16px rgba(0,0,0,0.5); }
+/* blue variant */
+.hero-card-blue { background:linear-gradient(145deg,#03101f 0%,#061a2e 100%);border:1px solid rgba(0,207,255,0.4);box-shadow:0 0 40px rgba(0,207,255,0.15), 0 2px 16px rgba(0,0,0,0.5); }
+/* hero card editable overrides */
+.hero-card [data-edit]:hover,.hero-card [data-edit-list]:hover { background:rgba(255,255,255,0.1);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.3); }
+.hero-card [data-edit]:focus,.hero-card [data-edit-list]:focus { background:rgba(255,255,255,0.15);box-shadow:inset 0 0 0 1.5px #fff; }
+@media(max-width:700px) {
+  .hero-cards-row.cols-2,.hero-cards-row.cols-3 { grid-template-columns:1fr; }
+  .hero-card-val { font-size:28px; }
+}
+
 /* INLINE EDITABLE */
 [data-edit],[data-edit-list] { cursor:text;border-radius:4px;padding:0 3px;margin:0 -3px;transition:background 0.12s,box-shadow 0.12s;outline:none;display:inline-block;min-width:24px; }
 [data-edit]:hover,[data-edit-list]:hover { background:rgba(255,255,255,0.06);box-shadow:inset 0 0 0 1px rgba(0,245,212,0.3); }
@@ -1288,35 +1323,46 @@ function renderDashboard() {
     <div class="page-title">Dashboard</div>
     <div class="page-sub">Your live financial snapshot — every number computes from your data</div>
 
-    <div class="networth-banner">
-      <div class="nw-label">Estimated Net Worth</div>
-      <div class="nw-val" style="color:var(--teal);text-shadow:0 0 28px rgba(0,245,212,0.6), 0 0 60px rgba(0,245,212,0.2);"><span data-private>${fmtMoneyD(netWorth())}</span></div>
-      <div class="nw-sub">Savings + investments minus credit debt · live</div>
-      <div class="nw-breakdown">
-        <div><div class="nw-item-label">Savings</div><div class="nw-item-val" style="color:var(--teal);"><span data-private>${fmtMoney(totalSavings())}</span></div></div>
-        <div><div class="nw-item-label">Investments</div><div class="nw-item-val" style="color:var(--amber);"><span data-private>${fmtMoney(totalInvestments())}</span></div></div>
-        <div><div class="nw-item-label">Credit Debt</div><div class="nw-item-val nw-negative"><span data-private>-${fmtMoney(totalDebt())}</span></div></div>
+    <div class="hero-cards-row cols-2" style="margin-bottom:24px;">
+      <div class="hero-card hero-card-teal" style="grid-column:1/-1;">
+        <div class="hero-card-label">Estimated Net Worth</div>
+        <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 28px rgba(0,245,212,0.55), 0 0 60px rgba(0,245,212,0.2);font-size:52px;"><span data-private>${fmtMoneyD(netWorth())}</span></div>
+        <div class="hero-card-sub">Savings + investments minus credit debt · live</div>
+        <div class="hero-card-breakdown">
+          <div><div class="hero-card-breakdown-item-label">Savings</div><div class="hero-card-breakdown-item-val" style="color:var(--teal);"><span data-private>${fmtMoney(totalSavings())}</span></div></div>
+          <div><div class="hero-card-breakdown-item-label">Investments</div><div class="hero-card-breakdown-item-val" style="color:var(--amber);"><span data-private>${fmtMoney(totalInvestments())}</span></div></div>
+          <div><div class="hero-card-breakdown-item-label">Credit Debt</div><div class="hero-card-breakdown-item-val" style="color:#F4816A;"><span data-private>-${fmtMoney(totalDebt())}</span></div></div>
+        </div>
       </div>
     </div>
 
-    <div class="grid-3 stats-grid" style="margin-bottom:24px;">
-      <div class="stat-card-accent" style="--accent-color:var(--purple);">
-        <div class="stat-eyebrow">Monthly Income</div>
-        <div class="stat-val" style="color:var(--purple);">${fmtMoney(inc.current_takehome)}</div>
-        <div class="stat-label">Take-home · <span data-edit="income.current_salary" data-type="money">${fmtMoney(inc.current_salary)}</span> salary</div>
-        <div class="stat-sub" data-edit="income.notes" data-type="text">${escHtml(inc.notes || '')}</div>
+    <div class="hero-cards-row cols-3" style="margin-bottom:24px;">
+      <div class="hero-card hero-card-purple">
+        <div class="hero-card-label">Monthly Income</div>
+        <div class="hero-card-val" style="color:var(--purple);text-shadow:0 0 20px rgba(212,77,255,0.5);">${fmtMoney(inc.current_takehome)}</div>
+        <div class="hero-card-sub">Take-home · <span data-edit="income.current_salary" data-type="money">${fmtMoney(inc.current_salary)}</span> salary</div>
+        <div class="hero-card-breakdown">
+          <div><div class="hero-card-breakdown-item-label">Notes</div><div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px;" data-edit="income.notes" data-type="text">${escHtml(inc.notes || 'click to add…')}</div></div>
+        </div>
       </div>
-      <div class="stat-card-accent" style="--accent-color:var(--coral);">
-        <div class="stat-eyebrow">Monthly Outgoings</div>
-        <div class="stat-val" style="color:var(--coral);">${fmtMoney(out)}</div>
-        <div class="stat-label">Fixed + bills + subs + pots</div>
-        <div class="stat-sub">${fmtMoney(totalBills('current'))} bills · ${fmtMoney(totalSubsActive())} subs · ${fmtMoney(totalPotsMonthly('current'))} pots</div>
+      <div class="hero-card hero-card-coral">
+        <div class="hero-card-label">Monthly Outgoings</div>
+        <div class="hero-card-val" style="color:var(--coral);text-shadow:0 0 20px rgba(255,95,87,0.45);">${fmtMoney(out)}</div>
+        <div class="hero-card-sub">Fixed + bills + subs + pots</div>
+        <div class="hero-card-breakdown">
+          <div><div class="hero-card-breakdown-item-label">Bills</div><div class="hero-card-breakdown-item-val" style="color:rgba(255,255,255,0.6);">${fmtMoney(totalBills('current'))}</div></div>
+          <div><div class="hero-card-breakdown-item-label">Subs</div><div class="hero-card-breakdown-item-val" style="color:rgba(255,255,255,0.6);">${fmtMoney(totalSubsActive())}</div></div>
+          <div><div class="hero-card-breakdown-item-label">Pots</div><div class="hero-card-breakdown-item-val" style="color:rgba(255,255,255,0.6);">${fmtMoney(totalPotsMonthly('current'))}</div></div>
+        </div>
       </div>
-      <div class="stat-card-accent" style="--accent-color:var(--amber);">
-        <div class="stat-eyebrow">Remaining</div>
-        <div class="stat-val" style="color:var(--amber);">${fmtMoneyD(rem)}</div>
-        <div class="stat-label">After all fixed outgoings</div>
-        <div class="stat-sub">Updates live as you edit</div>
+      <div class="hero-card hero-card-amber">
+        <div class="hero-card-label">Remaining</div>
+        <div class="hero-card-val" style="color:var(--amber);text-shadow:0 0 20px rgba(255,230,0,0.4);">${fmtMoneyD(rem)}</div>
+        <div class="hero-card-sub">After all fixed outgoings</div>
+        <div class="hero-card-bar">
+          <div class="hero-card-bar-track"><div class="hero-card-bar-fill" style="width:${Math.min(100, (out/Math.max(1,inc.current_takehome))*100)}%;background:${out>inc.current_takehome?'var(--red)':out>inc.current_takehome*0.9?'var(--amber)':'var(--teal)'};box-shadow:0 0 6px ${out>inc.current_takehome?'rgba(255,59,92,0.6)':'rgba(255,230,0,0.5)'};"></div></div>
+          <div class="hero-card-bar-label">${Math.round((out/Math.max(1,inc.current_takehome))*100)}% of income committed</div>
+        </div>
       </div>
     </div>
 
@@ -1407,11 +1453,24 @@ function renderBudget() {
     </div>
 
     <div id="bud-cur">
-      <div class="grid-4 stats-grid" style="margin-bottom:24px;">
-        <div class="stat-card-accent" style="--accent-color:var(--purple);"><div class="stat-eyebrow">Current Salary</div><div class="stat-val" style="color:var(--purple);"><span data-edit="income.current_salary" data-type="money">${fmtMoney(gAppData.income.current_salary)}</span></div><div class="stat-label">Per year · click to edit</div></div>
-        <div class="stat-card-accent" style="--accent-color:var(--teal);"><div class="stat-eyebrow">Take-home</div><div class="stat-val" style="color:var(--teal);"><span data-edit="income.current_takehome" data-type="money">${fmtMoney(gAppData.income.current_takehome)}</span></div><div class="stat-label">Per month · click to edit</div></div>
-        <div class="stat-card-accent" style="--accent-color:var(--coral);"><div class="stat-eyebrow">Outgoings</div><div class="stat-val" style="color:var(--coral);">${fmtMoney(totalOutgoings('current'))}</div><div class="stat-label">Fixed + Bills + Subs + Pots</div></div>
-        <div class="stat-card-accent" style="--accent-color:var(--amber);"><div class="stat-eyebrow">Remaining</div><div class="stat-val" style="color:var(--amber);">${fmtMoneyD(remainingCurrent())}</div><div class="stat-label">After outgoings</div></div>
+      <div class="hero-cards-row cols-2" style="margin-bottom:24px;">
+        <div class="hero-card hero-card-teal">
+          <div class="hero-card-label">Take-home</div>
+          <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 20px rgba(0,245,212,0.5);"><span data-edit="income.current_takehome" data-type="money">${fmtMoney(gAppData.income.current_takehome)}</span></div>
+          <div class="hero-card-sub">Per month · click to edit</div>
+          <div class="hero-card-breakdown">
+            <div><div class="hero-card-breakdown-item-label">Annual Salary</div><div class="hero-card-breakdown-item-val" style="color:rgba(255,255,255,0.55);"><span data-edit="income.current_salary" data-type="money">${fmtMoney(gAppData.income.current_salary)}</span></div></div>
+          </div>
+        </div>
+        <div class="hero-card hero-card-amber">
+          <div class="hero-card-label">Remaining</div>
+          <div class="hero-card-val" style="color:var(--amber);text-shadow:0 0 20px rgba(255,230,0,0.4);">${fmtMoneyD(remainingCurrent())}</div>
+          <div class="hero-card-sub">After all outgoings</div>
+          <div class="hero-card-bar">
+            <div class="hero-card-bar-track"><div class="hero-card-bar-fill" style="width:${Math.min(100,(totalOutgoings('current')/Math.max(1,gAppData.income.current_takehome))*100)}%;background:${totalOutgoings('current')>gAppData.income.current_takehome?'var(--red)':'var(--amber)'};box-shadow:0 0 6px rgba(255,230,0,0.4);"></div></div>
+            <div class="hero-card-bar-label">Outgoings ${fmtMoney(totalOutgoings('current'))} of ${fmtMoney(gAppData.income.current_takehome)} take-home</div>
+          </div>
+        </div>
       </div>
       <div class="grid-3">
         ${renderListCard('Fixed', gAppData.fixed_current, 'Fixed', 'current', false)}
@@ -1422,11 +1481,25 @@ function renderBudget() {
     </div>
 
     <div id="bud-fut" style="display:none;">
-      <div class="grid-4 stats-grid" style="margin-bottom:24px;">
-        <div class="stat-card-accent" style="--accent-color:var(--purple);"><div class="stat-eyebrow">Future Salary</div><div class="stat-val" style="color:var(--purple);"><span data-edit="income.future_salary" data-type="money">${fmtMoney(gAppData.income.future_salary)}</span></div><div class="stat-label">Per year · click to edit</div></div>
-        <div class="stat-card-accent" style="--accent-color:var(--teal);"><div class="stat-eyebrow">Future Take-home</div><div class="stat-val" style="color:var(--teal);"><span data-edit="income.future_takehome" data-type="money">${fmtMoney(gAppData.income.future_takehome)}</span></div><div class="stat-label">Per month · click to edit</div></div>
-        <div class="stat-card-accent" style="--accent-color:var(--coral);"><div class="stat-eyebrow">Outgoings</div><div class="stat-val" style="color:var(--coral);">${fmtMoney(totalOutgoings('future'))}</div><div class="stat-label">Fixed + Bills + Subs + Pots</div></div>
-        <div class="stat-card-accent" style="--accent-color:var(--amber);"><div class="stat-eyebrow">Remaining</div><div class="stat-val" style="color:var(--amber);">${fmtMoneyD(remainingFuture())}</div><div class="stat-label">After outgoings</div></div>
+      <div class="hero-cards-row cols-2" style="margin-bottom:24px;">
+        <div class="hero-card hero-card-blue">
+          <div class="hero-card-label">Future Take-home</div>
+          <div class="hero-card-val" style="color:var(--blue);text-shadow:0 0 20px rgba(0,207,255,0.5);"><span data-edit="income.future_takehome" data-type="money">${fmtMoney(gAppData.income.future_takehome)}</span></div>
+          <div class="hero-card-sub">Per month · click to edit</div>
+          <div class="hero-card-breakdown">
+            <div><div class="hero-card-breakdown-item-label">Annual Salary</div><div class="hero-card-breakdown-item-val" style="color:rgba(255,255,255,0.55);"><span data-edit="income.future_salary" data-type="money">${fmtMoney(gAppData.income.future_salary)}</span></div></div>
+            <div><div class="hero-card-breakdown-item-label">Uplift</div><div class="hero-card-breakdown-item-val" style="color:var(--teal);">+${fmtMoney(gAppData.income.future_takehome - gAppData.income.current_takehome)}/mo</div></div>
+          </div>
+        </div>
+        <div class="hero-card hero-card-amber">
+          <div class="hero-card-label">Remaining</div>
+          <div class="hero-card-val" style="color:var(--amber);text-shadow:0 0 20px rgba(255,230,0,0.4);">${fmtMoneyD(remainingFuture())}</div>
+          <div class="hero-card-sub">After all outgoings</div>
+          <div class="hero-card-bar">
+            <div class="hero-card-bar-track"><div class="hero-card-bar-fill" style="width:${Math.min(100,(totalOutgoings('future')/Math.max(1,gAppData.income.future_takehome))*100)}%;background:${totalOutgoings('future')>gAppData.income.future_takehome?'var(--red)':'var(--amber)'};box-shadow:0 0 6px rgba(255,230,0,0.4);"></div></div>
+            <div class="hero-card-bar-label">Outgoings ${fmtMoney(totalOutgoings('future'))} of ${fmtMoney(gAppData.income.future_takehome)} take-home</div>
+          </div>
+        </div>
       </div>
       <div class="grid-3">
         ${renderListCard('Fixed', gAppData.fixed_future, 'Fixed', 'future', false)}
@@ -1638,18 +1711,31 @@ function renderSavings() {
     <div class="page-title">Savings</div>
     <div class="page-sub">Goals, pots, and history — all totals computed live</div>
 
-    <div class="grid-2 stats-grid" style="margin-bottom:24px;">
-      <div class="stat-card-accent" style="--accent-color:var(--teal);">
-        <div class="stat-eyebrow">Total Savings</div>
-        <div class="stat-val" style="color:var(--teal);"><span data-private>${fmtMoney(totalGoalsCurrent())}</span></div>
-        <div class="stat-label">Across all savings goals</div>
-      </div>
-      <div class="stat-card-accent" style="--accent-color:var(--amber);">
-        <div class="stat-eyebrow">Target</div>
-        <div class="stat-val" style="color:var(--amber);"><span data-private>${fmtMoney(sum(gAppData.savings_goals,'target'))}</span></div>
-        <div class="stat-label">${(() => { const t = sum(gAppData.savings_goals,'target'); const c = totalGoalsCurrent(); return t > 0 ? Math.round(c / t * 100) + '% of total target' : 'Set targets on goals below'; })()}</div>
-      </div>
-    </div>
+    ${(() => {
+      const totalCurrent = totalGoalsCurrent();
+      const totalTarget = sum(gAppData.savings_goals,'target');
+      const pct = totalTarget > 0 ? Math.min(100, Math.round(totalCurrent / totalTarget * 100)) : 0;
+      return `<div class="hero-cards-row cols-2" style="margin-bottom:24px;">
+        <div class="hero-card hero-card-teal">
+          <div class="hero-card-label">Total Savings</div>
+          <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 24px rgba(0,245,212,0.5);"><span data-private>${fmtMoney(totalCurrent)}</span></div>
+          <div class="hero-card-sub">Across all savings goals</div>
+          <div class="hero-card-bar">
+            <div class="hero-card-bar-track"><div class="hero-card-bar-fill" style="width:${pct}%;background:var(--teal);box-shadow:0 0 8px rgba(0,245,212,0.5);"></div></div>
+            <div class="hero-card-bar-label">${pct}% of total target reached</div>
+          </div>
+        </div>
+        <div class="hero-card hero-card-amber">
+          <div class="hero-card-label">Total Target</div>
+          <div class="hero-card-val" style="color:var(--amber);text-shadow:0 0 20px rgba(255,230,0,0.4);"><span data-private>${fmtMoney(totalTarget)}</span></div>
+          <div class="hero-card-sub">${totalTarget > 0 ? pct + '% achieved · ' + fmtMoney(totalTarget - totalCurrent) + ' to go' : 'Set targets on goals below'}</div>
+          <div class="hero-card-breakdown">
+            <div><div class="hero-card-breakdown-item-label">Goals</div><div class="hero-card-breakdown-item-val" style="color:rgba(255,255,255,0.55);">${gAppData.savings_goals.length}</div></div>
+            <div><div class="hero-card-breakdown-item-label">Complete</div><div class="hero-card-breakdown-item-val" style="color:var(--teal);">${gAppData.savings_goals.filter(g => g.target > 0 && Number(g.current) >= Number(g.target)).length}</div></div>
+          </div>
+        </div>
+      </div>`;
+    })()}
 
     <div class="grid-2">
       <div class="card">
