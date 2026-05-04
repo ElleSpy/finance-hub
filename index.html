@@ -81,8 +81,29 @@ body { font-family: 'Manrope', sans-serif; background: var(--bg); color: var(--t
 .btn-privacy { width:100%;padding:8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:var(--radius-sm);color:rgba(255,255,255,0.6);font-size:11px;cursor:pointer;font-family:'Manrope', sans-serif;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:6px; }
 .btn-privacy:hover { background:rgba(255,255,255,0.14);color:#fff; }
 .btn-privacy.active { background:rgba(255,230,0,0.15);border-color:rgba(255,230,0,0.4);color:var(--amber); }
-.privacy-on [data-private] { color:transparent !important;text-shadow:none !important;background:rgba(255,255,255,0.12);border-radius:4px;letter-spacing:-1px;user-select:none;pointer-events:none;display:inline-block;min-width:60px; }
-.privacy-on [data-private]::after { content:'••••••';color:rgba(255,255,255,0.25);letter-spacing:2px;font-size:0.85em; }
+
+.privacy-on [data-private] {
+  position: relative;
+  display: inline-block;
+  color: transparent !important;
+  text-shadow: none !important;
+  filter: blur(8px);
+  user-select: none;
+  pointer-events: none;
+  border-radius: 8px;
+  transition: filter 0.3s ease;
+}
+.privacy-on [data-private]::after {
+  content: '🔒';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.65em;
+  filter: blur(0);
+  color: rgba(255,255,255,0.5);
+  pointer-events: none;
+}
 
 /* HAMBURGER */
 .hamburger { display:none;position:fixed;top:14px;left:14px;z-index:200;background:#0e0e0e;border:none;border-radius:8px;padding:8px 10px;cursor:pointer;color:#e5e2e1;font-size:16px; }
@@ -1287,13 +1308,13 @@ function renderDashboard() {
       </div>
       <div class="stat-card-accent" style="--accent-color:var(--coral);">
         <div class="stat-eyebrow">Monthly Outgoings</div>
-        <div class="stat-val" style="color:var(--coral);"><span data-private>${fmtMoney(out)}</span></div>
+        <div class="stat-val" style="color:var(--coral);">${fmtMoney(out)}</div>
         <div class="stat-label">Fixed + bills + subs + pots</div>
         <div class="stat-sub">${fmtMoney(totalBills('current'))} bills · ${fmtMoney(totalSubsActive())} subs · ${fmtMoney(totalPotsMonthly('current'))} pots</div>
       </div>
       <div class="stat-card-accent" style="--accent-color:var(--amber);">
         <div class="stat-eyebrow">Remaining</div>
-        <div class="stat-val" style="color:var(--amber);"><span data-private>${fmtMoneyD(rem)}</span></div>
+        <div class="stat-val" style="color:var(--amber);">${fmtMoneyD(rem)}</div>
         <div class="stat-label">After all fixed outgoings</div>
         <div class="stat-sub">Updates live as you edit</div>
       </div>
