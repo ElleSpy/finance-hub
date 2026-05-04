@@ -2259,14 +2259,25 @@ function importAmexCSV(event) {
       const lines = e.target.result.split('\n').map(l => l.trim()).filter(Boolean);
       if (lines.length < 2) { showToast('CSV appears empty'); return; }
 
-      // Detect header row — Amex CSVs sometimes start with a title row
-      // Look for a row containing "Date" or "date"
+      // Find header row
       let startIdx = 0;
       for (let i = 0; i < Math.min(5, lines.length); i++) {
-        if (lines[i].toLowerCase().includes('date')) { startIdx = i + 1; break; }
+        if (lines[i].toLowerCase().includes('transaction date') || lines[i].toLowerCase().includes('date')) {
+          startIdx = i + 1; break;
+        }
       }
 
-      // Build a dedup set from existing Amex transactions
+      // Detect column positions from header
+      const headerCols = parseCSVRow(lines[startIdx - 1]).map(h => h.replace(/"/g,'').trim().toLowerCase());
+      const iDate = headerCols.findIndex(h => h.includes('transaction date') || h === 'date');
+      const iDesc = headerCols.findIndex(h => h.includes('description'));
+      const iAmt  = headerCols.findIndex(h => h.includes('amount'));
+
+      if (iDate === -1 || iDesc === -1 || iAmt === -1) {
+        showToast('Could not read CSV columns — check format');
+        return;
+      }
+
       const existingKeys = new Set(
         (gAppData.spending || [])
           .filter(t => t.where === 'Amex')
@@ -2277,20 +2288,17 @@ function importAmexCSV(event) {
       const newTxns = [];
 
       for (let i = startIdx; i < lines.length; i++) {
-        // Parse CSV row (handle quoted fields)
         const cols = parseCSVRow(lines[i]);
         if (cols.length < 3) continue;
 
-        // Amex format: Date, Description, Amount
-        // Date is typically DD/MM/YYYY or MM/DD/YYYY — Amex UK uses DD/MM/YYYY
-        const rawDate   = (cols[0] || '').trim().replace(/"/g,'');
-        const desc      = (cols[1] || '').trim().replace(/"/g,'');
-        const rawAmount = parseFloat((cols[2] || '0').trim().replace(/[^0-9.\-]/g,''));
+        const rawDate  = (cols[iDate] || '').replace(/"/g,'').trim();
+        const desc     = (cols[iDesc] || '').replace(/"/g,'').trim();
+        const rawAmt   = parseFloat((cols[iAmt] || '0').replace(/"/g,'').trim());
 
-        if (!rawDate || !desc || isNaN(rawAmount)) continue;
+        if (!rawDate || !desc || isNaN(rawAmt)) continue;
 
-        // Amex amounts: positive = spending charged, negative = payment/credit
-        if (rawAmount <= 0) continue; // skip payments back
+        // Amex UK: positive = spending, negative = payment/refund — skip credits
+        if (rawAmt <= 0) continue;
 
         // Convert DD/MM/YYYY → YYYY-MM-DD
         let isoDate = rawDate;
@@ -2299,7 +2307,10 @@ function importAmexCSV(event) {
           isoDate = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
         }
 
-        const key = `${isoDate}|${desc}|${rawAmount}`;
+        // 2026 onwards only
+        if (!isoDate.startsWith('2026')) continue;
+
+        const key = `${isoDate}|${desc}|${rawAmt}`;
         if (existingKeys.has(key)) continue;
         existingKeys.add(key);
 
@@ -2309,7 +2320,7 @@ function importAmexCSV(event) {
           name:     desc,
           category: guessAmexCategory(desc),
           where:    'Amex',
-          amount:   rawAmount,
+          amount:   rawAmt,
         });
         added++;
       }
