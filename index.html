@@ -2043,9 +2043,17 @@ function renderCredit() {
     </div>
 
     <div id="cred-invest" style="display:none;">
-      <div class="grid-2 stats-grid" style="margin-bottom:24px;">
-        <div class="stat-card-accent" style="--accent-color:var(--teal);"><div class="stat-eyebrow">Total Investments</div><div class="stat-val" style="color:var(--teal);"><span data-private>${fmtMoney(totalInvestments())}</span></div><div class="stat-label">Live total · all accounts</div></div>
-        <div class="stat-card-accent" style="--accent-color:var(--amber);"><div class="stat-eyebrow">Monthly Target</div><div class="stat-val" style="color:var(--amber);">${fmtMoney(sum(gAppData.investments,'monthly_target'))}</div><div class="stat-label">Across all accounts</div></div>
+      <div class="hero-cards-row cols-2" style="margin-bottom:24px;">
+        <div class="hero-card hero-card-teal">
+          <div class="hero-card-label">Total Investments</div>
+          <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 20px rgba(0,245,212,0.5);"><span data-private>${fmtMoney(totalInvestments())}</span></div>
+          <div class="hero-card-sub">Live total · all accounts</div>
+        </div>
+        <div class="hero-card hero-card-amber">
+          <div class="hero-card-label">Monthly Target</div>
+          <div class="hero-card-val" style="color:var(--amber);text-shadow:0 0 20px rgba(255,230,0,0.4);">${fmtMoney(sum(gAppData.investments,'monthly_target'))}</div>
+          <div class="hero-card-sub">Across all accounts</div>
+        </div>
       </div>
       <div class="card">
         <div class="section-eyebrow">Investment Accounts <span class="total-pill" data-private>${fmtMoney(totalInvestments())}</span></div>
@@ -2061,9 +2069,17 @@ function renderCredit() {
     </div>
 
     <div id="cred-pension" style="display:none;">
-      <div class="grid-2 stats-grid" style="margin-bottom:24px;">
-        <div class="stat-card-accent" style="--accent-color:var(--teal);"><div class="stat-eyebrow">Total Pension Value</div><div class="stat-val" style="color:var(--teal);"><span data-private>${fmtMoney(totalPension())}</span></div><div class="stat-label">Live total · all pots</div></div>
-        <div class="stat-card-accent" style="--accent-color:var(--amber);"><div class="stat-eyebrow">Total Monthly Contributions</div><div class="stat-val" style="color:var(--amber);">${fmtMoney(sum(gAppData.pension,'monthly_contribution') + sum(gAppData.pension,'employer_contribution'))}</div><div class="stat-label">Me + Employer</div></div>
+      <div class="hero-cards-row cols-2" style="margin-bottom:24px;">
+        <div class="hero-card hero-card-teal">
+          <div class="hero-card-label">Total Pension Value</div>
+          <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 20px rgba(0,245,212,0.5);"><span data-private>${fmtMoney(totalPension())}</span></div>
+          <div class="hero-card-sub">Live total · all pots</div>
+        </div>
+        <div class="hero-card hero-card-amber">
+          <div class="hero-card-label">Total Monthly Contributions</div>
+          <div class="hero-card-val" style="color:var(--amber);text-shadow:0 0 20px rgba(255,230,0,0.4);">${fmtMoney(sum(gAppData.pension,'monthly_contribution') + sum(gAppData.pension,'employer_contribution'))}</div>
+          <div class="hero-card-sub">Me + Employer</div>
+        </div>
       </div>
       <div class="card">
         <div class="section-eyebrow">Pension Pots <span class="total-pill" data-private>${fmtMoney(totalPension())}</span></div>
@@ -2079,9 +2095,17 @@ function renderCredit() {
     </div>
 
     <div id="cred-mortgage" style="display:none;">
-      <div class="grid-2 stats-grid" style="margin-bottom:24px;">
-        <div class="stat-card-accent" style="--accent-color:var(--coral);"><div class="stat-eyebrow">Mortgage Balance</div><div class="stat-val" style="color:var(--coral);"><span data-private><span data-edit="mortgage.balance" data-type="money">${fmtMoney(gAppData.mortgage.balance)}</span></span></div><div class="stat-label"><span data-edit="mortgage.lender" data-type="text">${escHtml(gAppData.mortgage.lender)}</span></div></div>
-        <div class="stat-card-accent" style="--accent-color:var(--coral);"><div class="stat-eyebrow">Student Loan</div><div class="stat-val" style="color:var(--coral);"><span data-private><span data-edit="student_loan.balance" data-type="money">${fmtMoney(gAppData.student_loan.balance)}</span></span></div><div class="stat-label"><span data-edit="student_loan.plan" data-type="text">${escHtml(gAppData.student_loan.plan)}</span> · <span data-edit="student_loan.rate" data-type="number">${gAppData.student_loan.rate}</span>% · <span data-edit="student_loan.monthly" data-type="money">${fmtMoney(gAppData.student_loan.monthly)}</span>/mo</div></div>
+      <div class="hero-cards-row cols-2" style="margin-bottom:24px;">
+        <div class="hero-card hero-card-coral">
+          <div class="hero-card-label">Mortgage Balance</div>
+          <div class="hero-card-val" style="color:var(--coral);text-shadow:0 0 20px rgba(255,95,87,0.4);"><span data-private><span data-edit="mortgage.balance" data-type="money">${fmtMoney(gAppData.mortgage.balance)}</span></span></div>
+          <div class="hero-card-sub"><span data-edit="mortgage.lender" data-type="text">${escHtml(gAppData.mortgage.lender)}</span></div>
+        </div>
+        <div class="hero-card hero-card-coral">
+          <div class="hero-card-label">Student Loan</div>
+          <div class="hero-card-val" style="color:var(--coral);text-shadow:0 0 20px rgba(255,95,87,0.4);"><span data-private><span data-edit="student_loan.balance" data-type="money">${fmtMoney(gAppData.student_loan.balance)}</span></span></div>
+          <div class="hero-card-sub"><span data-edit="student_loan.plan" data-type="text">${escHtml(gAppData.student_loan.plan)}</span> · <span data-edit="student_loan.rate" data-type="number">${gAppData.student_loan.rate}</span>% · <span data-edit="student_loan.monthly" data-type="money">${fmtMoney(gAppData.student_loan.monthly)}</span>/mo</div>
+        </div>
       </div>
       <div class="grid-2">
         <div class="card">
@@ -2135,13 +2159,18 @@ function renderPerks() {
     </div>
 
     <div id="perks-airbnb">
-      <div class="grid-4 stats-grid" style="margin-bottom:24px;">
-        ${[...gAppData.airbnb_yearly].sort((a,b) => (a.year||0) - (b.year||0)).map((y, i) => { const aC = ['teal','purple','amber'][i % 3]; return `
-          <div class="stat-card-accent" style="--accent-color:var(--${aC});">
-            <div class="stat-eyebrow"><span data-edit-list="airbnb_yearly|${y.id}|year" data-type="number">${y.year}</span> Total</div>
-            <div class="stat-val" style="font-size:22px;color:var(--${aC});"><span data-edit-list="airbnb_yearly|${y.id}|total" data-type="money">${fmtMoney(y.total)}</span><button class="btn-row-del" onclick="deleteItem('airbnb_yearly','${y.id}')">✕</button></div>
+      <div class="hero-cards-row" style="margin-bottom:24px;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));">
+        ${[...gAppData.airbnb_yearly].sort((a,b) => (a.year||0) - (b.year||0)).map((y, i) => { const aC = ['teal','purple','amber'][i % 3]; const glows = {teal:'rgba(0,245,212,0.5)',purple:'rgba(212,77,255,0.5)',amber:'rgba(255,230,0,0.4)'}; return `
+          <div class="hero-card hero-card-${aC}">
+            <div class="hero-card-label"><span data-edit-list="airbnb_yearly|${y.id}|year" data-type="number">${y.year}</span> Total</div>
+            <div class="hero-card-val" style="color:var(--${aC});text-shadow:0 0 20px ${glows[aC]};font-size:26px;"><span data-edit-list="airbnb_yearly|${y.id}|total" data-type="money">${fmtMoney(y.total)}</span></div>
+            <div class="hero-card-sub"><button class="btn-row-del" onclick="deleteItem('airbnb_yearly','${y.id}')">✕ remove</button></div>
           </div>`; }).join('')}
-        <div class="stat-card-accent" style="--accent-color:var(--teal);"><div class="stat-eyebrow">${currentYear} Total (live)</div><div class="stat-val" style="font-size:22px;color:var(--teal);">${fmtMoney(totalAirbnbYear(currentYear))}</div><div class="stat-sub">From bookings list</div></div>
+        <div class="hero-card hero-card-teal">
+          <div class="hero-card-label">${currentYear} Total (live)</div>
+          <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 20px rgba(0,245,212,0.5);font-size:26px;">${fmtMoney(totalAirbnbYear(currentYear))}</div>
+          <div class="hero-card-sub">From bookings list</div>
+        </div>
       </div>
       <div class="grid-2">
         <div class="card">
@@ -2178,11 +2207,12 @@ function renderPerks() {
     </div>
 
     <div id="perks-miles" style="display:none;">
-      <div class="grid-4 stats-grid" style="margin-bottom:24px;">
-        ${gAppData.miles.map((m, i) => { const mC = ['teal','purple','amber','coral'][i % 4]; return `
-          <div class="stat-card-accent" style="--accent-color:var(--${mC});">
-            <div class="stat-eyebrow"><span data-edit-list="miles|${m.id}|program" data-type="text">${escHtml(m.program)}</span></div>
-            <div class="stat-val" style="color:var(--${mC});"><span data-edit-list="miles|${m.id}|balance" data-type="number">${(Number(m.balance)||0).toLocaleString()}</span><button class="btn-row-del" onclick="deleteItem('miles','${m.id}')">✕</button></div>
+      <div class="hero-cards-row" style="margin-bottom:24px;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));">
+        ${gAppData.miles.map((m, i) => { const mC = ['teal','purple','amber','coral'][i % 4]; const glows = {teal:'rgba(0,245,212,0.5)',purple:'rgba(212,77,255,0.5)',amber:'rgba(255,230,0,0.4)',coral:'rgba(255,95,87,0.4)'}; return `
+          <div class="hero-card hero-card-${mC}">
+            <div class="hero-card-label"><span data-edit-list="miles|${m.id}|program" data-type="text">${escHtml(m.program)}</span></div>
+            <div class="hero-card-val" style="color:var(--${mC});text-shadow:0 0 20px ${glows[mC]};font-size:26px;"><span data-edit-list="miles|${m.id}|balance" data-type="number">${(Number(m.balance)||0).toLocaleString()}</span></div>
+            <div class="hero-card-sub"><button class="btn-row-del" onclick="deleteItem('miles','${m.id}')">✕ remove</button></div>
           </div>`; }).join('')}
       </div>
       <div class="card">
@@ -2202,9 +2232,17 @@ function renderPerks() {
     </div>
 
     <div id="perks-cashback" style="display:none;">
-      <div class="grid-2 stats-grid" style="margin-bottom:24px;">
-        <div class="stat-card-accent" style="--accent-color:var(--teal);"><div class="stat-eyebrow">Active Cashback Total</div><div class="stat-val" style="color:var(--teal);">${fmtMoney(totalCashback())}</div><div class="stat-label">Live · all platforms</div></div>
-        <div class="stat-card-accent" style="--accent-color:var(--amber);"><div class="stat-eyebrow">Owed to me</div><div class="stat-val" style="color:var(--amber);">${fmtMoney(totalOwed())}</div><div class="stat-label">From the list below</div></div>
+      <div class="hero-cards-row cols-2" style="margin-bottom:24px;">
+        <div class="hero-card hero-card-teal">
+          <div class="hero-card-label">Active Cashback Total</div>
+          <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 20px rgba(0,245,212,0.5);">${fmtMoney(totalCashback())}</div>
+          <div class="hero-card-sub">Live · all platforms</div>
+        </div>
+        <div class="hero-card hero-card-amber">
+          <div class="hero-card-label">Owed to me</div>
+          <div class="hero-card-val" style="color:var(--amber);text-shadow:0 0 20px rgba(255,230,0,0.4);">${fmtMoney(totalOwed())}</div>
+          <div class="hero-card-sub">From the list below</div>
+        </div>
       </div>
 
       <div class="grid-2">
