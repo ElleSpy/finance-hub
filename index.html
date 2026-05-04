@@ -1464,7 +1464,7 @@ function renderSpending() {
         <span class="etab active" onclick="switchTab(this,'#spend-log','#spend-monthly')">Transaction Log</span>
         <span class="etab" onclick="switchTab(this,'#spend-monthly','#spend-log')">Monthly Summary</span>
       </div>
-      <button class="btn-teal" onclick="openAddModal('Add transaction','spending',[['date','Date','date',''],['amount','Amount £','money',0],['name','Name','text',''],['category','Category','select','Food|Shopping|Travel|Going Out|Beauty|Health|Subscriptions|Other'],['where','Where','select','Lloyds|Monzo|Monzo Flex|Amex|Cash|Klarna|Other']])">+ Add Transaction</button>
+      <button class="btn-teal" onclick="openAddModal('Add transaction','spending',[['date','Date','date',''],['amount','Amount £','money',0],['name','Name','text',''],['category','Category','select','Food|Shopping|Travel|Going Out|Eating Out|Beauty|Health|Subscriptions|Bills|Other'],['where','Where','select','Lloyds|Monzo|Monzo Flex|Amex|Cash|Klarna|Other']])">+ Add Transaction</button>
     </div>
 
     <div id="spend-log">
@@ -1473,7 +1473,7 @@ function renderSpending() {
           <input class="form-input" style="max-width:200px;" placeholder="Search…" id="spend-search" oninput="renderSpending()">
           <select class="form-select" style="max-width:160px;" id="spend-filter-cat" onchange="renderSpending()">
             <option value="">All categories</option>
-            ${['Food','Shopping','Travel','Going Out','Beauty','Health','Subscriptions','Other'].map(c => `<option ${(window._spendCat===c)?'selected':''}>${c}</option>`).join('')}
+            ${['Food','Shopping','Travel','Going Out','Eating Out','Beauty','Health','Subscriptions','Bills','Other'].map(c => `<option ${(window._spendCat===c)?'selected':''}>${c}</option>`).join('')}
           </select>
           <div style="margin-left:auto;font-family:'Space Grotesk', sans-serif;font-size:18px;font-weight:700;">Total: <span style="color:var(--red);">${fmtMoney(getFilteredSpending().reduce((s,t)=>s+t.amount,0))}</span></div>
         </div>
@@ -1484,7 +1484,7 @@ function renderSpending() {
             <tr>
               <td class="td-mono"><span data-edit-list="spending|${t.id}|date" data-type="text">${fmtDate(t.date)}</span></td>
               <td><span data-edit-list="spending|${t.id}|name" data-type="text">${escHtml(t.name)}</span></td>
-              <td><span data-edit-list="spending|${t.id}|category" data-type="select" data-options="Food|Shopping|Travel|Going Out|Beauty|Health|Subscriptions|Other" class="badge badge-${getCatColor(t.category)}">${escHtml(t.category)}</span></td>
+              <td><span data-edit-list="spending|${t.id}|category" data-type="select" data-options="Food|Shopping|Travel|Going Out|Eating Out|Beauty|Health|Subscriptions|Bills|Other" class="badge badge-${getCatColor(t.category)}">${escHtml(t.category)}</span></td>
               <td class="td-muted">${escHtml(t.where || '—')}</td>
               <td class="td-red"><span data-edit-list="spending|${t.id}|amount" data-type="money">${fmtMoney(t.amount)}</span></td>
               <td><button class="btn-row-del" onclick="deleteItem('spending','${t.id}')">✕</button></td>
@@ -1528,12 +1528,12 @@ function getFilteredSpending() {
     });
 }
 function getCatColor(c) {
-  return ({ Food:'teal', Shopping:'blue', Travel:'purple', 'Going Out':'coral', Beauty:'amber', Health:'teal', Subscriptions:'blue', Other:'' })[c] || 'teal';
+  return ({ Food:'teal', Shopping:'blue', Travel:'purple', 'Going Out':'coral', 'Eating Out':'coral', Beauty:'amber', Health:'teal', Subscriptions:'blue', Bills:'amber', Other:'' })[c] || 'teal';
 }
 function renderMonthlyBreakdown() {
-  const cats = ['Food','Shopping','Travel','Going Out','Beauty','Health','Subscriptions','Other'];
-  const catColors = { Food:'teal', Shopping:'blue', Travel:'purple', 'Going Out':'coral', Beauty:'amber', Health:'teal', Subscriptions:'blue', Other:'text3' };
-  const catIcons  = { Food:'🛒', Shopping:'🛍️', Travel:'✈️', 'Going Out':'🍸', Beauty:'💅', Health:'💪', Subscriptions:'📱', Other:'📦' };
+  const cats = ['Food','Shopping','Travel','Going Out','Eating Out','Beauty','Health','Subscriptions','Bills','Other'];
+  const catColors = { Food:'teal', Shopping:'blue', Travel:'purple', 'Going Out':'coral', 'Eating Out':'coral', Beauty:'amber', Health:'teal', Subscriptions:'blue', Bills:'amber', Other:'text3' };
+  const catIcons  = { Food:'🛒', Shopping:'🛍️', Travel:'✈️', 'Going Out':'🍸', 'Eating Out':'🍽️', Beauty:'💅', Health:'💪', Subscriptions:'📱', Bills:'🏠', Other:'📦' };
 
   const months = {};
   gAppData.spending.forEach(t => {
@@ -2165,7 +2165,7 @@ const MONZO_CATEGORY_MAP = {
   'health':        'Health',
   'medical':       'Health',
   'fitness':       'Health',
-  'bills':         'Subscriptions',
+  'bills':         'Bills',
   'finances':      'Other',
   'charity':       'Other',
   'transfers':     null,
@@ -2508,7 +2508,9 @@ function guessCategory(desc) {
   if (/restaurant|cafe|coffee|bar |pub |eat |pizza|nando|wagamama|mcdonalds|kfc|starbucks|pret|costa|caffe nero|subway|burger king|five guys|honest burger|pizza express|bills |the ivy|deliveroo|just eat|ubereats|uber eats|wetherspoon|mitchell|greene king|youngs |fullers |ei group|craft union|stonegate/.test(d)) return 'Going Out';
   if (/boots|superdrug|salon|spa |beauty|hair |nails|lush |glossybox|lookfantastic|cult beauty|space nk|charlotte tilbury|sephora|the ordinary|fenty|elemis/.test(d)) return 'Beauty';
   if (/david lloyd|puregym|pure gym|gym |nuffield|virgin active|everyone active|leisure centre|physio|doctor|pharmacy|chemist|dental|dentist|optician|specsavers|vision express|bupa|axa health|vitality|nuffield health|holland barrett/.test(d)) return 'Health';
-  if (/netflix|spotify|apple|disney|sky |now tv|amazon prime|youtube|adobe|microsoft|office 365|icloud|dropbox|broadband|bt |vodafone|virgin media|ee |o2 |three |talktalk|plusnet|utilita|bulb|octopus|british gas|edf|eon |sse |scottish power|water|council tax|tv licence/.test(d)) return 'Subscriptions';
+  if (/netflix|spotify|apple|disney|sky |now tv|amazon prime|youtube|adobe|microsoft|office 365|icloud|dropbox/.test(d)) return 'Subscriptions';
+  if (/broadband|bt |vodafone|virgin media|ee |o2 |three |talktalk|plusnet|utilita|bulb|octopus|british gas|edf|eon |sse |scottish power|water |council tax|tv licence|insurance|rent |mortgage|loan |direct debit|standing order|hmrc|dvla|rates/.test(d)) return 'Bills';
+  if (/restaurant|cafe|coffee|bar |pub |eat |pizza|nando|wagamama|mcdonalds|kfc|starbucks|pret|costa|caffe nero|subway|burger king|five guys|honest burger|pizza express|bills |the ivy|deliveroo|just eat|ubereats|uber eats|wetherspoon/.test(d)) return 'Eating Out';
   return 'Other';
 }
 // Keep old name as alias so existing calls still work
