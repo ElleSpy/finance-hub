@@ -932,7 +932,11 @@ function ensureSchema(d) {
     d.pots = [];
   }
   if (!d.meta) d.meta = { version: 3 };
-  if (!d.income) d.income = { current_salary: 0, current_takehome: 0, future_salary: 0, future_takehome: 0, future_start_date: '', notes: '' };
+  if (!d.income) d.income = { current_salary: 0, current_takehome: 0, future_salary: 0, future_takehome: 0, future_start_date: '', notes: '', note1: '', note2: '', note3: '', note4: '' };
+  if (!d.income.note1 && d.income.note1 !== '') d.income.note1 = '';
+  if (!d.income.note2 && d.income.note2 !== '') d.income.note2 = '';
+  if (!d.income.note3 && d.income.note3 !== '') d.income.note3 = '';
+  if (!d.income.note4 && d.income.note4 !== '') d.income.note4 = '';
   if (!d.mortgage) d.mortgage = { lender: '', balance: 0, monthly_current: 0, monthly_future: 0, was_fixed_until: '', notes: '' };
   if (!d.student_loan) d.student_loan = { plan: '', rate: 0, balance: 0, repayment_threshold: 0, monthly: 0, writeoff: '', goal: '' };
   // Ensure all subscriptions have a status
@@ -1366,12 +1370,6 @@ function renderDashboard() {
       </div>
     </div>
 
-    <div class="card" style="margin-bottom:24px;">
-      <div class="card-title">Net Worth Over Time</div>
-      <div class="card-sub" style="margin-bottom:14px;">From your monthly snapshots</div>
-      <div class="chart-wrap-tall"><canvas id="networth-chart"></canvas></div>
-    </div>
-
     <div class="grid-2">
       <div class="card">
         <div class="card-title">Take-home vs Outgoings</div>
@@ -1388,16 +1386,33 @@ function renderDashboard() {
       </div>
 
       <div class="card">
-        <div class="card-title">Future Salary</div>
-        <div class="card-sub" style="margin-bottom:14px;">Projected at £${(inc.future_salary/1000).toFixed(0)}k</div>
-        <div class="tip-box">
-          <div class="tip-box-title">Projected at £${(inc.future_salary/1000).toFixed(0)}k</div>
-          <div class="tip-item"><span class="tip-dot" style="background:var(--teal);"></span>Take-home: ${fmtMoney(inc.future_takehome)} (+${fmtMoney(inc.future_takehome - inc.current_takehome)}/mo)</div>
-          <div class="tip-item"><span class="tip-dot" style="background:var(--teal);"></span>Outgoings target: ${fmtMoney(totalOutgoings('future'))}/mo</div>
-          <div class="tip-item"><span class="tip-dot" style="background:${remainingFuture() > 0 ? 'var(--teal)' : 'var(--amber)'};"></span>Remaining: ${fmtMoneyD(remainingFuture())}/mo</div>
-          <div class="tip-item"><span class="tip-dot" style="background:var(--blue);"></span>Start: ${fmtDate(inc.future_start_date)}</div>
+        <div class="card-title">Notes</div>
+        <div class="card-sub" style="margin-bottom:14px;">Click any line to edit</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+            <span class="tip-dot" style="background:var(--teal);flex-shrink:0;margin-top:6px;"></span>
+            <span style="font-size:13px;color:var(--text2);flex:1;" data-edit="income.note1" data-type="text">${escHtml(inc.note1 || 'Click to add a note…')}</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+            <span class="tip-dot" style="background:var(--teal);flex-shrink:0;margin-top:6px;"></span>
+            <span style="font-size:13px;color:var(--text2);flex:1;" data-edit="income.note2" data-type="text">${escHtml(inc.note2 || 'Click to add a note…')}</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+            <span class="tip-dot" style="background:var(--teal);flex-shrink:0;margin-top:6px;"></span>
+            <span style="font-size:13px;color:var(--text2);flex:1;" data-edit="income.note3" data-type="text">${escHtml(inc.note3 || 'Click to add a note…')}</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;">
+            <span class="tip-dot" style="background:var(--teal);flex-shrink:0;margin-top:6px;"></span>
+            <span style="font-size:13px;color:var(--text2);flex:1;" data-edit="income.note4" data-type="text">${escHtml(inc.note4 || 'Click to add a note…')}</span>
+          </div>
         </div>
       </div>
+    </div>
+
+    <div class="card" style="margin-top:24px;">
+      <div class="card-title">Net Worth Over Time</div>
+      <div class="card-sub" style="margin-bottom:14px;">From your monthly snapshots</div>
+      <div class="chart-wrap"><canvas id="networth-chart"></canvas></div>
     </div>
   `;
   document.getElementById('page-dashboard').innerHTML = html;
