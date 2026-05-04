@@ -937,6 +937,7 @@ function ensureSchema(d) {
   if (!d.income) d.income = { current_salary: 0, current_takehome: 0, future_salary: 0, future_takehome: 0, future_start_date: '', notes: '', note1: '', note2: '', note3: '', note4: '' };
   if (!d.bonus) d.bonus = { amount: 0, notes: '' };
   if (!d.bonus_allocations) d.bonus_allocations = [];
+  if (!d.safety_ticked) d.safety_ticked = {};
   if (!d.income.note1 && d.income.note1 !== '') d.income.note1 = '';
   if (!d.income.note2 && d.income.note2 !== '') d.income.note2 = '';
   if (!d.income.note3 && d.income.note3 !== '') d.income.note3 = '';
@@ -1443,7 +1444,7 @@ function renderDashboard() {
 }
 
 /* ----- BUDGET ----- */
-window._safetyTicked = window._safetyTicked || {};
+// safety_ticked lives in gAppData — synced to Drive like all other data
 function updateSafetyNet() {
   const box = document.getElementById('safety-net-box');
   if (!box) return;
@@ -1478,9 +1479,9 @@ function renderBudget() {
         ? `<button class="sub-toggle ${item.status === 'active' ? 'active' : 'paused'}" onclick="toggleSubStatus('${item.id}')">${item.status === 'active' ? 'Active' : 'Paused'}</button>`
         : '';
       const safetyKey = arrName + '|' + item.id;
-      const cbChecked = window._safetyTicked[safetyKey] ? 'checked' : '';
+      const cbChecked = (gAppData.safety_ticked || {})[safetyKey] ? 'checked' : '';
       const safetyCb = showSafety
-        ? `<input type="checkbox" class="safety-cb" data-amount="${itemAmt}" data-key="${safetyKey}" ${cbChecked} onchange="window._safetyTicked[this.dataset.key]=this.checked;updateSafetyNet();" style="width:14px;height:14px;accent-color:var(--teal);cursor:pointer;flex-shrink:0;margin-left:4px;vertical-align:middle;">`
+        ? `<input type="checkbox" class="safety-cb" data-amount="${itemAmt}" data-key="${safetyKey}" ${cbChecked} onchange="if(!gAppData.safety_ticked)gAppData.safety_ticked={};gAppData.safety_ticked[this.dataset.key]=this.checked;scheduleSave();updateSafetyNet();" style="width:14px;height:14px;accent-color:var(--teal);cursor:pointer;flex-shrink:0;margin-left:4px;vertical-align:middle;">`
         : '';
       return `<tr class="drag-row" draggable="true"
           ondragstart="event.dataTransfer.setData('text/plain','${arrName}:${idx}');event.currentTarget.style.opacity='0.4';"
