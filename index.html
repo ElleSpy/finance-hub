@@ -212,7 +212,7 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
 
 /* SECTION HEADERS */
 .section-eyebrow { font-family:'Manrope', sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);margin-bottom:4px;padding-left:12px;padding-bottom:8px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:baseline; }
-.section-eyebrow .total-pill { color:var(--on-surface,#e5e2e1);font-size:13px;font-family:'Space Grotesk', sans-serif;text-transform:none;letter-spacing:0;font-weight:700; }
+.section-eyebrow .total-pill { color:var(--teal);font-size:13px;font-family:'Space Grotesk', sans-serif;text-transform:none;letter-spacing:0;font-weight:700; }
 .section-title { font-family:'Space Grotesk', sans-serif;font-size:22px;font-weight:500;margin-bottom:16px;display:flex;justify-content:space-between;align-items:baseline; }
 
 /* TIP BOX */
@@ -1497,9 +1497,9 @@ function renderBudget() {
 
     <div id="bud-fut" style="display:none;">
       <div class="hero-cards-row cols-2" style="margin-bottom:24px;">
-        <div class="hero-card hero-card-blue">
+        <div class="hero-card hero-card-teal">
           <div class="hero-card-label">Future Take-home</div>
-          <div class="hero-card-val" style="color:var(--blue);text-shadow:0 0 20px rgba(0,207,255,0.5);"><span data-edit="income.future_takehome" data-type="money">${fmtMoney(gAppData.income.future_takehome)}</span></div>
+          <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 20px rgba(0,245,212,0.5);"><span data-edit="income.future_takehome" data-type="money">${fmtMoney(gAppData.income.future_takehome)}</span></div>
           <div class="hero-card-sub">Per month · click to edit</div>
           <div class="hero-card-breakdown">
             <div><div class="hero-card-breakdown-item-label">Annual Salary</div><div class="hero-card-breakdown-item-val" style="color:rgba(255,255,255,0.55);"><span data-edit="income.future_salary" data-type="money">${fmtMoney(gAppData.income.future_salary)}</span></div></div>
