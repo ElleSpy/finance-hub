@@ -939,7 +939,7 @@ function id() { return 'i' + Date.now().toString(36) + Math.random().toString(36
 
 function ensureSchema(d) {
   // Make sure all top-level arrays exist (forwards-compatible)
-  ['fixed_current','fixed_future','bills_current','bills_future','subscriptions','pots_current','pots_future','savings_goals','investments','pension','credit_cards','purchases','spending','airbnb_bookings','airbnb_rates','airbnb_yearly','miles','cashback','cashback_history','owed','snapshots','incoming_payments'].forEach(k => { if (!Array.isArray(d[k])) d[k] = []; });
+  ['fixed_current','fixed_future','bills_current','bills_future','subscriptions','pots_current','pots_future','savings_goals','investments','pension','credit_cards','purchases','spending','airbnb_bookings','airbnb_rates','airbnb_yearly','miles','cashback','cashback_history','owed','snapshots','incoming_payments','loans'].forEach(k => { if (!Array.isArray(d[k])) d[k] = []; });
   // Migrate legacy 'pots' array into pots_current/pots_future if present
   if (Array.isArray(d.pots) && d.pots.length > 0) {
     if (d.pots_current.length === 0) d.pots_current = d.pots.map(p => ({...p}));
@@ -997,6 +997,7 @@ function totalSavings()               { return totalPotsCurrent() + totalGoalsCu
 function totalInvestments()           { return sum(gAppData.investments, 'balance'); }
 function totalPension()               { return sum(gAppData.pension, 'balance'); }
 function totalDebt()                  { return (gAppData.credit_cards || []).reduce((s, c) => s + totalPurchasesForCard(c.id), 0); }
+function totalLoans()                 { return (gAppData.loans || []).reduce((s, l) => s + (Number(l.balance) || 0), 0); }
 function totalMortgage()              { return Number(gAppData.mortgage.balance) || 0; }
 function netWorth()                   { return totalSavings() + totalInvestments() - totalDebt(); }
 function totalPurchasesForCard(cid)   { return sum(gAppData.purchases.filter(p => p.card_id === cid), 'amount'); }
@@ -1293,7 +1294,7 @@ function renderAll() {
   const spendMonthly = document.getElementById('spend-monthly');
   if (spendMonthly) subTabState.spending = spendMonthly.style.display === 'block' ? 'monthly' : 'log';
   // Credit: which panel is visible
-  ['credit','invest','pension','mortgage'].forEach(t => {
+  ['credit','loans','invest','pension','mortgage'].forEach(t => {
     const el = document.getElementById('cred-' + t);
     if (el && el.style.display !== 'none' && el.style.display !== '') subTabState.credit = t;
   });
@@ -1340,7 +1341,7 @@ function renderAll() {
     if (el) switchTab(el, '#spend-monthly', '#spend-log');
   }
   if (subTabState.credit && subTabState.credit !== 'credit') {
-    const creditTabMap = { invest: 1, pension: 2, mortgage: 3 };
+    const creditTabMap = { loans: 1, invest: 2, pension: 3, mortgage: 4 };
     const idx = creditTabMap[subTabState.credit];
     if (idx !== undefined) {
       const el = document.querySelectorAll('#page-credit .etab')[idx];
@@ -1993,6 +1994,7 @@ function renderCredit() {
 
     <div class="tab-bar">
       <span class="etab active" onclick="switchCreditTab(this,'credit')">Credit Cards</span>
+      <span class="etab" onclick="switchCreditTab(this,'loans')">Loans</span>
       <span class="etab" onclick="switchCreditTab(this,'invest')">Investments</span>
       <span class="etab" onclick="switchCreditTab(this,'pension')">Pension</span>
       <span class="etab" onclick="switchCreditTab(this,'mortgage')">Mortgage & Student Loan</span>
@@ -2088,6 +2090,69 @@ function renderCredit() {
             </div>
             <button class="btn-add" onclick="openAddModal('Add purchase to ${escHtml(c.name)}','purchases',[['item','Item','text',''],['amount','Amount £','money',0],['date','Date','date','${new Date().toISOString().slice(0,10)}']],{card_id:'${c.id}'})">+ Add purchase</button>
           </div>`).join('')}
+      </div>
+    </div>
+
+    <div id="cred-loans" style="display:none;">
+      <div class="hero-cards-row cols-2" style="margin-bottom:24px;">
+        <div class="hero-card hero-card-coral">
+          <div class="hero-card-label">Total Loan Debt</div>
+          <div class="hero-card-val" style="color:var(--coral);text-shadow:0 0 20px rgba(255,95,87,0.4);"><span data-private>${fmtMoney(totalLoans())}</span></div>
+          <div class="hero-card-sub">Across all loans</div>
+        </div>
+        <div class="hero-card" style="background:var(--card-high);border:1px solid var(--border);">
+          <div class="hero-card-label">Total Monthly Payments</div>
+          <div class="hero-card-val" style="color:var(--amber);text-shadow:0 0 20px rgba(255,230,0,0.4);">${fmtMoney((gAppData.loans||[]).reduce((s,l)=>s+(Number(l.monthly_payment)||0),0))}</div>
+          <div class="hero-card-sub">Minimum across all loans</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:20px;">
+        <div class="section-eyebrow">My Loans <span class="total-pill" style="color:var(--coral);" data-private>${fmtMoney(totalLoans())}</span></div>
+        <div style="margin-top:14px;">
+          ${(gAppData.loans||[]).length === 0 ? `<div style="text-align:center;color:var(--text3);padding:28px 0;font-size:13px;">No loans added yet</div>` : ''}
+          ${(gAppData.loans||[]).map(l => {
+            const bal = Number(l.balance)||0;
+            const rate = Number(l.rate)||0;
+            const months = Number(l.duration_months)||0;
+            const monthly = Number(l.monthly_payment)||0;
+            // Progress: months elapsed estimate
+            const pct = months > 0 && l.original_balance ? Math.min(100, ((Number(l.original_balance)-bal)/Math.max(1,Number(l.original_balance)))*100) : 0;
+            return `
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;margin-bottom:12px;">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+                <div style="flex:1;min-width:180px;">
+                  <div style="font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px;">
+                    <span data-edit-list="loans|${l.id}|name" data-type="text">${escHtml(l.name||'Unnamed loan')}</span>
+                    <button class="btn-row-del" onclick="deleteItem('loans','${l.id}')" style="margin-left:8px;">✕</button>
+                  </div>
+                  <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:6px;">
+                    <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Balance</div><div style="font-size:14px;color:var(--coral);font-weight:600;" data-private><span data-edit-list="loans|${l.id}|balance" data-type="money">${fmtMoney(bal)}</span></div></div>
+                    <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Rate</div><div style="font-size:14px;font-weight:600;"><span data-edit-list="loans|${l.id}|rate" data-type="number">${rate}</span>%</div></div>
+                    <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Duration</div><div style="font-size:14px;font-weight:600;"><span data-edit-list="loans|${l.id}|duration_months" data-type="number">${months}</span> mo</div></div>
+                    <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Monthly min</div><div style="font-size:14px;color:var(--amber);font-weight:600;"><span data-edit-list="loans|${l.id}|monthly_payment" data-type="money">${fmtMoney(monthly)}</span></div></div>
+                  </div>
+                  ${pct > 0 ? `<div style="margin-top:10px;"><div style="height:4px;background:rgba(255,255,255,0.08);border-radius:2px;"><div style="height:4px;width:${pct.toFixed(1)}%;background:var(--teal);border-radius:2px;box-shadow:0 0 8px rgba(0,245,212,0.4);"></div></div><div style="font-size:11px;color:var(--text3);margin-top:4px;">${pct.toFixed(0)}% paid off</div></div>` : ''}
+                </div>
+                <div>
+                  <button onclick="openLoanCalculator('${l.id}')" style="background:var(--teal-light);border:1px solid rgba(0,245,212,0.25);color:var(--teal);font-size:12px;font-family:'Manrope',sans-serif;font-weight:600;padding:7px 14px;border-radius:8px;cursor:pointer;white-space:nowrap;">📊 Overpayment calculator</button>
+                </div>
+              </div>
+            </div>`;
+          }).join('')}
+          <button class="btn-add" onclick="openAddModal('Add loan','loans',[['name','Loan name','text',''],['balance','Current balance £','money',0],['original_balance','Original balance £','money',0],['rate','Interest rate %','number',0],['duration_months','Duration (months)','number',0],['monthly_payment','Minimum monthly £','money',0],['lender','Lender','text',''],['notes','Notes','text','']])">+ Add loan</button>
+        </div>
+      </div>
+
+      <!-- LOAN CALCULATOR MODAL -->
+      <div id="loan-calc-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:900;display:none;align-items:center;justify-content:center;padding:20px;">
+        <div style="background:var(--card);border-radius:var(--radius);padding:28px;max-width:520px;width:100%;box-shadow:var(--shadow-lg);border:1px solid var(--border);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+            <div style="font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;" id="loan-calc-title">Overpayment Calculator</div>
+            <button onclick="closeLoanCalculator()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;line-height:1;">✕</button>
+          </div>
+          <div id="loan-calc-body"></div>
+        </div>
       </div>
     </div>
 
@@ -2187,10 +2252,98 @@ function renderCredit() {
 function switchCreditTab(el, tab) {
   document.querySelectorAll('#page-credit .etab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
-  ['credit','invest','pension','mortgage'].forEach(t => {
+  ['credit','loans','invest','pension','mortgage'].forEach(t => {
     const e = document.getElementById('cred-' + t);
     if (e) e.style.display = t === tab ? 'block' : 'none';
   });
+}
+function openLoanCalculator(loanId) {
+  const l = (gAppData.loans||[]).find(x=>x.id===loanId);
+  if (!l) return;
+  const bal = Number(l.balance)||0;
+  const rate = Number(l.rate)||0;
+  const months = Number(l.duration_months)||0;
+  const minPayment = Number(l.monthly_payment)||0;
+  const calcPayoff = (balance, annualRate, monthly) => {
+    if (!monthly || monthly <= 0) return { months: Infinity, totalInterest: Infinity };
+    const r = (annualRate/100)/12;
+    if (r === 0) return { months: Math.ceil(balance/monthly), totalInterest: 0 };
+    let b = balance, m = 0, interest = 0;
+    while (b > 0 && m < 1200) {
+      const int = b * r;
+      interest += int;
+      b = b + int - monthly;
+      m++;
+      if (b < 0.01) { b = 0; break; }
+    }
+    return { months: m, totalInterest: interest };
+  };
+  const minResult = calcPayoff(bal, rate, minPayment);
+  const steps = [0, 25, 50, 75, 100, 150, 200, 300, 500];
+  document.getElementById('loan-calc-title').textContent = escHtml(l.name||'Loan') + ' — Overpayment Calculator';
+  document.getElementById('loan-calc-body').innerHTML = `
+    <div style="margin-bottom:16px;">
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
+        <div style="flex:1;min-width:120px;background:var(--bg2);border-radius:8px;padding:12px;">
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Balance</div>
+          <div style="font-size:16px;font-weight:700;color:var(--coral);">${fmtMoney(bal)}</div>
+        </div>
+        <div style="flex:1;min-width:120px;background:var(--bg2);border-radius:8px;padding:12px;">
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Rate</div>
+          <div style="font-size:16px;font-weight:700;">${rate}%</div>
+        </div>
+        <div style="flex:1;min-width:120px;background:var(--bg2);border-radius:8px;padding:12px;">
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Min payment</div>
+          <div style="font-size:16px;font-weight:700;color:var(--amber);">${fmtMoney(minPayment)}</div>
+        </div>
+      </div>
+      <div style="margin-bottom:20px;">
+        <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:8px;">Extra monthly overpayment: <span id="slider-label" style="color:var(--teal);">£0</span></label>
+        <input type="range" id="overpay-slider" min="0" max="500" step="25" value="0"
+          style="width:100%;accent-color:var(--teal);cursor:pointer;"
+          oninput="updateLoanCalc(${bal},${rate},${minPayment},${minResult.months},${minResult.totalInterest})">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:4px;"><span>£0</span><span>£500</span></div>
+      </div>
+      <div id="loan-calc-result" style="background:var(--bg2);border-radius:10px;padding:16px;">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:12px;">At minimum payment only:</div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;">
+          <div style="flex:1;"><div style="font-size:10px;color:var(--text3);">Pay-off time</div><div style="font-size:18px;font-weight:700;color:var(--text);" id="calc-months">${minResult.months === Infinity ? '—' : minResult.months + ' months'}</div></div>
+          <div style="flex:1;"><div style="font-size:10px;color:var(--text3);">Total interest</div><div style="font-size:18px;font-weight:700;color:var(--coral);" id="calc-interest">${minResult.totalInterest === Infinity ? '—' : fmtMoney(minResult.totalInterest)}</div></div>
+          <div style="flex:1;"><div style="font-size:10px;color:var(--text3);">Monthly payment</div><div style="font-size:18px;font-weight:700;color:var(--amber);" id="calc-monthly">${fmtMoney(minPayment)}</div></div>
+        </div>
+        <div id="calc-saving" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:13px;color:var(--text3);"></div>
+      </div>
+    </div>`;
+  document.getElementById('loan-calc-modal').style.display = 'flex';
+}
+function updateLoanCalc(bal, rate, minPayment, baseMonths, baseInterest) {
+  const extra = Number(document.getElementById('overpay-slider').value)||0;
+  document.getElementById('slider-label').textContent = '£' + extra;
+  const total = minPayment + extra;
+  const r = (rate/100)/12;
+  let b = bal, m = 0, interest = 0;
+  if (r === 0) { m = Math.ceil(bal/total); interest = 0; }
+  else {
+    while (b > 0 && m < 1200) {
+      const int = b * r; interest += int; b = b + int - total; m++;
+      if (b < 0.01) { b = 0; break; }
+    }
+  }
+  document.getElementById('calc-months').textContent = m + ' months';
+  document.getElementById('calc-interest').textContent = fmtMoney(interest);
+  document.getElementById('calc-monthly').textContent = fmtMoney(total);
+  if (extra > 0) {
+    const savedMonths = baseMonths - m;
+    const savedInterest = baseInterest - interest;
+    document.getElementById('calc-saving').innerHTML = savedMonths > 0 || savedInterest > 0
+      ? `<span style="color:var(--teal);font-weight:600;">You'd pay off ${savedMonths} months sooner</span> and save <span style="color:var(--teal);font-weight:600;">${fmtMoney(savedInterest)}</span> in interest.`
+      : `<span style="color:var(--text3);">Already paying off quickly.</span>`;
+  } else {
+    document.getElementById('calc-saving').innerHTML = '';
+  }
+}
+function closeLoanCalculator() {
+  document.getElementById('loan-calc-modal').style.display = 'none';
 }
 
 /* ----- MY FLAT ----- */
