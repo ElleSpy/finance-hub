@@ -999,7 +999,7 @@ function totalPension()               { return sum(gAppData.pension, 'balance');
 function totalDebt()                  { return (gAppData.credit_cards || []).reduce((s, c) => s + totalPurchasesForCard(c.id), 0); }
 function totalLoans()                 { return (gAppData.loans || []).reduce((s, l) => s + (Number(l.balance) || 0), 0); }
 function totalMortgage()              { return Number(gAppData.mortgage.balance) || 0; }
-function netWorth()                   { return totalSavings() + totalInvestments() - totalDebt(); }
+function netWorth()                   { return totalSavings() + totalInvestments() - totalDebt() - totalLoans(); }
 function totalPurchasesForCard(cid)   { return sum(gAppData.purchases.filter(p => p.card_id === cid), 'amount'); }
 function totalAirbnbYear(y)           { return sum(gAppData.airbnb_bookings.filter(b => b.year === y), 'my_share'); }
 function totalCashback()              { return sum(gAppData.cashback, 'balance'); }
@@ -1371,11 +1371,12 @@ function renderDashboard() {
       <div class="hero-card hero-card-teal" style="grid-column:1/-1;">
         <div class="hero-card-label">Estimated Net Worth</div>
         <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 28px rgba(0,245,212,0.55), 0 0 60px rgba(0,245,212,0.2);font-size:52px;"><span data-private>${fmtMoneyD(netWorth())}</span></div>
-        <div class="hero-card-sub">Savings + investments minus credit debt · live</div>
+        <div class="hero-card-sub">Savings + investments minus credit debt & loans · live</div>
         <div class="hero-card-breakdown">
           <div><div class="hero-card-breakdown-item-label">Savings</div><div class="hero-card-breakdown-item-val" style="color:var(--teal);"><span data-private>${fmtMoney(totalSavings())}</span></div></div>
           <div><div class="hero-card-breakdown-item-label">Investments</div><div class="hero-card-breakdown-item-val" style="color:var(--amber);"><span data-private>${fmtMoney(totalInvestments())}</span></div></div>
           <div><div class="hero-card-breakdown-item-label">Credit Debt</div><div class="hero-card-breakdown-item-val" style="color:#F4816A;"><span data-private>-${fmtMoney(totalDebt())}</span></div></div>
+          <div><div class="hero-card-breakdown-item-label">Loans</div><div class="hero-card-breakdown-item-val" style="color:#F4816A;"><span data-private>-${fmtMoney(totalLoans())}</span></div></div>
         </div>
       </div>
     </div>
@@ -1424,6 +1425,19 @@ function renderDashboard() {
             <div class="goal-bar-label"><span>${escHtml(c.name)} Utilisation</span><span data-private>${fmtMoney(cardBal)} / ${fmtMoney(c.limit)}</span></div>
             <div class="goal-bar-track"><div class="goal-bar-fill" style="width:${Math.min(100, util * 100)}%;background:${util > 0.7 ? 'var(--red)' : util > 0.4 ? 'var(--amber)' : 'var(--teal)'};"></div></div>
           </div>`; }).join('')}
+        ${(gAppData.loans||[]).length > 0 ? `
+          <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border);">
+            <div style="font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Loans</div>
+            ${(gAppData.loans||[]).map(l => {
+              const bal = Number(l.balance)||0;
+              const orig = Number(l.original_balance)||bal;
+              const pct = orig > 0 ? Math.min(100, ((orig - bal) / orig) * 100) : 0;
+              return `<div class="goal-bar-wrap" style="margin-top:10px;">
+                <div class="goal-bar-label"><span>${escHtml(l.name||'Loan')}</span><span data-private>${fmtMoney(bal)} remaining</span></div>
+                <div class="goal-bar-track"><div class="goal-bar-fill" style="width:${pct.toFixed(1)}%;background:var(--teal);"></div></div>
+              </div>`;
+            }).join('')}
+          </div>` : ''}
       </div>
 
       <div class="card">
@@ -2854,6 +2868,7 @@ function snapshotNow() {
     investments: totalInvestments(),
     pension: totalPension(),
     debt: totalDebt(),
+    loans: totalLoans(),
     mortgage: totalMortgage(),
   };
   const existing = gAppData.snapshots.find(s => s.month === m);
