@@ -1443,37 +1443,6 @@ function renderDashboard() {
       </div>
 
       <div class="card">
-        <div class="card-title">Notes</div>
-        <div class="card-sub" style="margin-bottom:14px;">Click any line to edit</div>
-        <div style="display:flex;flex-direction:column;gap:8px;">
-          <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
-            <span class="tip-dot" style="background:var(--teal);flex-shrink:0;margin-top:6px;"></span>
-            <span style="font-size:13px;color:var(--text2);flex:1;" data-edit="income.note1" data-type="text">${escHtml(inc.note1 || 'Click to add a note…')}</span>
-          </div>
-          <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
-            <span class="tip-dot" style="background:var(--teal);flex-shrink:0;margin-top:6px;"></span>
-            <span style="font-size:13px;color:var(--text2);flex:1;" data-edit="income.note2" data-type="text">${escHtml(inc.note2 || 'Click to add a note…')}</span>
-          </div>
-          <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
-            <span class="tip-dot" style="background:var(--teal);flex-shrink:0;margin-top:6px;"></span>
-            <span style="font-size:13px;color:var(--text2);flex:1;" data-edit="income.note3" data-type="text">${escHtml(inc.note3 || 'Click to add a note…')}</span>
-          </div>
-          <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;">
-            <span class="tip-dot" style="background:var(--teal);flex-shrink:0;margin-top:6px;"></span>
-            <span style="font-size:13px;color:var(--text2);flex:1;" data-edit="income.note4" data-type="text">${escHtml(inc.note4 || 'Click to add a note…')}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="grid-2" style="margin-top:24px;align-items:start;">
-      <div class="card">
-        <div class="card-title">Net Worth Over Time</div>
-        <div class="card-sub" style="margin-bottom:14px;">From your monthly snapshots</div>
-        <div class="chart-wrap"><canvas id="networth-chart"></canvas></div>
-      </div>
-
-      <div class="card">
         <div class="card-title">📸 Payday Checklist</div>
         <div class="card-sub" style="margin-bottom:16px;">Update these figures each payday, then hit Save monthly snapshot</div>
 
@@ -1532,6 +1501,12 @@ function renderDashboard() {
           <button onclick="snapshotNow()" style="background:var(--teal);color:#001a14;font-family:'Manrope',sans-serif;font-size:12px;font-weight:700;padding:8px 16px;border:none;border-radius:8px;cursor:pointer;">📸 Save snapshot</button>
         </div>
       </div>
+    </div>
+
+    <div class="card" style="margin-top:24px;">
+      <div class="card-title">Net Worth Over Time</div>
+      <div class="card-sub" style="margin-bottom:14px;">From your monthly snapshots</div>
+      <div class="chart-wrap"><canvas id="networth-chart"></canvas></div>
     </div>
   `;
   document.getElementById('page-dashboard').innerHTML = html;
