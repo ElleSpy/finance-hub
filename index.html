@@ -993,7 +993,7 @@ function totalPotsMonthly(scenario)   { return sum(gAppData[scenario === 'future
 function totalOutgoings(scenario)     { return totalFixed(scenario) + totalBills(scenario) + totalSubsActive() + totalPotsMonthly(scenario); }
 function totalPotsCurrent()           { return sum(gAppData.pots_current || [], 'current'); }
 function totalGoalsCurrent()          { return sum(gAppData.savings_goals, 'current'); }
-function totalSavings()               { return totalPotsCurrent() + totalGoalsCurrent(); }
+function totalSavings()               { return totalGoalsCurrent(); } // Pots are spending buckets, not savings
 function totalInvestments()           { return sum(gAppData.investments, 'balance'); }
 function totalPension()               { return sum(gAppData.pension, 'balance'); }
 function totalDebt()                  { return (gAppData.credit_cards || []).reduce((s, c) => s + totalPurchasesForCard(c.id), 0); }
@@ -1371,9 +1371,9 @@ function renderDashboard() {
       <div class="hero-card hero-card-teal" style="grid-column:1/-1;">
         <div class="hero-card-label">Estimated Net Worth</div>
         <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 28px rgba(0,245,212,0.55), 0 0 60px rgba(0,245,212,0.2);font-size:52px;"><span data-private>${fmtMoneyD(netWorth())}</span></div>
-        <div class="hero-card-sub">Savings + investments minus credit debt & loans · live</div>
+        <div class="hero-card-sub">Savings goals + investments minus credit debt & loans · live</div>
         <div class="hero-card-breakdown">
-          <div><div class="hero-card-breakdown-item-label">Savings</div><div class="hero-card-breakdown-item-val" style="color:var(--teal);"><span data-private>${fmtMoney(totalSavings())}</span></div></div>
+          <div><div class="hero-card-breakdown-item-label">Savings</div><div class="hero-card-breakdown-item-val" style="color:var(--teal);"><span data-private>${fmtMoney(totalGoalsCurrent())}</span></div></div>
           <div><div class="hero-card-breakdown-item-label">Investments</div><div class="hero-card-breakdown-item-val" style="color:var(--amber);"><span data-private>${fmtMoney(totalInvestments())}</span></div></div>
           <div><div class="hero-card-breakdown-item-label">Credit Debt</div><div class="hero-card-breakdown-item-val" style="color:#F4816A;"><span data-private>-${fmtMoney(totalDebt())}</span></div></div>
           <div><div class="hero-card-breakdown-item-label">Loans</div><div class="hero-card-breakdown-item-val" style="color:#F4816A;"><span data-private>-${fmtMoney(totalLoans())}</span></div></div>
@@ -1414,30 +1414,32 @@ function renderDashboard() {
 
     <div class="grid-2">
       <div class="card">
-        <div class="card-title">Take-home vs Outgoings</div>
-        <div class="card-sub" style="margin-bottom:14px;">Live calculation</div>
-        <div class="goal-bar-wrap">
-          <div class="goal-bar-label"><span>Outgoings</span><span>${fmtMoney(out)} / ${fmtMoney(inc.current_takehome)}</span></div>
-          <div class="goal-bar-track"><div class="goal-bar-fill" style="width:${Math.min(100, (out / Math.max(1, inc.current_takehome)) * 100)}%;background:${out > inc.current_takehome ? 'var(--red)' : out > inc.current_takehome * 0.9 ? 'var(--amber)' : 'var(--teal)'};"></div></div>
-        </div>
+        <div class="card-title">Debt Overview</div>
+        <div class="card-sub" style="margin-bottom:14px;">Credit cards & loans · live balances</div>
+        ${gAppData.credit_cards.length === 0 && (gAppData.loans||[]).length === 0 ? `<div style="color:var(--text3);font-size:13px;padding:12px 0;">No credit cards or loans added yet.</div>` : ''}
         ${gAppData.credit_cards.map(c => { const cardBal = totalPurchasesForCard(c.id); const util = cardBal / Math.max(1, c.limit); return `
-          <div class="goal-bar-wrap" style="margin-top:14px;">
-            <div class="goal-bar-label"><span>${escHtml(c.name)} Utilisation</span><span data-private>${fmtMoney(cardBal)} / ${fmtMoney(c.limit)}</span></div>
+          <div class="goal-bar-wrap" style="margin-top:10px;">
+            <div class="goal-bar-label"><span>${escHtml(c.name)}</span><span data-private style="color:var(--coral);">-${fmtMoney(cardBal)}</span></div>
             <div class="goal-bar-track"><div class="goal-bar-fill" style="width:${Math.min(100, util * 100)}%;background:${util > 0.7 ? 'var(--red)' : util > 0.4 ? 'var(--amber)' : 'var(--teal)'};"></div></div>
+            <div style="font-size:11px;color:var(--text3);margin-top:3px;">${util.toFixed(0)}% of ${fmtMoney(c.limit)} limit used</div>
           </div>`; }).join('')}
         ${(gAppData.loans||[]).length > 0 ? `
-          <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border);">
-            <div style="font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Loans</div>
+          <div style="margin-top:${gAppData.credit_cards.length > 0 ? '18px' : '0'};${gAppData.credit_cards.length > 0 ? 'padding-top:14px;border-top:1px solid var(--border);' : ''}">
             ${(gAppData.loans||[]).map(l => {
               const bal = Number(l.balance)||0;
               const orig = Number(l.original_balance)||bal;
               const pct = orig > 0 ? Math.min(100, ((orig - bal) / orig) * 100) : 0;
               return `<div class="goal-bar-wrap" style="margin-top:10px;">
-                <div class="goal-bar-label"><span>${escHtml(l.name||'Loan')}</span><span data-private>${fmtMoney(bal)} remaining</span></div>
+                <div class="goal-bar-label"><span>${escHtml(l.name||'Loan')}</span><span data-private style="color:var(--coral);">-${fmtMoney(bal)}</span></div>
                 <div class="goal-bar-track"><div class="goal-bar-fill" style="width:${pct.toFixed(1)}%;background:var(--teal);"></div></div>
+                <div style="font-size:11px;color:var(--text3);margin-top:3px;">${pct.toFixed(0)}% paid off</div>
               </div>`;
             }).join('')}
           </div>` : ''}
+        <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Total debt</span>
+          <span style="font-size:15px;font-weight:700;color:var(--coral);" data-private>-${fmtMoney(totalDebt() + totalLoans())}</span>
+        </div>
       </div>
 
       <div class="card">
@@ -1464,10 +1466,72 @@ function renderDashboard() {
       </div>
     </div>
 
-    <div class="card" style="margin-top:24px;">
-      <div class="card-title">Net Worth Over Time</div>
-      <div class="card-sub" style="margin-bottom:14px;">From your monthly snapshots</div>
-      <div class="chart-wrap"><canvas id="networth-chart"></canvas></div>
+    <div class="grid-2" style="margin-top:24px;align-items:start;">
+      <div class="card">
+        <div class="card-title">Net Worth Over Time</div>
+        <div class="card-sub" style="margin-bottom:14px;">From your monthly snapshots</div>
+        <div class="chart-wrap"><canvas id="networth-chart"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📸 Payday Checklist</div>
+        <div class="card-sub" style="margin-bottom:16px;">Update these figures each payday, then hit Save monthly snapshot</div>
+
+        ${(gAppData.savings_goals||[]).length > 0 ? `
+        <div style="margin-bottom:14px;">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);margin-bottom:8px;">Savings Goals</div>
+          ${(gAppData.savings_goals||[]).map(g => `
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);">
+            <span style="font-size:13px;color:var(--text2);">${escHtml(g.name)}</span>
+            <span style="font-size:13px;font-weight:600;color:var(--teal);" data-private><span data-edit-list="savings_goals|${g.id}|current" data-type="money">${fmtMoney(g.current||0)}</span></span>
+          </div>`).join('')}
+        </div>` : ''}
+
+        ${(gAppData.investments||[]).length > 0 ? `
+        <div style="margin-bottom:14px;">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);margin-bottom:8px;">Investments</div>
+          ${(gAppData.investments||[]).map(i => `
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);">
+            <span style="font-size:13px;color:var(--text2);">${escHtml(i.name)}</span>
+            <span style="font-size:13px;font-weight:600;color:var(--amber);" data-private><span data-edit-list="investments|${i.id}|balance" data-type="money">${fmtMoney(i.balance||0)}</span></span>
+          </div>`).join('')}
+        </div>` : ''}
+
+        ${(gAppData.pension||[]).length > 0 ? `
+        <div style="margin-bottom:14px;">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);margin-bottom:8px;">Pension</div>
+          ${(gAppData.pension||[]).map(p => `
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);">
+            <span style="font-size:13px;color:var(--text2);">${escHtml(p.name)}</span>
+            <span style="font-size:13px;font-weight:600;color:var(--teal);" data-private><span data-edit-list="pension|${p.id}|balance" data-type="money">${fmtMoney(p.balance||0)}</span></span>
+          </div>`).join('')}
+        </div>` : ''}
+
+        ${(gAppData.credit_cards||[]).length > 0 ? `
+        <div style="margin-bottom:14px;">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);margin-bottom:8px;">Credit Cards</div>
+          ${(gAppData.credit_cards||[]).map(c => `
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);">
+            <span style="font-size:13px;color:var(--text2);">${escHtml(c.name)}</span>
+            <span style="font-size:13px;font-weight:600;color:var(--coral);" data-private>-${fmtMoney(totalPurchasesForCard(c.id))}</span>
+          </div>`).join('')}
+        </div>` : ''}
+
+        ${(gAppData.loans||[]).length > 0 ? `
+        <div style="margin-bottom:14px;">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);margin-bottom:8px;">Loans</div>
+          ${(gAppData.loans||[]).map(l => `
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);">
+            <span style="font-size:13px;color:var(--text2);">${escHtml(l.name||'Loan')}</span>
+            <span style="font-size:13px;font-weight:600;color:var(--coral);" data-private><span data-edit-list="loans|${l.id}|balance" data-type="money">${fmtMoney(l.balance||0)}</span></span>
+          </div>`).join('')}
+        </div>` : ''}
+
+        <div style="padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:12px;color:var(--text3);">All figures updated?</div>
+          <button onclick="snapshotNow()" style="background:var(--teal);color:#001a14;font-family:'Manrope',sans-serif;font-size:12px;font-weight:700;padding:8px 16px;border:none;border-radius:8px;cursor:pointer;">📸 Save snapshot</button>
+        </div>
+      </div>
     </div>
   `;
   document.getElementById('page-dashboard').innerHTML = html;
