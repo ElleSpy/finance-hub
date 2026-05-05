@@ -38,7 +38,7 @@
     --sidebar:       240px;
   }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Manrope', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+body { font-family: 'Manrope', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; overflow-x: hidden; }
 
 /* SYNC OVERLAY */
 #sync-overlay { position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px; }
@@ -110,7 +110,7 @@ body { font-family: 'Manrope', sans-serif; background: var(--bg); color: var(--t
 .sidebar-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:90; }
 
 /* MAIN */
-.main { margin-left:var(--sidebar);min-height:100vh;padding:36px 32px 60px; }
+.main { margin-left:var(--sidebar);min-height:100vh;padding:36px 32px 60px;box-sizing:border-box;overflow-x:hidden;max-width:100%; }
 .page { display:none; }
 .page.active { display:block; }
 
@@ -120,7 +120,7 @@ body { font-family: 'Manrope', sans-serif; background: var(--bg); color: var(--t
 .page-sub { font-size:14px;color:var(--text2);margin-top:6px;margin-bottom:28px; }
 
 /* CARDS */
-.card { background:var(--card);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.1); }
+.card { background:var(--card);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.1);min-width:0; }
 .card-title { font-family:'Space Grotesk', sans-serif;font-size:17px;font-weight:500;margin-bottom:4px; }
 .card-sub { font-size:12px;color:var(--text2); }
 
@@ -285,7 +285,7 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
 .hero-cards-row { display:grid;gap:16px;margin-bottom:24px; }
 .hero-cards-row.cols-2 { grid-template-columns:1fr 1fr; }
 .hero-cards-row.cols-3 { grid-template-columns:1fr 1fr 1fr; }
-.hero-card { border-radius:var(--radius);padding:22px 24px;color:#e5e2e1;position:relative;overflow:hidden; }
+.hero-card { border-radius:var(--radius);padding:22px 24px;color:#e5e2e1;position:relative;overflow:hidden;min-width:0; }
 .hero-card::before { content:'';position:absolute;top:-50px;right:-50px;width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,0.04);pointer-events:none; }
 .hero-card::after { content:'';position:absolute;bottom:-30px;left:-30px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,0.025);pointer-events:none; }
 .hero-card-label { font-size:11px;color:rgba(255,255,255,0.55);font-family:'Manrope', sans-serif;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px; }
@@ -394,6 +394,14 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
     .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr !important; }
     /* 2-col grid for stat cards so they don't stretch too tall */
     .grid-4.stats-grid, .stats-grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+    /* Dashboard lower grid — stack on mobile, checklist card no longer spans rows */
+    .dash-lower-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
+    .dash-checklist-card { grid-column: 1 !important; grid-row: auto !important; }
+    /* Hero card breakdown — wrap and prevent overflow */
+    .hero-card-breakdown { flex-wrap: wrap !important; gap: 10px 16px !important; }
+    .hero-card-breakdown > div { min-width: 0; }
+    /* hero-cards-row items — prevent overflow */
+    .hero-cards-row { overflow: hidden; }
     .page-title { font-size: 24px !important; }
     .page-sub { font-size: 13px; margin-bottom: 18px; }
     .hamburger { display: flex !important; }
@@ -998,6 +1006,37 @@ function totalInvestments()           { return sum(gAppData.investments, 'balanc
 function totalPension()               { return sum(gAppData.pension, 'balance'); }
 function totalDebt()                  { return (gAppData.credit_cards || []).reduce((s, c) => s + totalPurchasesForCard(c.id), 0); }
 function totalLoans()                 { return (gAppData.loans || []).reduce((s, l) => s + (Number(l.balance) || 0), 0); }
+// Calculates remaining months on a loan given current balance, annual rate %, and monthly payment
+function loanRemainingMonths(balance, annualRate, monthlyPayment) {
+  const r = annualRate / 100 / 12;
+  if (monthlyPayment <= 0) return 0;
+  if (r === 0) return Math.ceil(balance / monthlyPayment);
+  if (monthlyPayment <= balance * r) return Infinity; // payment doesn't cover interest
+  return Math.ceil(-Math.log(1 - (balance * r) / monthlyPayment) / Math.log(1 + r));
+}
+// Total truly owed = sum of all future payments (principal + interest)
+function loanTrueTotal(loan) {
+  const bal = Number(loan.balance) || 0;
+  const rate = Number(loan.rate) || 0;
+  const monthly = Number(loan.monthly_payment) || 0;
+  if (bal <= 0) return 0;
+  if (monthly <= 0 || rate === 0) return bal;
+  const months = loanRemainingMonths(bal, rate, monthly);
+  if (!isFinite(months)) return bal;
+  // Last payment may be partial
+  const r = rate / 100 / 12;
+  let remaining = bal;
+  let total = 0;
+  for (let i = 0; i < months; i++) {
+    const interest = remaining * r;
+    const payment = Math.min(monthly, remaining + interest);
+    total += payment;
+    remaining = remaining + interest - payment;
+    if (remaining <= 0.01) break;
+  }
+  return Math.round(total * 100) / 100;
+}
+function totalLoansTrueTotal()        { return (gAppData.loans || []).reduce((s, l) => s + loanTrueTotal(l), 0); }
 function totalMortgage()              { return Number(gAppData.mortgage.balance) || 0; }
 function netWorth()                   { return totalSavings() + totalInvestments() - totalDebt() - totalLoans(); }
 function totalPurchasesForCard(cid)   { return sum(gAppData.purchases.filter(p => p.card_id === cid), 'amount'); }
@@ -1412,7 +1451,7 @@ function renderDashboard() {
       </div>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+    <div class="grid-2 dash-lower-grid" style="gap:24px;">
       <div class="card" style="grid-column:1;grid-row:1;align-self:start;">
         <div class="card-title">Debt Overview</div>
         <div class="card-sub" style="margin-bottom:14px;">Credit cards & loans · live balances</div>
@@ -1442,7 +1481,7 @@ function renderDashboard() {
         </div>
       </div>
 
-      <div class="card" style="grid-column:2;grid-row:1/3;align-self:stretch;">
+      <div class="card dash-checklist-card" style="grid-column:2;grid-row:1/3;align-self:stretch;">
         <div class="card-title">📸 Payday Checklist</div>
         <div class="card-sub" style="margin-bottom:16px;">Update these figures each payday, then hit Save monthly snapshot</div>
 
@@ -2149,9 +2188,12 @@ function renderCredit() {
     <div id="cred-loans" style="display:none;">
       <div class="hero-cards-row cols-2" style="margin-bottom:24px;">
         <div class="hero-card hero-card-coral">
-          <div class="hero-card-label">Total Loan Debt</div>
-          <div class="hero-card-val" style="color:var(--coral);text-shadow:0 0 20px rgba(255,95,87,0.4);"><span data-private>${fmtMoney(totalLoans())}</span></div>
-          <div class="hero-card-sub">Across all loans</div>
+          <div class="hero-card-label">True Total Owed</div>
+          <div class="hero-card-val" style="color:var(--coral);text-shadow:0 0 20px rgba(255,95,87,0.4);"><span data-private>${fmtMoney(totalLoansTrueTotal())}</span></div>
+          <div class="hero-card-sub" style="display:flex;gap:16px;flex-wrap:wrap;">
+            <span>Principal: <span data-private style="color:rgba(255,255,255,0.7);">${fmtMoney(totalLoans())}</span></span>
+            <span>Interest: <span data-private style="color:var(--amber);">${fmtMoney(Math.max(0, totalLoansTrueTotal() - totalLoans()))}</span></span>
+          </div>
         </div>
         <div class="hero-card" style="background:var(--card-high);border:1px solid var(--border);">
           <div class="hero-card-label">Total Monthly Payments</div>
@@ -2169,7 +2211,10 @@ function renderCredit() {
             const rate = Number(l.rate)||0;
             const months = Number(l.duration_months)||0;
             const monthly = Number(l.monthly_payment)||0;
-            // Progress: months elapsed estimate
+            const trueTotal = loanTrueTotal(l);
+            const totalInterest = Math.max(0, trueTotal - bal);
+            const remMonths = loanRemainingMonths(bal, rate, monthly);
+            // Progress based on original balance vs current balance
             const pct = months > 0 && l.original_balance ? Math.min(100, ((Number(l.original_balance)-bal)/Math.max(1,Number(l.original_balance)))*100) : 0;
             return `
             <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;margin-bottom:12px;">
@@ -2180,12 +2225,24 @@ function renderCredit() {
                     <button onclick="deleteItem('loans','${l.id}')" style="background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;padding:2px 6px;border-radius:4px;margin-left:8px;transition:color 0.15s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text3)'">✕</button>
                   </div>
                   <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:6px;">
-                    <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Balance</div><div style="font-size:14px;color:var(--coral);font-weight:600;" data-private><span data-edit-list="loans|${l.id}|balance" data-type="money">${fmtMoney(bal)}</span></div></div>
+                    <div>
+                      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Current Balance</div>
+                      <div style="font-size:14px;color:var(--coral);font-weight:600;" data-private><span data-edit-list="loans|${l.id}|balance" data-type="money">${fmtMoney(bal)}</span></div>
+                    </div>
+                    ${trueTotal > bal ? `<div>
+                      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">True Total Owed</div>
+                      <div style="font-size:14px;color:var(--red);font-weight:600;" data-private>${fmtMoney(trueTotal)}</div>
+                    </div>
+                    <div>
+                      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Interest Cost</div>
+                      <div style="font-size:14px;color:var(--amber);font-weight:600;" data-private>${fmtMoney(totalInterest)}</div>
+                    </div>` : ''}
                     <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Rate</div><div style="font-size:14px;font-weight:600;"><span data-edit-list="loans|${l.id}|rate" data-type="number">${rate}</span>%</div></div>
                     <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Duration</div><div style="font-size:14px;font-weight:600;"><span data-edit-list="loans|${l.id}|duration_months" data-type="number">${months}</span> mo</div></div>
                     <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Monthly min</div><div style="font-size:14px;color:var(--amber);font-weight:600;"><span data-edit-list="loans|${l.id}|monthly_payment" data-type="money">${fmtMoney(monthly)}</span></div></div>
+                    ${isFinite(remMonths) && remMonths > 0 ? `<div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Months left</div><div style="font-size:14px;font-weight:600;">${remMonths}</div></div>` : ''}
                   </div>
-                  ${pct > 0 ? `<div style="margin-top:10px;"><div style="height:4px;background:rgba(255,255,255,0.08);border-radius:2px;"><div style="height:4px;width:${pct.toFixed(1)}%;background:var(--teal);border-radius:2px;box-shadow:0 0 8px rgba(0,245,212,0.4);"></div></div><div style="font-size:11px;color:var(--text3);margin-top:4px;">${pct.toFixed(0)}% paid off</div></div>` : ''}
+                  ${pct > 0 ? `<div style="margin-top:10px;"><div style="height:4px;background:rgba(255,255,255,0.08);border-radius:2px;"><div style="height:4px;width:${pct.toFixed(1)}%;background:var(--teal);border-radius:2px;box-shadow:0 0 8px rgba(0,245,212,0.4);"></div></div><div style="font-size:11px;color:var(--text3);margin-top:4px;">${pct.toFixed(0)}% paid off (by original balance)</div></div>` : ''}
                 </div>
                 <div>
                   <button onclick="openLoanCalculator('${l.id}')" style="background:var(--teal-light);border:1px solid rgba(0,245,212,0.25);color:var(--teal);font-size:12px;font-family:'Manrope',sans-serif;font-weight:600;padding:7px 14px;border-radius:8px;cursor:pointer;white-space:nowrap;">📊 Overpayment calculator</button>
