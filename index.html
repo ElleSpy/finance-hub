@@ -2202,7 +2202,7 @@ function renderCredit() {
                 <div style="flex:1;min-width:180px;">
                   <div style="font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px;">
                     <span data-edit-list="loans|${l.id}|name" data-type="text">${escHtml(l.name||'Unnamed loan')}</span>
-                    <button class="btn-row-del" onclick="deleteItem('loans','${l.id}')" style="margin-left:8px;">✕</button>
+                    <button onclick="deleteItem('loans','${l.id}')" style="background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;padding:2px 6px;border-radius:4px;margin-left:8px;transition:color 0.15s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text3)'">✕</button>
                   </div>
                   <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:6px;">
                     <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Balance</div><div style="font-size:14px;color:var(--coral);font-weight:600;" data-private><span data-edit-list="loans|${l.id}|balance" data-type="money">${fmtMoney(bal)}</span></div></div>
