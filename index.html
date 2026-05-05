@@ -1417,11 +1417,11 @@ function renderDashboard() {
         <div class="card-title">Debt Overview</div>
         <div class="card-sub" style="margin-bottom:14px;">Credit cards & loans · live balances</div>
         ${gAppData.credit_cards.length === 0 && (gAppData.loans||[]).length === 0 ? `<div style="color:var(--text3);font-size:13px;padding:12px 0;">No credit cards or loans added yet.</div>` : ''}
-        ${gAppData.credit_cards.map(c => { const cardBal = totalPurchasesForCard(c.id); const util = cardBal / Math.max(1, c.limit); return `
+        ${gAppData.credit_cards.map(c => { const cardBal = totalPurchasesForCard(c.id); const util = cardBal / Math.max(1, c.limit); const utilPct = Math.round(util * 100); return `
           <div class="goal-bar-wrap" style="margin-top:10px;">
             <div class="goal-bar-label"><span>${escHtml(c.name)}</span><span data-private style="color:var(--coral);">-${fmtMoney(cardBal)}</span></div>
             <div class="goal-bar-track"><div class="goal-bar-fill" style="width:${Math.min(100, util * 100)}%;background:${util > 0.7 ? 'var(--red)' : util > 0.4 ? 'var(--amber)' : 'var(--teal)'};"></div></div>
-            <div style="font-size:11px;color:var(--text3);margin-top:3px;">${util.toFixed(0)}% of ${fmtMoney(c.limit)} limit used</div>
+            ${utilPct > 0 ? `<div style="font-size:11px;color:var(--text3);margin-top:3px;">${utilPct}% of ${fmtMoney(c.limit)} limit used</div>` : ''}
           </div>`; }).join('')}
         ${(gAppData.loans||[]).length > 0 ? `
           <div style="margin-top:${gAppData.credit_cards.length > 0 ? '18px' : '0'};${gAppData.credit_cards.length > 0 ? 'padding-top:14px;border-top:1px solid var(--border);' : ''}">
@@ -1432,7 +1432,7 @@ function renderDashboard() {
               return `<div class="goal-bar-wrap" style="margin-top:10px;">
                 <div class="goal-bar-label"><span>${escHtml(l.name||'Loan')}</span><span data-private style="color:var(--coral);">-${fmtMoney(bal)}</span></div>
                 <div class="goal-bar-track"><div class="goal-bar-fill" style="width:${pct.toFixed(1)}%;background:var(--teal);"></div></div>
-                <div style="font-size:11px;color:var(--text3);margin-top:3px;">${pct.toFixed(0)}% paid off</div>
+                ${pct > 0 ? `<div style="font-size:11px;color:var(--text3);margin-top:3px;">${pct.toFixed(0)}% paid off</div>` : ''}
               </div>`;
             }).join('')}
           </div>` : ''}
