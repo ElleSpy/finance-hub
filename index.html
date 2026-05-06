@@ -17,9 +17,9 @@
     --text2:         #b9cac4;
     --text3:         #83948f;
     --border:        rgba(255,255,255,0.08);
-    --teal:          #00f5d4;
-    --teal-light:    rgba(0,245,212,0.12);
-    --teal-mid:      rgba(0,245,212,0.25);
+    --teal:          #f5a623;
+    --teal-light:    rgba(245,166,35,0.12);
+    --teal-mid:      rgba(245,166,35,0.25);
     --coral:         #ff5f57;
     --coral-light:   rgba(255,95,87,0.12);
     --amber:         #ffe600;
@@ -79,7 +79,7 @@ body { font-family: 'Manrope', sans-serif; background: var(--bg); color: var(--t
 .nav-label { font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.25);padding:10px 0 4px;font-family:'Manrope', sans-serif; }
 .nav-item { display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;color:rgba(255,255,255,0.55);font-size:13.5px;margin-bottom:2px;cursor:pointer;transition:all 0.15s; }
 .nav-item:hover { background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.85); }
-.nav-item.active { background:rgba(0,245,212,0.15);color:#00f5d4;font-weight:500; }
+.nav-item.active { background:rgba(245,166,35,0.15);color:#f5a623;font-weight:500; }
 .nav-icon { font-size:16px; }
 .sidebar-footer { margin-top:auto;padding-top:20px;border-top:1px solid rgba(255,255,255,0.08); }
 .btn-export { width:100%;padding:8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:var(--radius-sm);color:rgba(255,255,255,0.6);font-size:11px;cursor:pointer;font-family:'Manrope', sans-serif;transition:all 0.15s; }
@@ -163,12 +163,12 @@ body { font-family: 'Manrope', sans-serif; background: var(--bg); color: var(--t
 .tab-bar { display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px; }
 .etab { padding:7px 16px;border-radius:999px;font-size:13px;font-weight:500;cursor:pointer;border:1.5px solid var(--border);background:var(--card);color:var(--text2);transition:all 0.15s;display:inline-block; }
 .etab:hover { border-color:var(--on-surface,#e5e2e1);color:var(--on-surface,#e5e2e1); }
-.etab.active { background:#00f5d4;color:#00382f;border-color:#00f5d4; }
+.etab.active { background:#f5a623;color:#2a1a00;border-color:#f5a623; }
 
 /* BUTTONS */
-.btn-primary { display:inline-flex;align-items:center;gap:8px;padding:11px 22px;background:#00f5d4;color:#00382f;border:none;border-radius:999px;font-family:'Manrope', sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:opacity 0.15s; }
+.btn-primary { display:inline-flex;align-items:center;gap:8px;padding:11px 22px;background:#f5a623;color:#2a1a00;border:none;border-radius:999px;font-family:'Manrope', sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:opacity 0.15s; }
 .btn-primary:hover { opacity:0.85; }
-.btn-teal { display:inline-flex;align-items:center;gap:8px;padding:9px 18px;background:#00f5d4;color:#00382f;border:none;border-radius:var(--radius-sm);font-family:'Manrope', sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:opacity 0.15s; }
+.btn-teal { display:inline-flex;align-items:center;gap:8px;padding:9px 18px;background:#f5a623;color:#2a1a00;border:none;border-radius:var(--radius-sm);font-family:'Manrope', sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:opacity 0.15s; }
 .btn-teal:hover { opacity:0.9; }
 .btn-ghost { display:inline-flex;align-items:center;gap:8px;padding:9px 16px;background:var(--card);color:var(--text2);border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'Manrope', sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.15s; }
 .btn-ghost:hover { border-color:var(--on-surface,#e5e2e1);color:var(--on-surface,#e5e2e1); }
@@ -278,7 +278,7 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
 .goal-amounts { font-family:'Manrope', sans-serif;font-size:12px;color:var(--on-surface,#e5e2e1); }
 
 /* NETWORTH BANNER */
-.networth-banner { background:linear-gradient(135deg,#0a1f1a 0%,#0d0d12 60%,#0a0f1a 100%);border:1px solid rgba(0,245,212,0.3);border-radius:var(--radius);padding:28px 32px;color:#e5e2e1;margin-bottom:24px;box-shadow:0 0 60px rgba(0,245,212,0.12), 0 0 120px rgba(0,245,212,0.05); }
+.networth-banner { background:linear-gradient(135deg,#0a1f1a 0%,#0d0d12 60%,#0a0f1a 100%);border:1px solid rgba(245,166,35,0.3);border-radius:var(--radius);padding:28px 32px;color:#e5e2e1;margin-bottom:24px;box-shadow:0 0 60px rgba(245,166,35,0.12), 0 0 120px rgba(245,166,35,0.05); }
 .networth-banner.blue-banner { background:linear-gradient(135deg,#03101f 0%,#0d0d12 60%,#03101f 100%);border-color:rgba(0,207,255,0.35);box-shadow:0 0 60px rgba(0,207,255,0.15), 0 0 120px rgba(0,207,255,0.06); }
 .nw-label { font-family:'Manrope', sans-serif;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:8px; }
 .nw-val { font-family:'Space Grotesk', sans-serif;font-size:48px;font-weight:700;line-height:1; }
@@ -307,7 +307,7 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
 .hero-card-breakdown-item-label { font-size:11px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.1em; }
 .hero-card-breakdown-item-val { font-family:'Space Grotesk', sans-serif;font-size:15px;font-weight:600;margin-top:2px; }
 /* teal variant */
-.hero-card-teal { background:linear-gradient(145deg,#021310 0%,#042e26 100%);border:1px solid rgba(0,245,212,0.4);box-shadow:0 0 40px rgba(0,245,212,0.15), 0 2px 16px rgba(0,0,0,0.5); }
+.hero-card-teal { background:linear-gradient(145deg,#021310 0%,#042e26 100%);border:1px solid rgba(245,166,35,0.4);box-shadow:0 0 40px rgba(245,166,35,0.15), 0 2px 16px rgba(0,0,0,0.5); }
 /* coral/red variant */
 .hero-card-coral { background:linear-gradient(145deg,#1a0a08 0%,#2e1208 100%);border:1px solid rgba(255,95,87,0.4);box-shadow:0 0 40px rgba(255,95,87,0.14), 0 2px 16px rgba(0,0,0,0.5); }
 /* amber variant */
@@ -326,8 +326,8 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
 
 /* INLINE EDITABLE */
 [data-edit],[data-edit-list] { cursor:text;border-radius:4px;padding:0 3px;margin:0 -3px;transition:background 0.12s,box-shadow 0.12s;outline:none;display:inline-block;min-width:24px; }
-[data-edit]:hover,[data-edit-list]:hover { background:rgba(255,255,255,0.06);box-shadow:inset 0 0 0 1px rgba(0,245,212,0.3); }
-[data-edit]:focus,[data-edit-list]:focus { background:rgba(0,245,212,0.06);box-shadow:inset 0 0 0 1.5px var(--teal); }
+[data-edit]:hover,[data-edit-list]:hover { background:rgba(255,255,255,0.06);box-shadow:inset 0 0 0 1px rgba(245,166,35,0.3); }
+[data-edit]:focus,[data-edit-list]:focus { background:rgba(245,166,35,0.06);box-shadow:inset 0 0 0 1.5px var(--teal); }
 .credit-card [data-edit]:hover,.credit-card [data-edit-list]:hover { background:rgba(255,255,255,0.1);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.3); }
 .credit-card [data-edit]:focus,.credit-card [data-edit-list]:focus { background:rgba(255,255,255,0.15);box-shadow:inset 0 0 0 1.5px #fff; }
 .networth-banner [data-edit]:hover,.networth-banner [data-edit-list]:hover { background:rgba(255,255,255,0.1);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.3); }
@@ -361,8 +361,8 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255,255,255,0.05);
   }
-  .emerald-glow { box-shadow: 0 0 20px rgba(0,245,212,0.08); }
-  .emerald-text-glow { text-shadow: 0 0 15px rgba(0,245,212,0.3); }
+  .emerald-glow { box-shadow: 0 0 20px rgba(245,166,35,0.08); }
+  .emerald-text-glow { text-shadow: 0 0 15px rgba(245,166,35,0.3); }
 
   /* ── ACCENT STAT CARDS ── */
   /* Fallback for browsers without color-mix (older iOS/Android) */
@@ -502,7 +502,7 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
     border: none; background: none; transition: color 0.15s;
     min-width: 44px; min-height: 44px; justify-content: center;
   }
-  .mobile-nav-item.active { color: #00f5d4; }
+  .mobile-nav-item.active { color: #f5a623; }
   .mobile-nav-item .nav-icon { font-size: 18px; }
 </style>
 </head>
@@ -1446,7 +1446,7 @@ function renderDashboard() {
     <div class="hero-cards-row cols-2" style="margin-bottom:24px;">
       <div class="hero-card hero-card-teal" style="grid-column:1/-1;">
         <div class="hero-card-label">Estimated Net Worth</div>
-        <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 28px rgba(0,245,212,0.55), 0 0 60px rgba(0,245,212,0.2);font-size:52px;"><span data-private>${fmtMoneyD(netWorth())}</span></div>
+        <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 28px rgba(245,166,35,0.55), 0 0 60px rgba(245,166,35,0.2);font-size:52px;"><span data-private>${fmtMoneyD(netWorth())}</span></div>
         <div class="hero-card-sub">Savings goals + investments minus credit debt & loans · live</div>
         <div class="hero-card-breakdown">
           <div><div class="hero-card-breakdown-item-label">Savings</div><div class="hero-card-breakdown-item-val" style="color:var(--teal);"><span data-private>${fmtMoney(totalGoalsCurrent())}</span></div></div>
@@ -1698,7 +1698,7 @@ function renderBudget() {
       <div class="hero-cards-row cols-2" style="margin-bottom:24px;">
         <div class="hero-card hero-card-teal">
           <div class="hero-card-label">Take-home</div>
-          <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 20px rgba(0,245,212,0.5);"><span data-edit="income.current_takehome" data-type="money">${fmtMoney(gAppData.income.current_takehome)}</span></div>
+          <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 20px rgba(245,166,35,0.5);"><span data-edit="income.current_takehome" data-type="money">${fmtMoney(gAppData.income.current_takehome)}</span></div>
           <div class="hero-card-sub">Per month · click to edit</div>
           <div class="hero-card-breakdown">
             <div><div class="hero-card-breakdown-item-label">Annual Salary</div><div class="hero-card-breakdown-item-val" style="color:rgba(255,255,255,0.55);"><span data-edit="income.current_salary" data-type="money">${fmtMoney(gAppData.income.current_salary)}</span></div></div>
@@ -1740,7 +1740,7 @@ function renderBudget() {
       <div class="hero-cards-row cols-2" style="margin-bottom:24px;">
         <div class="hero-card hero-card-teal">
           <div class="hero-card-label">Future Take-home</div>
-          <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 20px rgba(0,245,212,0.5);"><span data-edit="income.future_takehome" data-type="money">${fmtMoney(gAppData.income.future_takehome)}</span></div>
+          <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 20px rgba(245,166,35,0.5);"><span data-edit="income.future_takehome" data-type="money">${fmtMoney(gAppData.income.future_takehome)}</span></div>
           <div class="hero-card-sub">Per month · click to edit</div>
           <div class="hero-card-breakdown">
             <div><div class="hero-card-breakdown-item-label">Annual Salary</div><div class="hero-card-breakdown-item-val" style="color:rgba(255,255,255,0.55);"><span data-edit="income.future_salary" data-type="money">${fmtMoney(gAppData.income.future_salary)}</span></div></div>
@@ -1764,7 +1764,7 @@ function renderBudget() {
       </div>
       ${renderPotsSection('future')}
       <div style="margin-top:20px;display:flex;justify-content:flex-end;">
-        <button onclick="applyFutureToCurrent()" style="display:flex;align-items:center;gap:8px;padding:10px 20px;background:var(--teal-light);border:1px solid rgba(0,245,212,0.35);border-radius:var(--radius-sm);color:var(--teal);font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='rgba(0,245,212,0.2)'" onmouseout="this.style.background='var(--teal-light)'">
+        <button onclick="applyFutureToCurrent()" style="display:flex;align-items:center;gap:8px;padding:10px 20px;background:var(--teal-light);border:1px solid rgba(245,166,35,0.35);border-radius:var(--radius-sm);color:var(--teal);font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='rgba(245,166,35,0.2)'" onmouseout="this.style.background='var(--teal-light)'">
           ↓ Apply future to current
         </button>
       </div>
@@ -1792,7 +1792,7 @@ function renderBudget() {
           <div class="grid-2" style="align-items:start;">
             <div class="hero-card hero-card-teal" style="height:100%;">
               <div class="hero-card-label">Bonus</div>
-              <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 20px rgba(0,245,212,0.5);"><span data-edit="bonus.amount" data-type="money">${fmtMoney(bonus.amount)}</span></div>
+              <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 20px rgba(245,166,35,0.5);"><span data-edit="bonus.amount" data-type="money">${fmtMoney(bonus.amount)}</span></div>
               <div class="hero-card-sub">Click to edit your bonus amount</div>
               <div class="hero-card-breakdown">
                 <div>
@@ -1806,7 +1806,7 @@ function renderBudget() {
               </div>
               ${bonus.amount > 0 ? `
               <div class="hero-card-bar" style="margin-top:16px;">
-                <div class="hero-card-bar-track"><div class="hero-card-bar-fill" style="width:${Math.min(100,(allocTotal/Math.max(1,bonus.amount))*100)}%;background:${allocTotal > bonus.amount ? 'var(--red)' : 'var(--teal)'};box-shadow:0 0 8px rgba(0,245,212,0.4);"></div></div>
+                <div class="hero-card-bar-track"><div class="hero-card-bar-fill" style="width:${Math.min(100,(allocTotal/Math.max(1,bonus.amount))*100)}%;background:${allocTotal > bonus.amount ? 'var(--red)' : 'var(--teal)'};box-shadow:0 0 8px rgba(245,166,35,0.4);"></div></div>
                 <div class="hero-card-bar-label">${Math.round((allocTotal/Math.max(1,bonus.amount))*100)}% allocated</div>
               </div>` : ''}
             </div>
@@ -2030,10 +2030,10 @@ function renderSavings() {
       return `<div class="hero-cards-row cols-2" style="margin-bottom:24px;">
         <div class="hero-card hero-card-teal">
           <div class="hero-card-label">Total Savings</div>
-          <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 24px rgba(0,245,212,0.5);"><span data-private>${fmtMoney(totalCurrent)}</span></div>
+          <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 24px rgba(245,166,35,0.5);"><span data-private>${fmtMoney(totalCurrent)}</span></div>
           <div class="hero-card-sub">Across all savings goals</div>
           <div class="hero-card-bar">
-            <div class="hero-card-bar-track"><div class="hero-card-bar-fill" style="width:${pct}%;background:var(--teal);box-shadow:0 0 8px rgba(0,245,212,0.5);"></div></div>
+            <div class="hero-card-bar-track"><div class="hero-card-bar-fill" style="width:${pct}%;background:var(--teal);box-shadow:0 0 8px rgba(245,166,35,0.5);"></div></div>
             <div class="hero-card-bar-label">${pct}% of total target reached</div>
           </div>
         </div>
@@ -2144,9 +2144,9 @@ function renderCredit() {
             : col === 'amber'
             ? 'linear-gradient(145deg,#181200 0%,#2e2100 100%)'
             : 'linear-gradient(145deg,#021310 0%,#042e26 100%)';
-          const accentColor = col === 'purple' ? '#d44dff' : col === 'amber' ? '#ffe600' : '#00f5d4';
-          const borderStyle = col === 'purple' ? '1px solid rgba(212,77,255,0.45)' : col === 'amber' ? '1px solid rgba(255,230,0,0.45)' : '1px solid rgba(0,245,212,0.45)';
-          const cardGlow = col === 'purple' ? '0 0 40px rgba(212,77,255,0.18), 0 2px 16px rgba(0,0,0,0.5)' : col === 'amber' ? '0 0 40px rgba(255,230,0,0.15), 0 2px 16px rgba(0,0,0,0.5)' : '0 0 40px rgba(0,245,212,0.18), 0 2px 16px rgba(0,0,0,0.5)';
+          const accentColor = col === 'purple' ? '#d44dff' : col === 'amber' ? '#ffe600' : '#f5a623';
+          const borderStyle = col === 'purple' ? '1px solid rgba(212,77,255,0.45)' : col === 'amber' ? '1px solid rgba(255,230,0,0.45)' : '1px solid rgba(245,166,35,0.45)';
+          const cardGlow = col === 'purple' ? '0 0 40px rgba(212,77,255,0.18), 0 2px 16px rgba(0,0,0,0.5)' : col === 'amber' ? '0 0 40px rgba(255,230,0,0.15), 0 2px 16px rgba(0,0,0,0.5)' : '0 0 40px rgba(245,166,35,0.18), 0 2px 16px rgba(0,0,0,0.5)';
           const barFill = util > 70 ? '#ff3b5c' : accentColor;
           return `
             <div class="credit-card" style="background:${colorBg};border:${borderStyle};box-shadow:${cardGlow};">
@@ -2279,13 +2279,13 @@ function renderCredit() {
                   </div>
                   ${pct > 0 ? `<div style="margin-top:12px;">
                     <div style="height:4px;background:rgba(255,255,255,0.08);border-radius:2px;">
-                      <div style="height:4px;width:${pct.toFixed(1)}%;background:var(--teal);border-radius:2px;box-shadow:0 0 8px rgba(0,245,212,0.4);"></div>
+                      <div style="height:4px;width:${pct.toFixed(1)}%;background:var(--teal);border-radius:2px;box-shadow:0 0 8px rgba(245,166,35,0.4);"></div>
                     </div>
                     <div style="font-size:11px;color:var(--text3);margin-top:4px;">${pct.toFixed(0)}% paid off · ${fmtMoney(paid)} of ${fmtMoney(totalRepayable)}</div>
                   </div>` : ''}
                 </div>
                 <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;">
-                  <button onclick="openLoanCalculator('${l.id}')" style="background:var(--teal-light);border:1px solid rgba(0,245,212,0.25);color:var(--teal);font-size:12px;font-family:'Manrope',sans-serif;font-weight:600;padding:7px 14px;border-radius:8px;cursor:pointer;white-space:nowrap;">📊 Calculator</button>
+                  <button onclick="openLoanCalculator('${l.id}')" style="background:var(--teal-light);border:1px solid rgba(245,166,35,0.25);color:var(--teal);font-size:12px;font-family:'Manrope',sans-serif;font-weight:600;padding:7px 14px;border-radius:8px;cursor:pointer;white-space:nowrap;">📊 Calculator</button>
                 </div>
               </div>
               ${(() => {
@@ -2345,7 +2345,7 @@ function renderCredit() {
       <div class="hero-cards-row cols-2" style="margin-bottom:24px;">
         <div class="hero-card hero-card-teal">
           <div class="hero-card-label">Total Investments</div>
-          <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 20px rgba(0,245,212,0.5);"><span data-private>${fmtMoney(totalInvestments())}</span></div>
+          <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 20px rgba(245,166,35,0.5);"><span data-private>${fmtMoney(totalInvestments())}</span></div>
           <div class="hero-card-sub">Live total · all accounts</div>
         </div>
         <div class="hero-card hero-card-amber">
@@ -2371,7 +2371,7 @@ function renderCredit() {
       <div class="hero-cards-row cols-2" style="margin-bottom:24px;">
         <div class="hero-card hero-card-teal">
           <div class="hero-card-label">Total Pension Value</div>
-          <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 20px rgba(0,245,212,0.5);"><span data-private>${fmtMoney(totalPension())}</span></div>
+          <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 20px rgba(245,166,35,0.5);"><span data-private>${fmtMoney(totalPension())}</span></div>
           <div class="hero-card-sub">Live total · all pots</div>
         </div>
         <div class="hero-card hero-card-amber">
@@ -2563,7 +2563,7 @@ function renderFlat() {
     <div class="hero-cards-row cols-3" style="margin-bottom:24px;">
       <div class="hero-card hero-card-teal">
         <div class="hero-card-label">Property Value</div>
-        <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 20px rgba(0,245,212,0.5);" data-private>
+        <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 20px rgba(245,166,35,0.5);" data-private>
           <span data-edit="flat.value" data-type="money">${fmtMoney(val)}</span>
         </div>
         <div class="hero-card-sub">Tap to update estimate</div>
@@ -2651,7 +2651,7 @@ function renderFlat() {
           </div>
         </div>
 
-        <div class="card" style="border:1px solid rgba(0,245,212,0.2);">
+        <div class="card" style="border:1px solid rgba(245,166,35,0.2);">
           <div class="section-eyebrow">Buyout Scenario</div>
           <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px;">
             <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -2673,7 +2673,7 @@ function renderFlat() {
           </div>
         </div>
 
-        <div class="card" style="border:1px solid ${borrowGap > 0 ? 'rgba(255,95,87,0.3)' : 'rgba(0,245,212,0.2)'};">
+        <div class="card" style="border:1px solid ${borrowGap > 0 ? 'rgba(255,95,87,0.3)' : 'rgba(245,166,35,0.2)'};">
           <div class="section-eyebrow">Affordability Check</div>
           <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px;">
             <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -2731,7 +2731,7 @@ function renderPerks() {
 
     <div id="perks-airbnb">
       <div class="hero-cards-row" style="margin-bottom:24px;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));">
-        ${[...gAppData.airbnb_yearly].sort((a,b) => (a.year||0) - (b.year||0)).map((y, i) => { const aC = ['teal','purple','amber'][i % 3]; const glows = {teal:'rgba(0,245,212,0.5)',purple:'rgba(212,77,255,0.5)',amber:'rgba(255,230,0,0.4)'}; return `
+        ${[...gAppData.airbnb_yearly].sort((a,b) => (a.year||0) - (b.year||0)).map((y, i) => { const aC = ['teal','purple','amber'][i % 3]; const glows = {teal:'rgba(245,166,35,0.5)',purple:'rgba(212,77,255,0.5)',amber:'rgba(255,230,0,0.4)'}; return `
           <div class="hero-card hero-card-${aC}">
             <div class="hero-card-label"><span data-edit-list="airbnb_yearly|${y.id}|year" data-type="number">${y.year}</span> Total</div>
             <div class="hero-card-val" style="color:var(--${aC});text-shadow:0 0 20px ${glows[aC]};font-size:26px;"><span data-edit-list="airbnb_yearly|${y.id}|total" data-type="money">${fmtMoney(y.total)}</span></div>
@@ -2739,7 +2739,7 @@ function renderPerks() {
           </div>`; }).join('')}
         <div class="hero-card hero-card-teal">
           <div class="hero-card-label">${currentYear} Total (live)</div>
-          <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 20px rgba(0,245,212,0.5);font-size:26px;">${fmtMoney(totalAirbnbYear(currentYear))}</div>
+          <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 20px rgba(245,166,35,0.5);font-size:26px;">${fmtMoney(totalAirbnbYear(currentYear))}</div>
           <div class="hero-card-sub">From bookings list</div>
         </div>
       </div>
@@ -2779,7 +2779,7 @@ function renderPerks() {
 
     <div id="perks-miles" style="display:none;">
       <div class="hero-cards-row" style="margin-bottom:24px;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));">
-        ${gAppData.miles.map((m, i) => { const mC = ['teal','purple','amber','coral'][i % 4]; const glows = {teal:'rgba(0,245,212,0.5)',purple:'rgba(212,77,255,0.5)',amber:'rgba(255,230,0,0.4)',coral:'rgba(255,95,87,0.4)'}; return `
+        ${gAppData.miles.map((m, i) => { const mC = ['teal','purple','amber','coral'][i % 4]; const glows = {teal:'rgba(245,166,35,0.5)',purple:'rgba(212,77,255,0.5)',amber:'rgba(255,230,0,0.4)',coral:'rgba(255,95,87,0.4)'}; return `
           <div class="hero-card hero-card-${mC}">
             <div class="hero-card-label"><span data-edit-list="miles|${m.id}|program" data-type="text">${escHtml(m.program)}</span></div>
             <div class="hero-card-val" style="color:var(--${mC});text-shadow:0 0 20px ${glows[mC]};font-size:26px;"><span data-edit-list="miles|${m.id}|balance" data-type="number">${(Number(m.balance)||0).toLocaleString()}</span></div>
@@ -2806,7 +2806,7 @@ function renderPerks() {
       <div class="hero-cards-row cols-2" style="margin-bottom:24px;">
         <div class="hero-card hero-card-teal">
           <div class="hero-card-label">Active Cashback Total</div>
-          <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 20px rgba(0,245,212,0.5);">${fmtMoney(totalCashback())}</div>
+          <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 20px rgba(245,166,35,0.5);">${fmtMoney(totalCashback())}</div>
           <div class="hero-card-sub">Live · all platforms</div>
         </div>
         <div class="hero-card hero-card-amber">
@@ -2950,7 +2950,7 @@ function initSpendingChart() {
   if (!ctx) return;
   if (spendingChart) spendingChart.destroy();
   const cats = ['Food','Shopping','Travel','Going Out','Beauty','Health','Other'];
-  const colors = { Food:'#4ade80', Shopping:'#00f5d4', Travel:'#00cfff', 'Going Out':'#f87171', Beauty:'#fbbf24', Health:'#4ade80', Other:'#a78bfa' };
+  const colors = { Food:'#4ade80', Shopping:'#f5a623', Travel:'#00cfff', 'Going Out':'#f87171', Beauty:'#fbbf24', Health:'#4ade80', Other:'#a78bfa' };
   const months = {};
   gAppData.spending.forEach(t => {
     const m = (t.date || '').slice(0, 7);
@@ -2979,7 +2979,7 @@ function initSavingsChart() {
   savingsChart = new Chart(ctx, {
     type: 'line',
     data: { labels: sorted.map(s => fmtMonth(s.month)), datasets: [
-      { label: 'Saved this month', data: sorted.map(s => Number(s.savings_total) || 0), borderColor: '#00f5d4', backgroundColor: 'rgba(0,245,212,0.1)', tension: 0.3 },
+      { label: 'Saved this month', data: sorted.map(s => Number(s.savings_total) || 0), borderColor: '#f5a623', backgroundColor: 'rgba(245,166,35,0.1)', tension: 0.3 },
       { label: 'Cumulative', data: cumData, borderColor: '#00cfff', backgroundColor: 'rgba(0,207,255,0.08)', tension: 0.3 },
     ]},
     options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'top'}}, scales:{y:{ticks:{callback:v=>'£'+v}}} }
@@ -2998,7 +2998,7 @@ function initNetWorthChart() {
   data.push(netWorth());
   networthChart = new Chart(ctx, {
     type: 'line',
-    data: { labels, datasets: [{ label: 'Net Worth', data, borderColor: '#00f5d4', backgroundColor: 'rgba(0,245,212,0.15)', tension: 0.3, fill: true, pointBackgroundColor: '#00f5d4', pointRadius: 4 }]},
+    data: { labels, datasets: [{ label: 'Net Worth', data, borderColor: '#f5a623', backgroundColor: 'rgba(245,166,35,0.15)', tension: 0.3, fill: true, pointBackgroundColor: '#f5a623', pointRadius: 4 }]},
     options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{ticks:{callback:v=>'£'+v.toLocaleString()}}} }
   });
 }
