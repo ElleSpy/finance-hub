@@ -3040,7 +3040,7 @@ async function syncMonzo() {
   if (btn) { btn.disabled = true; btn.textContent = 'Syncing…'; }
   try {
     // Fetch all rows from the Monzo sheet (Sheet1, all columns)
-    const range = encodeURIComponent('Personal Account Transactions!A:P');
+    const range = encodeURIComponent('Monzo Transactions!A:P');
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${MONZO_SHEET_ID}/values/${range}`;
     const res = await fetch(url, { headers: { Authorization: 'Bearer ' + gAccessToken } });
     if (!res.ok) {
@@ -3133,7 +3133,9 @@ async function syncMonzo() {
     showToast(msg.length > 0 ? `✓ ${msg.join(', ')} transactions` : '✓ Already up to date');
   } catch(e) {
     console.error('Monzo sync failed', e);
-    showToast('Monzo sync failed — check console');
+    // Surface the real error message so it's visible without opening console
+    const msg = e.message || String(e);
+    showToast('Sync failed: ' + msg.slice(0, 120));
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = '⟳ Sync Monzo'; }
   }
