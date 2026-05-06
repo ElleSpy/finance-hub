@@ -29,6 +29,8 @@
     --green-light:   rgba(52,211,153,0.12);
     --red:           #f87171;
     --red-light:     rgba(248,113,113,0.12);
+    --coral:         #f4816a;
+    --coral-light:   rgba(244,129,106,0.15);
     --blue:          #60a5fa;
     --blue-light:    rgba(96,165,250,0.12);
     --blue-mid:      rgba(96,165,250,0.25);
@@ -65,6 +67,8 @@
     --green-light:   rgba(14,143,92,0.1);
     --red:           #d94444;
     --red-light:     rgba(217,68,68,0.1);
+    --coral:         #c95a47;
+    --coral-light:   rgba(201,90,71,0.12);
     --blue:          #2563eb;
     --blue-light:    rgba(37,99,235,0.1);
     --blue-mid:      rgba(37,99,235,0.2);
@@ -89,14 +93,14 @@ body { font-family: 'Manrope', sans-serif; background: var(--bg); color: var(--t
 .sync-btn { display:inline-flex;align-items:center;gap:10px;padding:13px 24px;background:#f5a623;color:#2a1a00;border:none;border-radius:999px;font-family:'Manrope', sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:opacity 0.15s;margin-bottom:12px;width:100%;justify-content:center; }
 .sync-btn:hover { opacity:0.85; }
 .sync-btn-secondary { display:inline-flex;align-items:center;gap:10px;padding:11px 24px;background:none;color:var(--text2);border:1.5px solid var(--border);border-radius:999px;font-family:'Manrope', sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:border-color 0.15s;width:100%;justify-content:center; }
-.sync-btn-secondary:hover { border-color:var(--on-surface,#e5e2e1);color:var(--on-surface,#e5e2e1); }
+.sync-btn-secondary:hover { border-color:var(--text);color:var(--text); }
 .sync-setup { background:var(--bg2);border-radius:12px;padding:18px;text-align:left;margin-top:16px; }
 .sync-setup-title { font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);font-family:'Manrope', sans-serif;margin-bottom:10px; }
 .sync-step { font-size:12.5px;color:var(--text2);padding:6px 0;display:flex;gap:10px;border-bottom:1px solid var(--border);line-height:1.5; }
 .sync-step:last-child { border-bottom:none; }
 .sync-step-num { font-family:'Manrope', sans-serif;font-size:11px;color:var(--text3);flex-shrink:0;padding-top:2px; }
 .sync-input-wrap { margin-top:14px; }
-.sync-input { width:100%;padding:10px 14px;border-radius:8px;border:1.5px solid var(--border);font-family:'Manrope', sans-serif;font-size:13px;background:var(--bg);color:var(--on-surface,#e5e2e1);outline:none; }
+.sync-input { width:100%;padding:10px 14px;border-radius:8px;border:1.5px solid var(--border);font-family:'Manrope', sans-serif;font-size:13px;background:var(--bg);color:var(--text);outline:none; }
 .sync-input:focus { border-color:var(--teal); }
 #top-bar { position:fixed;top:14px;right:18px;z-index:500;display:flex;align-items:center;gap:8px; }
 #theme-toggle { width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);transition:all 0.2s; }
@@ -206,7 +210,7 @@ body { font-family: 'Manrope', sans-serif; background: var(--bg); color: var(--t
 /* TABS */
 .tab-bar { display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px; }
 .etab { padding:7px 16px;border-radius:999px;font-size:13px;font-weight:500;cursor:pointer;border:1.5px solid var(--border);background:var(--card);color:var(--text2);transition:all 0.15s;display:inline-block; }
-.etab:hover { border-color:var(--on-surface,#e5e2e1);color:var(--on-surface,#e5e2e1); }
+.etab:hover { border-color:var(--text);color:var(--text); }
 .etab.active { background:#f5a623;color:#2a1a00;border-color:#f5a623; }
 
 /* BUTTONS */
@@ -215,7 +219,7 @@ body { font-family: 'Manrope', sans-serif; background: var(--bg); color: var(--t
 .btn-teal { display:inline-flex;align-items:center;gap:8px;padding:9px 18px;background:#f5a623;color:#2a1a00;border:none;border-radius:var(--radius-sm);font-family:'Manrope', sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:opacity 0.15s; }
 .btn-teal:hover { opacity:0.9; }
 .btn-ghost { display:inline-flex;align-items:center;gap:8px;padding:9px 16px;background:var(--card);color:var(--text2);border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'Manrope', sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.15s; }
-.btn-ghost:hover { border-color:var(--on-surface,#e5e2e1);color:var(--on-surface,#e5e2e1); }
+.btn-ghost:hover { border-color:var(--text);color:var(--text); }
 .btn-danger { display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:var(--red-light);color:var(--red);border:none;border-radius:6px;font-size:12px;cursor:pointer;font-family:'Manrope', sans-serif;transition:opacity 0.15s; }
 .btn-danger:hover { opacity:0.8; }
 .btn-add { display:inline-flex;align-items:center;gap:6px;padding:7px 16px;background:var(--bg2);color:var(--text2);border:1.5px dashed var(--border);border-radius:999px;font-family:'Manrope', sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.15s;margin-top:12px; }
@@ -228,15 +232,15 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
 .goal-bar-wrap { margin-top:6px; }
 .goal-bar-label { display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px; }
 .goal-bar-label span:first-child { color:var(--text2); }
-.goal-bar-label span:last-child { font-weight:600;color:var(--on-surface,#e5e2e1); }
+.goal-bar-label span:last-child { font-weight:600;color:var(--text); }
 .goal-bar-track { height:7px;background:var(--bg2);border-radius:999px;overflow:hidden; }
 .goal-bar-fill { height:100%;border-radius:999px;background:var(--teal); }
 
 /* FORMS */
 .form-label { display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.08em; }
-.form-input { width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'Manrope', sans-serif;font-size:13px;background:var(--bg);color:var(--on-surface,#e5e2e1);outline:none;transition:border-color 0.15s; }
+.form-input { width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'Manrope', sans-serif;font-size:13px;background:var(--bg);color:var(--text);outline:none;transition:border-color 0.15s; }
 .form-input:focus { border-color:var(--teal); }
-.form-select { width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'Manrope', sans-serif;font-size:13px;background:var(--bg);color:var(--on-surface,#e5e2e1);outline:none; }
+.form-select { width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'Manrope', sans-serif;font-size:13px;background:var(--bg);color:var(--text);outline:none; }
 .form-row { display:grid;gap:12px;margin-bottom:14px; }
 .form-row-2 { grid-template-columns:1fr 1fr; }
 .form-row-3 { grid-template-columns:1fr 1fr 1fr; }
@@ -252,7 +256,7 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
 .sub-toggle { font-size:10px;font-weight:600;font-family:'Manrope', sans-serif;padding:2px 8px;border-radius:999px;border:1px solid;cursor:pointer;background:none;transition:all 0.15s; }
 .sub-toggle.active { color:var(--teal);border-color:var(--teal-mid); }
 .sub-toggle.paused { color:var(--text3);border-color:var(--border); }
-.data-table td { padding:10px 12px;border-bottom:1px solid var(--border);color:var(--on-surface,#e5e2e1); }
+.data-table td { padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text); }
 .data-table tr:last-child td { border-bottom:none; }
 .data-table tr:hover td { background:var(--bg2); }
 .td-mono { font-family:'Manrope', sans-serif;font-size:12px; }
@@ -270,7 +274,7 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
 /* TIP BOX */
 .tip-box { background:var(--bg2);border-radius:var(--radius-sm);padding:16px 18px; }
 .tip-box-title { font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-family:'Manrope', sans-serif;margin-bottom:10px; }
-.tip-item { font-size:13px;color:var(--on-surface,#e5e2e1);padding:4px 0;display:flex;gap:10px;align-items:flex-start; }
+.tip-item { font-size:13px;color:var(--text);padding:4px 0;display:flex;gap:10px;align-items:flex-start; }
 .tip-dot { width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:6px;background:var(--teal); }
 
 /* TOAST */
@@ -306,7 +310,7 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
 /* INVESTMENT/POT/GOAL ROWS */
 .invest-row,.pot-row,.goal-row,.purchase-row,.list-row { display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border); }
 .invest-row:last-child,.pot-row:last-child,.goal-row:last-child,.purchase-row:last-child,.list-row:last-child { border-bottom:none; }
-.invest-name,.list-name { font-size:14px;color:var(--on-surface,#e5e2e1); }
+.invest-name,.list-name { font-size:14px;color:var(--text); }
 .invest-sub,.list-sub { font-size:11px;color:var(--text3);margin-top:2px; }
 .invest-val { font-family:'Space Grotesk', sans-serif;font-size:20px;font-weight:700; }
 
@@ -319,7 +323,7 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
 .goal-header { display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;width:100%; }
 .goal-name { font-size:14px;font-weight:500;display:flex;align-items:center;gap:8px; }
 .goal-deadline { font-size:11px;color:var(--text3);margin-top:4px; }
-.goal-amounts { font-family:'Manrope', sans-serif;font-size:12px;color:var(--on-surface,#e5e2e1); }
+.goal-amounts { font-family:'Manrope', sans-serif;font-size:12px;color:var(--text); }
 
 /* NETWORTH BANNER */
 .networth-banner { background:var(--card);border:1px solid rgba(245,166,35,0.3);border-radius:var(--radius);padding:28px 32px;color:var(--text);margin-bottom:24px;box-shadow:var(--shadow); }
@@ -331,7 +335,7 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
 .nw-item-label { font-size:11px;color:var(--text2);font-family:'Manrope', sans-serif;text-transform:uppercase;letter-spacing:0.1em; }
 .nw-item-val { font-family:'Space Grotesk', sans-serif;font-size:18px;font-weight:700;margin-top:3px; }
 .nw-positive { color:var(--teal); }
-.nw-negative { color:#F4816A; }
+.nw-negative { color:var(--coral); }
 
 /* HERO CARDS — credit-card style used on dashboard, budget, savings */
 .hero-cards-row { display:grid;gap:16px;margin-bottom:24px; }
@@ -541,7 +545,7 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
   .mobile-nav-item {
     display: flex; flex-direction: column; align-items: center; gap: 2px;
     padding: 6px 8px; border-radius: 10px; cursor: pointer;
-    font-size: 9px; font-weight: 600; color: #83948f;
+    font-size: 9px; font-weight: 600; color: var(--text3);
     font-family: 'Manrope', sans-serif; letter-spacing: 0.04em;
     border: none; background: none; transition: color 0.15s;
     min-width: 44px; min-height: 44px; justify-content: center;
@@ -1516,8 +1520,8 @@ function renderDashboard() {
         <div class="hero-card-breakdown">
           <div><div class="hero-card-breakdown-item-label">Savings</div><div class="hero-card-breakdown-item-val" style="color:var(--teal);"><span data-private>${fmtMoney(totalGoalsCurrent())}</span></div></div>
           <div><div class="hero-card-breakdown-item-label">Investments</div><div class="hero-card-breakdown-item-val" style="color:var(--amber);"><span data-private>${fmtMoney(totalInvestments())}</span></div></div>
-          <div><div class="hero-card-breakdown-item-label">Credit Debt</div><div class="hero-card-breakdown-item-val" style="color:#F4816A;"><span data-private>-${fmtMoney(totalDebt())}</span></div></div>
-          <div><div class="hero-card-breakdown-item-label">Loans</div><div class="hero-card-breakdown-item-val" style="color:#F4816A;"><span data-private>-${fmtMoney(totalLoans())}</span></div></div>
+          <div><div class="hero-card-breakdown-item-label">Credit Debt</div><div class="hero-card-breakdown-item-val" style="color:var(--coral);"><span data-private>-${fmtMoney(totalDebt())}</span></div></div>
+          <div><div class="hero-card-breakdown-item-label">Loans</div><div class="hero-card-breakdown-item-val" style="color:var(--coral);"><span data-private>-${fmtMoney(totalLoans())}</span></div></div>
         </div>
       </div>
     </div>
