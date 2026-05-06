@@ -947,7 +947,7 @@ function id() { return 'i' + Date.now().toString(36) + Math.random().toString(36
 
 function ensureSchema(d) {
   // Make sure all top-level arrays exist (forwards-compatible)
-  ['fixed_current','fixed_future','bills_current','bills_future','subscriptions','pots_current','pots_future','savings_goals','investments','pension','credit_cards','purchases','spending','airbnb_bookings','airbnb_rates','airbnb_yearly','miles','cashback','cashback_history','owed','snapshots','incoming_payments','loans'].forEach(k => { if (!Array.isArray(d[k])) d[k] = []; });
+  ['fixed_current','fixed_future','bills_current','bills_future','subscriptions','pots_current','pots_future','savings_goals','investments','pension','credit_cards','purchases','spending','airbnb_bookings','airbnb_rates','airbnb_yearly','miles','cashback','cashback_history','owed','snapshots','incoming_payments','loans','loan_payments'].forEach(k => { if (!Array.isArray(d[k])) d[k] = []; });
   // Migrate legacy 'pots' array into pots_current/pots_future if present
   if (Array.isArray(d.pots) && d.pots.length > 0) {
     if (d.pots_current.length === 0) d.pots_current = d.pots.map(p => ({...p}));
@@ -1017,6 +1017,15 @@ function loanRemaining(l)             { return Number(l.remaining) || Number(l.b
 function loanTotalRepayable(l)        { return Number(l.total_repayable) || loanRemaining(l); }
 function loanMonthsLeft(l)            { const m = Number(l.monthly_payment)||0; const r = loanRemaining(l); return (m > 0 && r > 0) ? Math.ceil(r / m) : 0; }
 function totalLoans()                 { return (gAppData.loans || []).reduce((s, l) => s + loanRemaining(l), 0); }
+// Loan payment log helpers
+function loanPayments(loanId)         { return (gAppData.loan_payments || []).filter(p => p.loan_id === loanId).sort((a,b) => b.date.localeCompare(a.date)); }
+function loanOverpayments(loanId, monthly) { return loanPayments(loanId).filter(p => (Number(p.amount_paid)||0) > (Number(monthly)||0)); }
+function loanTotalOverpaid(loanId, monthly) { return loanOverpayments(loanId, monthly).reduce((s,p) => s + Math.max(0, (Number(p.amount_paid)||0) - (Number(monthly)||0)), 0); }
+function deletePaymentLog(paymentId) {
+  gAppData.loan_payments = (gAppData.loan_payments || []).filter(p => p.id !== paymentId);
+  scheduleSave();
+  renderCredit();
+}
 function totalMortgage()              { return Number(gAppData.mortgage.balance) || 0; }
 function netWorth()                   { return totalSavings() + totalInvestments() - totalDebt() - totalLoans(); }
 function totalPurchasesForCard(cid)   { return sum(gAppData.purchases.filter(p => p.card_id === cid), 'amount'); }
@@ -1212,6 +1221,8 @@ function onEditFocus(e) {
   if (type === 'money' || type === 'number') {
     // Strip £ and commas, show raw number; if zero show blank
     const raw = parseMoney(el.textContent);
+    // Capture the old value before editing — used for loan overpayment detection
+    el.dataset.prevVal = raw;
     el.textContent = raw === 0 ? '' : String(raw);
     // Move cursor to end
     const range = document.createRange();
@@ -1235,11 +1246,41 @@ function onEditBlur(e) {
   // Two flavours: data-edit="path" (object path) or data-edit-list="array|id|field"
   if (el.dataset.editList) {
     const [arr, itemId, field] = el.dataset.editList.split('|');
-    updateItem(arr, itemId, field, val);
+    // Auto-log overpayment when loan 'remaining' is updated
+    if (arr === 'loans' && field === 'remaining') {
+      const oldVal = parseFloat(el.dataset.prevVal) || 0;
+      const newVal = parseFloat(val) || 0;
+      const drop = oldVal - newVal;
+      if (drop > 0 && oldVal > 0) {
+        const loan = (gAppData.loans || []).find(l => l.id === itemId);
+        const monthly = Number(loan?.monthly_payment) || 0;
+        // Only log if it's an overpayment (dropped by more than the regular payment)
+        if (monthly > 0 && drop > monthly + 0.01) {
+          const overpayment = Math.round((drop - monthly) * 100) / 100;
+          gAppData.loan_payments = gAppData.loan_payments || [];
+          gAppData.loan_payments.push({
+            id: id(),
+            loan_id: itemId,
+            date: new Date().toISOString().slice(0, 10),
+            amount_paid: drop,
+            auto_logged: true
+          });
+          showToast(`✓ Saved · overpayment of ${fmtMoney(overpayment)} auto-logged`);
+        } else {
+          showToast('✓ Saved');
+        }
+      } else {
+        showToast('✓ Saved');
+      }
+    } else {
+      updateItem(arr, itemId, field, val);
+      showToast('✓ Saved');
+    }
+    if (arr === 'loans' && field === 'remaining') updateItem(arr, itemId, field, val);
   } else if (el.dataset.edit) {
     updatePath(el.dataset.edit, val);
+    showToast('✓ Saved');
   }
-  showToast('✓ Saved');
 }
 
 /* ============================================================
@@ -2227,10 +2268,44 @@ function renderCredit() {
                     <div style="font-size:11px;color:var(--text3);margin-top:4px;">${pct.toFixed(0)}% paid off · ${fmtMoney(paid)} of ${fmtMoney(totalRepayable)}</div>
                   </div>` : ''}
                 </div>
-                <div>
-                  <button onclick="openLoanCalculator('${l.id}')" style="background:var(--teal-light);border:1px solid rgba(0,245,212,0.25);color:var(--teal);font-size:12px;font-family:'Manrope',sans-serif;font-weight:600;padding:7px 14px;border-radius:8px;cursor:pointer;white-space:nowrap;">📊 Overpayment calculator</button>
+                <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;">
+                  <button onclick="openLoanCalculator('${l.id}')" style="background:var(--teal-light);border:1px solid rgba(0,245,212,0.25);color:var(--teal);font-size:12px;font-family:'Manrope',sans-serif;font-weight:600;padding:7px 14px;border-radius:8px;cursor:pointer;white-space:nowrap;">📊 Calculator</button>
                 </div>
               </div>
+              ${(() => {
+                const payments = loanPayments(l.id);
+                const totalOverpaid = loanTotalOverpaid(l.id, monthly);
+                const overpayCount = loanOverpayments(l.id, monthly).length;
+                if (payments.length === 0) return '';
+                return `<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+                  <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:12px;">
+                    <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Payments logged</div><div style="font-size:15px;font-weight:700;">${payments.length}</div></div>
+                    ${overpayCount > 0 ? `<div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Overpayments</div><div style="font-size:15px;font-weight:700;color:var(--teal);">${overpayCount}</div></div>
+                    <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Total extra paid</div><div style="font-size:15px;font-weight:700;color:var(--teal);" data-private>${fmtMoney(totalOverpaid)}</div></div>` : ''}
+                  </div>
+                  <div style="max-height:160px;overflow-y:auto;">
+                    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                      <thead><tr>
+                        <th style="text-align:left;font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;padding:4px 0;border-bottom:1px solid var(--border);">Date</th>
+                        <th style="text-align:right;font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;padding:4px 0;border-bottom:1px solid var(--border);">Balance drop</th>
+                        <th style="text-align:right;font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;padding:4px 0;border-bottom:1px solid var(--border);">Overpaid</th>
+                        <th style="width:24px;border-bottom:1px solid var(--border);"></th>
+                      </tr></thead>
+                      <tbody>
+                        ${payments.map(p => {
+                          const extra = Math.max(0, (Number(p.amount_paid)||0) - (Number(monthly)||0));
+                          return `<tr>
+                            <td style="padding:6px 0;color:var(--text2);">${p.date}</td>
+                            <td style="padding:6px 0;text-align:right;font-weight:600;" data-private>${fmtMoney(p.amount_paid)}</td>
+                            <td style="padding:6px 0;text-align:right;color:${extra > 0 ? 'var(--teal)' : 'var(--text3)'};" data-private>${extra > 0 ? '+' + fmtMoney(extra) : '—'}</td>
+                            <td style="padding:6px 0;text-align:right;"><button onclick="deletePaymentLog('${p.id}')" style="background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;padding:2px 4px;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text3)'">✕</button></td>
+                          </tr>`;
+                        }).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>`;
+              })()}
             </div>`;
           }).join('')}
           <button class="btn-add" onclick="openAddModal('Add loan','loans',[['name','Loan name','text',''],['remaining','Amount still owed £','money',0],['total_repayable','Total repayable £ (from lender)','money',0],['monthly_payment','Monthly payment £','money',0],['lender','Lender','text',''],['notes','Notes','text','']])">+ Add loan</button>
@@ -2247,6 +2322,7 @@ function renderCredit() {
           <div id="loan-calc-body"></div>
         </div>
       </div>
+
     </div>
 
     <div id="cred-invest" style="display:none;">
