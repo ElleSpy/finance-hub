@@ -968,6 +968,11 @@ function ensureSchema(d) {
   if (!d.flat) d.flat = { value: 0, mortgage_balance: 0, laura_pct: 50, steve_pct: 50, mortgage_rate: 4.5, mortgage_term_remaining: 25, buyout_legal_cost: 1500, stamp_duty_threshold: 250000, notes: '' };
   // Ensure all subscriptions have a status
   (d.subscriptions || []).forEach(s => { if (!s.status) s.status = 'active'; });
+  // Migrate loans: old model used 'balance' — new model uses 'remaining' and 'total_repayable'
+  (d.loans || []).forEach(l => {
+    if (l.remaining === undefined) l.remaining = Number(l.balance) || 0;
+    if (l.total_repayable === undefined) l.total_repayable = l.remaining;
+  });
   // Migrate any cards that were saved with opening_balance (old computed format) back to plain balance
   d.credit_cards.forEach(c => {
     if (c.opening_balance !== undefined && c.balance === undefined) {
@@ -1005,38 +1010,13 @@ function totalSavings()               { return totalGoalsCurrent(); } // Pots ar
 function totalInvestments()           { return sum(gAppData.investments, 'balance'); }
 function totalPension()               { return sum(gAppData.pension, 'balance'); }
 function totalDebt()                  { return (gAppData.credit_cards || []).reduce((s, c) => s + totalPurchasesForCard(c.id), 0); }
-function totalLoans()                 { return (gAppData.loans || []).reduce((s, l) => s + (Number(l.balance) || 0), 0); }
-// Calculates remaining months on a loan given current balance, annual rate %, and monthly payment
-function loanRemainingMonths(balance, annualRate, monthlyPayment) {
-  const r = annualRate / 100 / 12;
-  if (monthlyPayment <= 0) return 0;
-  if (r === 0) return Math.ceil(balance / monthlyPayment);
-  if (monthlyPayment <= balance * r) return Infinity; // payment doesn't cover interest
-  return Math.ceil(-Math.log(1 - (balance * r) / monthlyPayment) / Math.log(1 + r));
-}
-// Total truly owed = sum of all future payments (principal + interest)
-function loanTrueTotal(loan) {
-  const bal = Number(loan.balance) || 0;
-  const rate = Number(loan.rate) || 0;
-  const monthly = Number(loan.monthly_payment) || 0;
-  if (bal <= 0) return 0;
-  if (monthly <= 0 || rate === 0) return bal;
-  const months = loanRemainingMonths(bal, rate, monthly);
-  if (!isFinite(months)) return bal;
-  // Last payment may be partial
-  const r = rate / 100 / 12;
-  let remaining = bal;
-  let total = 0;
-  for (let i = 0; i < months; i++) {
-    const interest = remaining * r;
-    const payment = Math.min(monthly, remaining + interest);
-    total += payment;
-    remaining = remaining + interest - payment;
-    if (remaining <= 0.01) break;
-  }
-  return Math.round(total * 100) / 100;
-}
-function totalLoansTrueTotal()        { return (gAppData.loans || []).reduce((s, l) => s + loanTrueTotal(l), 0); }
+// Loan model: lender gives you one number — total_repayable (principal + all interest).
+// 'remaining' is what's left to pay. It goes down with each payment/overpayment.
+// No APR maths needed — the lender's number is the truth.
+function loanRemaining(l)             { return Number(l.remaining) || Number(l.balance) || 0; } // balance fallback for old data
+function loanTotalRepayable(l)        { return Number(l.total_repayable) || loanRemaining(l); }
+function loanMonthsLeft(l)            { const m = Number(l.monthly_payment)||0; const r = loanRemaining(l); return (m > 0 && r > 0) ? Math.ceil(r / m) : 0; }
+function totalLoans()                 { return (gAppData.loans || []).reduce((s, l) => s + loanRemaining(l), 0); }
 function totalMortgage()              { return Number(gAppData.mortgage.balance) || 0; }
 function netWorth()                   { return totalSavings() + totalInvestments() - totalDebt() - totalLoans(); }
 function totalPurchasesForCard(cid)   { return sum(gAppData.purchases.filter(p => p.card_id === cid), 'amount'); }
@@ -1465,11 +1445,12 @@ function renderDashboard() {
         ${(gAppData.loans||[]).length > 0 ? `
           <div style="margin-top:${gAppData.credit_cards.length > 0 ? '18px' : '0'};${gAppData.credit_cards.length > 0 ? 'padding-top:14px;border-top:1px solid var(--border);' : ''}">
             ${(gAppData.loans||[]).map(l => {
-              const bal = Number(l.balance)||0;
-              const orig = Number(l.original_balance)||bal;
-              const pct = orig > 0 ? Math.min(100, ((orig - bal) / orig) * 100) : 0;
+              const rem = loanRemaining(l);
+              const total = loanTotalRepayable(l);
+              const paid = Math.max(0, total - rem);
+              const pct = total > 0 ? Math.min(100, (paid / total) * 100) : 0;
               return `<div class="goal-bar-wrap" style="margin-top:10px;">
-                <div class="goal-bar-label"><span>${escHtml(l.name||'Loan')}</span><span data-private style="color:var(--coral);">-${fmtMoney(bal)}</span></div>
+                <div class="goal-bar-label"><span>${escHtml(l.name||'Loan')}</span><span data-private style="color:var(--coral);">-${fmtMoney(rem)}</span></div>
                 <div class="goal-bar-track"><div class="goal-bar-fill" style="width:${pct.toFixed(1)}%;background:var(--teal);"></div></div>
                 ${pct > 0 ? `<div style="font-size:11px;color:var(--text3);margin-top:3px;">${pct.toFixed(0)}% paid off</div>` : ''}
               </div>`;
@@ -1531,7 +1512,7 @@ function renderDashboard() {
           ${(gAppData.loans||[]).map(l => `
           <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);">
             <span style="font-size:13px;color:var(--text2);">${escHtml(l.name||'Loan')}</span>
-            <span style="font-size:13px;font-weight:600;color:var(--coral);" data-private><span data-edit-list="loans|${l.id}|balance" data-type="money">${fmtMoney(l.balance||0)}</span></span>
+            <span style="font-size:13px;font-weight:600;color:var(--coral);" data-private><span data-edit-list="loans|${l.id}|remaining" data-type="money">${fmtMoney(loanRemaining(l))}</span></span>
           </div>`).join('')}
         </div>` : ''}
 
@@ -2188,12 +2169,9 @@ function renderCredit() {
     <div id="cred-loans" style="display:none;">
       <div class="hero-cards-row cols-2" style="margin-bottom:24px;">
         <div class="hero-card hero-card-coral">
-          <div class="hero-card-label">True Total Owed</div>
-          <div class="hero-card-val" style="color:var(--coral);text-shadow:0 0 20px rgba(255,95,87,0.4);"><span data-private>${fmtMoney(totalLoansTrueTotal())}</span></div>
-          <div class="hero-card-sub" style="display:flex;gap:16px;flex-wrap:wrap;">
-            <span>Principal: <span data-private style="color:rgba(255,255,255,0.7);">${fmtMoney(totalLoans())}</span></span>
-            <span>Interest: <span data-private style="color:var(--amber);">${fmtMoney(Math.max(0, totalLoansTrueTotal() - totalLoans()))}</span></span>
-          </div>
+          <div class="hero-card-label">Total Still Owed</div>
+          <div class="hero-card-val" style="color:var(--coral);text-shadow:0 0 20px rgba(255,95,87,0.4);"><span data-private>${fmtMoney(totalLoans())}</span></div>
+          <div class="hero-card-sub">What you still owe across all loans (principal + interest remaining)</div>
         </div>
         <div class="hero-card" style="background:var(--card-high);border:1px solid var(--border);">
           <div class="hero-card-label">Total Monthly Payments</div>
@@ -2207,15 +2185,13 @@ function renderCredit() {
         <div style="margin-top:14px;">
           ${(gAppData.loans||[]).length === 0 ? `<div style="text-align:center;color:var(--text3);padding:28px 0;font-size:13px;">No loans added yet</div>` : ''}
           ${(gAppData.loans||[]).map(l => {
-            const bal = Number(l.balance)||0;
-            const rate = Number(l.rate)||0;
-            const months = Number(l.duration_months)||0;
+            const remaining = loanRemaining(l);
+            const totalRepayable = loanTotalRepayable(l);
             const monthly = Number(l.monthly_payment)||0;
-            const trueTotal = loanTrueTotal(l);
-            const totalInterest = Math.max(0, trueTotal - bal);
-            const remMonths = loanRemainingMonths(bal, rate, monthly);
-            // Progress based on original balance vs current balance
-            const pct = months > 0 && l.original_balance ? Math.min(100, ((Number(l.original_balance)-bal)/Math.max(1,Number(l.original_balance)))*100) : 0;
+            const remMonths = loanMonthsLeft(l);
+            // Progress: how much of the total repayable has been paid off
+            const paid = Math.max(0, totalRepayable - remaining);
+            const pct = totalRepayable > 0 ? Math.min(100, (paid / totalRepayable) * 100) : 0;
             return `
             <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;margin-bottom:12px;">
               <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
@@ -2226,23 +2202,30 @@ function renderCredit() {
                   </div>
                   <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:6px;">
                     <div>
-                      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Current Balance</div>
-                      <div style="font-size:14px;color:var(--coral);font-weight:600;" data-private><span data-edit-list="loans|${l.id}|balance" data-type="money">${fmtMoney(bal)}</span></div>
+                      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Still Owed</div>
+                      <div style="font-size:18px;color:var(--coral);font-weight:700;" data-private><span data-edit-list="loans|${l.id}|remaining" data-type="money">${fmtMoney(remaining)}</span></div>
                     </div>
-                    ${trueTotal > bal ? `<div>
-                      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">True Total Owed</div>
-                      <div style="font-size:14px;color:var(--red);font-weight:600;" data-private>${fmtMoney(trueTotal)}</div>
+                    ${totalRepayable > remaining ? `<div>
+                      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Total Repayable</div>
+                      <div style="font-size:14px;color:var(--text2);font-weight:600;" data-private><span data-edit-list="loans|${l.id}|total_repayable" data-type="money">${fmtMoney(totalRepayable)}</span></div>
                     </div>
                     <div>
-                      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Interest Cost</div>
-                      <div style="font-size:14px;color:var(--amber);font-weight:600;" data-private>${fmtMoney(totalInterest)}</div>
-                    </div>` : ''}
-                    <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Rate</div><div style="font-size:14px;font-weight:600;"><span data-edit-list="loans|${l.id}|rate" data-type="number">${rate}</span>%</div></div>
-                    <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Duration</div><div style="font-size:14px;font-weight:600;"><span data-edit-list="loans|${l.id}|duration_months" data-type="number">${months}</span> mo</div></div>
-                    <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Monthly min</div><div style="font-size:14px;color:var(--amber);font-weight:600;"><span data-edit-list="loans|${l.id}|monthly_payment" data-type="money">${fmtMoney(monthly)}</span></div></div>
-                    ${isFinite(remMonths) && remMonths > 0 ? `<div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Months left</div><div style="font-size:14px;font-weight:600;">${remMonths}</div></div>` : ''}
+                      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Paid so far</div>
+                      <div style="font-size:14px;color:var(--teal);font-weight:600;" data-private>${fmtMoney(paid)}</div>
+                    </div>` : `<div>
+                      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Total Repayable</div>
+                      <div style="font-size:14px;color:var(--text2);font-weight:600;" data-private><span data-edit-list="loans|${l.id}|total_repayable" data-type="money">${fmtMoney(totalRepayable)}</span></div>
+                    </div>`}
+                    <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Monthly</div><div style="font-size:14px;color:var(--amber);font-weight:600;"><span data-edit-list="loans|${l.id}|monthly_payment" data-type="money">${fmtMoney(monthly)}</span></div></div>
+                    ${remMonths > 0 ? `<div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Months left</div><div style="font-size:14px;font-weight:600;">${remMonths}</div></div>` : ''}
+                    ${l.lender ? `<div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Lender</div><div style="font-size:13px;color:var(--text2);"><span data-edit-list="loans|${l.id}|lender" data-type="text">${escHtml(l.lender)}</span></div></div>` : ''}
                   </div>
-                  ${pct > 0 ? `<div style="margin-top:10px;"><div style="height:4px;background:rgba(255,255,255,0.08);border-radius:2px;"><div style="height:4px;width:${pct.toFixed(1)}%;background:var(--teal);border-radius:2px;box-shadow:0 0 8px rgba(0,245,212,0.4);"></div></div><div style="font-size:11px;color:var(--text3);margin-top:4px;">${pct.toFixed(0)}% paid off (by original balance)</div></div>` : ''}
+                  ${pct > 0 ? `<div style="margin-top:12px;">
+                    <div style="height:4px;background:rgba(255,255,255,0.08);border-radius:2px;">
+                      <div style="height:4px;width:${pct.toFixed(1)}%;background:var(--teal);border-radius:2px;box-shadow:0 0 8px rgba(0,245,212,0.4);"></div>
+                    </div>
+                    <div style="font-size:11px;color:var(--text3);margin-top:4px;">${pct.toFixed(0)}% paid off · ${fmtMoney(paid)} of ${fmtMoney(totalRepayable)}</div>
+                  </div>` : ''}
                 </div>
                 <div>
                   <button onclick="openLoanCalculator('${l.id}')" style="background:var(--teal-light);border:1px solid rgba(0,245,212,0.25);color:var(--teal);font-size:12px;font-family:'Manrope',sans-serif;font-weight:600;padding:7px 14px;border-radius:8px;cursor:pointer;white-space:nowrap;">📊 Overpayment calculator</button>
@@ -2250,7 +2233,7 @@ function renderCredit() {
               </div>
             </div>`;
           }).join('')}
-          <button class="btn-add" onclick="openAddModal('Add loan','loans',[['name','Loan name','text',''],['balance','Current balance £','money',0],['original_balance','Original balance £','money',0],['rate','Interest rate %','number',0],['duration_months','Duration (months)','number',0],['monthly_payment','Minimum monthly £','money',0],['lender','Lender','text',''],['notes','Notes','text','']])">+ Add loan</button>
+          <button class="btn-add" onclick="openAddModal('Add loan','loans',[['name','Loan name','text',''],['remaining','Amount still owed £','money',0],['total_repayable','Total repayable £ (from lender)','money',0],['monthly_payment','Monthly payment £','money',0],['lender','Lender','text',''],['notes','Notes','text','']])">+ Add loan</button>
         </div>
       </div>
 
@@ -2370,86 +2353,62 @@ function switchCreditTab(el, tab) {
 function openLoanCalculator(loanId) {
   const l = (gAppData.loans||[]).find(x=>x.id===loanId);
   if (!l) return;
-  const bal = Number(l.balance)||0;
-  const rate = Number(l.rate)||0;
-  const months = Number(l.duration_months)||0;
+  const remaining = loanRemaining(l);
+  const totalRepayable = loanTotalRepayable(l);
   const minPayment = Number(l.monthly_payment)||0;
-  const calcPayoff = (balance, annualRate, monthly) => {
-    if (!monthly || monthly <= 0) return { months: Infinity, totalInterest: Infinity };
-    const r = (annualRate/100)/12;
-    if (r === 0) return { months: Math.ceil(balance/monthly), totalInterest: 0 };
-    let b = balance, m = 0, interest = 0;
-    while (b > 0 && m < 1200) {
-      const int = b * r;
-      interest += int;
-      b = b + int - monthly;
-      m++;
-      if (b < 0.01) { b = 0; break; }
-    }
-    return { months: m, totalInterest: interest };
-  };
-  const minResult = calcPayoff(bal, rate, minPayment);
-  const steps = [0, 25, 50, 75, 100, 150, 200, 300, 500];
+  if (!minPayment) { alert('Set a monthly payment on this loan first.'); return; }
+  const baseMonths = Math.ceil(remaining / minPayment);
   document.getElementById('loan-calc-title').textContent = escHtml(l.name||'Loan') + ' — Overpayment Calculator';
   document.getElementById('loan-calc-body').innerHTML = `
     <div style="margin-bottom:16px;">
       <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
         <div style="flex:1;min-width:120px;background:var(--bg2);border-radius:8px;padding:12px;">
-          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Balance</div>
-          <div style="font-size:16px;font-weight:700;color:var(--coral);">${fmtMoney(bal)}</div>
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Still owed</div>
+          <div style="font-size:16px;font-weight:700;color:var(--coral);">${fmtMoney(remaining)}</div>
         </div>
         <div style="flex:1;min-width:120px;background:var(--bg2);border-radius:8px;padding:12px;">
-          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Rate</div>
-          <div style="font-size:16px;font-weight:700;">${rate}%</div>
-        </div>
-        <div style="flex:1;min-width:120px;background:var(--bg2);border-radius:8px;padding:12px;">
-          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Min payment</div>
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Monthly payment</div>
           <div style="font-size:16px;font-weight:700;color:var(--amber);">${fmtMoney(minPayment)}</div>
+        </div>
+        <div style="flex:1;min-width:120px;background:var(--bg2);border-radius:8px;padding:12px;">
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Months left (min)</div>
+          <div style="font-size:16px;font-weight:700;">${baseMonths}</div>
         </div>
       </div>
       <div style="margin-bottom:20px;">
         <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:8px;">Extra monthly overpayment: <span id="slider-label" style="color:var(--teal);">£0</span></label>
         <input type="range" id="overpay-slider" min="0" max="500" step="25" value="0"
           style="width:100%;accent-color:var(--teal);cursor:pointer;"
-          oninput="updateLoanCalc(${bal},${rate},${minPayment},${minResult.months},${minResult.totalInterest})">
-        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:4px;"><span>£0</span><span>£500</span></div>
+          oninput="updateLoanCalc(${remaining},${minPayment},${baseMonths})">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:4px;"><span>£0</span><span>+£500/mo</span></div>
       </div>
       <div id="loan-calc-result" style="background:var(--bg2);border-radius:10px;padding:16px;">
-        <div style="font-size:12px;color:var(--text3);margin-bottom:12px;">At minimum payment only:</div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:12px;">At current payment of ${fmtMoney(minPayment)}/mo:</div>
         <div style="display:flex;gap:16px;flex-wrap:wrap;">
-          <div style="flex:1;"><div style="font-size:10px;color:var(--text3);">Pay-off time</div><div style="font-size:18px;font-weight:700;color:var(--text);" id="calc-months">${minResult.months === Infinity ? '—' : minResult.months + ' months'}</div></div>
-          <div style="flex:1;"><div style="font-size:10px;color:var(--text3);">Total interest</div><div style="font-size:18px;font-weight:700;color:var(--coral);" id="calc-interest">${minResult.totalInterest === Infinity ? '—' : fmtMoney(minResult.totalInterest)}</div></div>
-          <div style="flex:1;"><div style="font-size:10px;color:var(--text3);">Monthly payment</div><div style="font-size:18px;font-weight:700;color:var(--amber);" id="calc-monthly">${fmtMoney(minPayment)}</div></div>
+          <div style="flex:1;"><div style="font-size:10px;color:var(--text3);">Pay-off time</div><div style="font-size:18px;font-weight:700;color:var(--text);" id="calc-months">${baseMonths} months</div></div>
+          <div style="flex:1;"><div style="font-size:10px;color:var(--text3);">Total paid</div><div style="font-size:18px;font-weight:700;color:var(--coral);" id="calc-total">${fmtMoney(minPayment * baseMonths)}</div></div>
+          <div style="flex:1;"><div style="font-size:10px;color:var(--text3);">Monthly</div><div style="font-size:18px;font-weight:700;color:var(--amber);" id="calc-monthly">${fmtMoney(minPayment)}</div></div>
         </div>
         <div id="calc-saving" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:13px;color:var(--text3);"></div>
       </div>
     </div>`;
   document.getElementById('loan-calc-modal').style.display = 'flex';
 }
-function updateLoanCalc(bal, rate, minPayment, baseMonths, baseInterest) {
+function updateLoanCalc(remaining, minPayment, baseMonths) {
   const extra = Number(document.getElementById('overpay-slider').value)||0;
   document.getElementById('slider-label').textContent = '£' + extra;
   const total = minPayment + extra;
-  const r = (rate/100)/12;
-  let b = bal, m = 0, interest = 0;
-  if (r === 0) { m = Math.ceil(bal/total); interest = 0; }
-  else {
-    while (b > 0 && m < 1200) {
-      const int = b * r; interest += int; b = b + int - total; m++;
-      if (b < 0.01) { b = 0; break; }
-    }
-  }
-  document.getElementById('calc-months').textContent = m + ' months';
-  document.getElementById('calc-interest').textContent = fmtMoney(interest);
+  const newMonths = Math.ceil(remaining / total);
+  const savedMonths = baseMonths - newMonths;
+  document.getElementById('calc-months').textContent = newMonths + ' months';
+  document.getElementById('calc-total').textContent = fmtMoney(total * newMonths);
   document.getElementById('calc-monthly').textContent = fmtMoney(total);
-  if (extra > 0) {
-    const savedMonths = baseMonths - m;
-    const savedInterest = baseInterest - interest;
-    document.getElementById('calc-saving').innerHTML = savedMonths > 0 || savedInterest > 0
-      ? `<span style="color:var(--teal);font-weight:600;">You'd pay off ${savedMonths} months sooner</span> and save <span style="color:var(--teal);font-weight:600;">${fmtMoney(savedInterest)}</span> in interest.`
-      : `<span style="color:var(--text3);">Already paying off quickly.</span>`;
+  if (extra > 0 && savedMonths > 0) {
+    const moneySaved = (minPayment * baseMonths) - (total * newMonths);
+    document.getElementById('calc-saving').innerHTML =
+      `<span style="color:var(--teal);font-weight:600;">You'd pay off ${savedMonths} month${savedMonths !== 1 ? 's' : ''} sooner</span>${moneySaved > 0 ? ` and pay <span style="color:var(--teal);font-weight:600;">${fmtMoney(moneySaved)} less</span> overall` : ''}.`;
   } else {
-    document.getElementById('calc-saving').innerHTML = '';
+    document.getElementById('calc-saving').innerHTML = extra > 0 ? `<span style="color:var(--text3);">Already on track for fastest payoff.</span>` : '';
   }
 }
 function closeLoanCalculator() {
