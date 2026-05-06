@@ -118,7 +118,7 @@ body { font-family: 'Manrope', sans-serif; background: var(--bg); color: var(--t
 .hub-link:hover { background:var(--teal-light);color:var(--text); }
 .hub-link.current { background:rgba(245,166,35,0.12);color:#f5a623;font-weight:600;pointer-events:none; }
 .hub-link .hub-dot { width:6px;height:6px;border-radius:50%;flex-shrink:0;background:currentColor;opacity:0.7; }
-.sidebar-sub { font-size:10px;color:rgba(255,255,255,0.3);margin-top:3px;font-family:'Manrope', sans-serif;letter-spacing:0.05em;margin-bottom:24px; }
+.sidebar-sub { font-size:10px;color:var(--text3);margin-top:3px;font-family:'Manrope', sans-serif;letter-spacing:0.05em;margin-bottom:24px; }
 .nav-section { padding:0; }
 .nav-label { font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);padding:10px 6px 4px;font-family:'Manrope', sans-serif; }
 .nav-item { display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;color:var(--text2);font-size:13.5px;margin-bottom:2px;cursor:pointer;transition:all 0.15s; }
@@ -290,11 +290,11 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
 .amount-neutral { font-family:'Manrope', sans-serif;font-weight:600; }
 
 /* CREDIT CARDS */
-.credit-card { background:#1b1b1c;border:1px solid rgba(255,255,255,0.1);border-radius:var(--radius);padding:20px;color:#e5e2e1;position:relative;overflow:hidden; }
+.credit-card { background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;color:var(--text);position:relative;overflow:hidden; }
 .credit-card::before { content:'';position:absolute;top:-40px;right:-40px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.05); }
-.credit-card-bank { font-size:11px;color:rgba(255,255,255,0.6);font-family:'Manrope', sans-serif;letter-spacing:0.1em;text-transform:uppercase; }
+.credit-card-bank { font-size:11px;color:var(--text2);font-family:'Manrope', sans-serif;letter-spacing:0.1em;text-transform:uppercase; }
 .credit-card-balance { font-family:'Space Grotesk', sans-serif;font-size:26px;font-weight:700;margin:8px 0 4px; }
-.credit-card-limit { font-size:11px;color:rgba(255,255,255,0.5); }
+.credit-card-limit { font-size:11px;color:var(--text2); }
 .credit-card-util { margin-top:12px; }
 .credit-bar-track { height:4px;background:rgba(255,255,255,0.15);border-radius:999px;overflow:hidden; }
 .credit-bar-fill { height:100%;border-radius:999px; }
@@ -322,13 +322,13 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
 .goal-amounts { font-family:'Manrope', sans-serif;font-size:12px;color:var(--on-surface,#e5e2e1); }
 
 /* NETWORTH BANNER */
-.networth-banner { background:linear-gradient(135deg,#0a1f1a 0%,#0d0d12 60%,#0a0f1a 100%);border:1px solid rgba(245,166,35,0.3);border-radius:var(--radius);padding:28px 32px;color:#e5e2e1;margin-bottom:24px;box-shadow:0 0 60px rgba(245,166,35,0.12), 0 0 120px rgba(245,166,35,0.05); }
-.networth-banner.blue-banner { background:linear-gradient(135deg,#03101f 0%,#0d0d12 60%,#03101f 100%);border-color:rgba(0,207,255,0.35);box-shadow:0 0 60px rgba(0,207,255,0.15), 0 0 120px rgba(0,207,255,0.06); }
-.nw-label { font-family:'Manrope', sans-serif;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:8px; }
+.networth-banner { background:var(--card);border:1px solid rgba(245,166,35,0.3);border-radius:var(--radius);padding:28px 32px;color:var(--text);margin-bottom:24px;box-shadow:var(--shadow); }
+.networth-banner.blue-banner { background:var(--card);border-color:rgba(0,207,255,0.35);box-shadow:var(--shadow); }
+.nw-label { font-family:'Manrope', sans-serif;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);margin-bottom:8px; }
 .nw-val { font-family:'Space Grotesk', sans-serif;font-size:48px;font-weight:700;line-height:1; }
-.nw-sub { font-size:13px;color:rgba(255,255,255,0.45);margin-top:8px; }
+.nw-sub { font-size:13px;color:var(--text2);margin-top:8px; }
 .nw-breakdown { display:flex;gap:32px;margin-top:20px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.08);flex-wrap:wrap; }
-.nw-item-label { font-size:11px;color:rgba(255,255,255,0.45);font-family:'Manrope', sans-serif;text-transform:uppercase;letter-spacing:0.1em; }
+.nw-item-label { font-size:11px;color:var(--text2);font-family:'Manrope', sans-serif;text-transform:uppercase;letter-spacing:0.1em; }
 .nw-item-val { font-family:'Space Grotesk', sans-serif;font-size:18px;font-weight:700;margin-top:3px; }
 .nw-positive { color:var(--teal); }
 .nw-negative { color:#F4816A; }
@@ -337,18 +337,18 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
 .hero-cards-row { display:grid;gap:16px;margin-bottom:24px; }
 .hero-cards-row.cols-2 { grid-template-columns:1fr 1fr; }
 .hero-cards-row.cols-3 { grid-template-columns:1fr 1fr 1fr; }
-.hero-card { border-radius:var(--radius);padding:22px 24px;color:#e5e2e1;position:relative;overflow:hidden;min-width:0; }
+.hero-card { border-radius:var(--radius);padding:22px 24px;color:var(--text);position:relative;overflow:hidden;min-width:0; }
 .hero-card::before { content:'';position:absolute;top:-50px;right:-50px;width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,0.04);pointer-events:none; }
 .hero-card::after { content:'';position:absolute;bottom:-30px;left:-30px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,0.025);pointer-events:none; }
-.hero-card-label { font-size:11px;color:rgba(255,255,255,0.55);font-family:'Manrope', sans-serif;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px; }
+.hero-card-label { font-size:11px;color:var(--text2);font-family:'Manrope', sans-serif;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px; }
 .hero-card-val { font-family:'Space Grotesk', sans-serif;font-size:36px;font-weight:700;line-height:1.1; }
-.hero-card-sub { font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px; }
+.hero-card-sub { font-size:12px;color:var(--text2);margin-top:6px; }
 .hero-card-bar { margin-top:14px; }
 .hero-card-bar-track { height:3px;background:rgba(255,255,255,0.1);border-radius:999px;overflow:hidden; }
 .hero-card-bar-fill { height:100%;border-radius:999px; }
-.hero-card-bar-label { font-size:11px;color:rgba(255,255,255,0.45);margin-top:4px;font-family:'Manrope', sans-serif; }
+.hero-card-bar-label { font-size:11px;color:var(--text2);margin-top:4px;font-family:'Manrope', sans-serif; }
 .hero-card-breakdown { display:flex;gap:20px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.07);flex-wrap:wrap; }
-.hero-card-breakdown-item-label { font-size:11px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.1em; }
+.hero-card-breakdown-item-label { font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.1em; }
 .hero-card-breakdown-item-val { font-family:'Space Grotesk', sans-serif;font-size:15px;font-weight:600;margin-top:2px; }
 /* teal variant */
 .hero-card-teal { background:linear-gradient(145deg,#021310 0%,#042e26 100%);border:1px solid rgba(245,166,35,0.4);box-shadow:0 0 40px rgba(245,166,35,0.15), 0 2px 16px rgba(0,0,0,0.5); }
@@ -630,7 +630,7 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
   </div>
 
   <div class="sidebar-footer">
-    <div style="font-size:9px;color:rgba(255,255,255,0.32);font-family:'Manrope', sans-serif;line-height:1.5;margin-bottom:10px;">
+    <div style="font-size:9px;color:var(--text3);font-family:'Manrope', sans-serif;line-height:1.5;margin-bottom:10px;">
       Synced live to Google Drive<br>(<span id="sync-mode-label">checking…</span>)
     </div>
     <button class="btn-export" onclick="exportData()">↓ Export JSON Backup</button>
@@ -1528,7 +1528,7 @@ function renderDashboard() {
         <div class="hero-card-val" style="color:var(--purple);text-shadow:0 0 20px rgba(212,77,255,0.5);">${fmtMoney(inc.current_takehome)}</div>
         <div class="hero-card-sub">Take-home · <span data-edit="income.current_salary" data-type="money">${fmtMoney(inc.current_salary)}</span> salary</div>
         <div class="hero-card-breakdown">
-          <div><div class="hero-card-breakdown-item-label">Notes</div><div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px;" data-edit="income.notes" data-type="text">${escHtml(inc.notes || 'click to add…')}</div></div>
+          <div><div class="hero-card-breakdown-item-label">Notes</div><div style="font-size:12px;color:var(--text2);margin-top:2px;" data-edit="income.notes" data-type="text">${escHtml(inc.notes || 'click to add…')}</div></div>
         </div>
       </div>
       <div class="hero-card hero-card-coral">
@@ -1536,10 +1536,10 @@ function renderDashboard() {
         <div class="hero-card-val" style="color:var(--coral);text-shadow:0 0 20px rgba(255,95,87,0.45);">${fmtMoney(out)}</div>
         <div class="hero-card-sub">Fixed + bills + subs + pots</div>
         <div class="hero-card-breakdown">
-          <div><div class="hero-card-breakdown-item-label">Fixed</div><div class="hero-card-breakdown-item-val" style="color:rgba(255,255,255,0.6);">${fmtMoney(totalFixed('current'))}</div></div>
-          <div><div class="hero-card-breakdown-item-label">Bills</div><div class="hero-card-breakdown-item-val" style="color:rgba(255,255,255,0.6);">${fmtMoney(totalBills('current'))}</div></div>
-          <div><div class="hero-card-breakdown-item-label">Subs</div><div class="hero-card-breakdown-item-val" style="color:rgba(255,255,255,0.6);">${fmtMoney(totalSubsActive())}</div></div>
-          <div><div class="hero-card-breakdown-item-label">Pots</div><div class="hero-card-breakdown-item-val" style="color:rgba(255,255,255,0.6);">${fmtMoney(totalPotsMonthly('current'))}</div></div>
+          <div><div class="hero-card-breakdown-item-label">Fixed</div><div class="hero-card-breakdown-item-val" style="color:var(--text2);">${fmtMoney(totalFixed('current'))}</div></div>
+          <div><div class="hero-card-breakdown-item-label">Bills</div><div class="hero-card-breakdown-item-val" style="color:var(--text2);">${fmtMoney(totalBills('current'))}</div></div>
+          <div><div class="hero-card-breakdown-item-label">Subs</div><div class="hero-card-breakdown-item-val" style="color:var(--text2);">${fmtMoney(totalSubsActive())}</div></div>
+          <div><div class="hero-card-breakdown-item-label">Pots</div><div class="hero-card-breakdown-item-val" style="color:var(--text2);">${fmtMoney(totalPotsMonthly('current'))}</div></div>
         </div>
       </div>
       <div class="hero-card hero-card-amber">
@@ -1766,7 +1766,7 @@ function renderBudget() {
           <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 20px rgba(245,166,35,0.5);"><span data-edit="income.current_takehome" data-type="money">${fmtMoney(gAppData.income.current_takehome)}</span></div>
           <div class="hero-card-sub">Per month · click to edit</div>
           <div class="hero-card-breakdown">
-            <div><div class="hero-card-breakdown-item-label">Annual Salary</div><div class="hero-card-breakdown-item-val" style="color:rgba(255,255,255,0.55);"><span data-edit="income.current_salary" data-type="money">${fmtMoney(gAppData.income.current_salary)}</span></div></div>
+            <div><div class="hero-card-breakdown-item-label">Annual Salary</div><div class="hero-card-breakdown-item-val" style="color:var(--text2);"><span data-edit="income.current_salary" data-type="money">${fmtMoney(gAppData.income.current_salary)}</span></div></div>
           </div>
         </div>
         <div class="hero-card hero-card-amber">
@@ -1808,7 +1808,7 @@ function renderBudget() {
           <div class="hero-card-val" style="color:var(--teal);text-shadow:0 0 20px rgba(245,166,35,0.5);"><span data-edit="income.future_takehome" data-type="money">${fmtMoney(gAppData.income.future_takehome)}</span></div>
           <div class="hero-card-sub">Per month · click to edit</div>
           <div class="hero-card-breakdown">
-            <div><div class="hero-card-breakdown-item-label">Annual Salary</div><div class="hero-card-breakdown-item-val" style="color:rgba(255,255,255,0.55);"><span data-edit="income.future_salary" data-type="money">${fmtMoney(gAppData.income.future_salary)}</span></div></div>
+            <div><div class="hero-card-breakdown-item-label">Annual Salary</div><div class="hero-card-breakdown-item-val" style="color:var(--text2);"><span data-edit="income.future_salary" data-type="money">${fmtMoney(gAppData.income.future_salary)}</span></div></div>
             <div><div class="hero-card-breakdown-item-label">Uplift</div><div class="hero-card-breakdown-item-val" style="color:var(--teal);">+${fmtMoney(gAppData.income.future_takehome - gAppData.income.current_takehome)}/mo</div></div>
           </div>
         </div>
@@ -2107,7 +2107,7 @@ function renderSavings() {
           <div class="hero-card-val" style="color:var(--amber);text-shadow:0 0 20px rgba(255,230,0,0.4);"><span data-private>${fmtMoney(totalTarget)}</span></div>
           <div class="hero-card-sub">${totalTarget > 0 ? pct + '% achieved · ' + fmtMoney(totalTarget - totalCurrent) + ' to go' : 'Set targets on goals below'}</div>
           <div class="hero-card-breakdown">
-            <div><div class="hero-card-breakdown-item-label">Goals</div><div class="hero-card-breakdown-item-val" style="color:rgba(255,255,255,0.55);">${gAppData.savings_goals.length}</div></div>
+            <div><div class="hero-card-breakdown-item-label">Goals</div><div class="hero-card-breakdown-item-val" style="color:var(--text2);">${gAppData.savings_goals.length}</div></div>
             <div><div class="hero-card-breakdown-item-label">Complete</div><div class="hero-card-breakdown-item-val" style="color:var(--teal);">${gAppData.savings_goals.filter(g => g.target > 0 && Number(g.current) >= Number(g.target)).length}</div></div>
           </div>
         </div>
@@ -2215,12 +2215,12 @@ function renderCredit() {
           const barFill = util > 70 ? '#ff3b5c' : accentColor;
           return `
             <div class="credit-card" style="background:${colorBg};border:${borderStyle};box-shadow:${cardGlow};">
-              <div class="credit-card-bank" style="color:rgba(255,255,255,0.5);letter-spacing:0.12em;"><span data-edit-list="credit_cards|${c.id}|name" data-type="text">${escHtml(c.name)}</span></div>
+              <div class="credit-card-bank" style="color:var(--text2);letter-spacing:0.12em;"><span data-edit-list="credit_cards|${c.id}|name" data-type="text">${escHtml(c.name)}</span></div>
               <div class="credit-card-balance" style="color:${accentColor};text-shadow:0 0 20px ${accentColor}99, 0 0 40px ${accentColor}33;"><span data-private>-${fmtMoney(cardTotal)}</span></div>
-              <div class="credit-card-limit" style="color:rgba(255,255,255,0.4);"><span data-edit-list="credit_cards|${c.id}|limit" data-type="money">${fmtMoney(c.limit)}</span> limit · <span data-edit-list="credit_cards|${c.id}|rate_info" data-type="text">${escHtml(c.rate_info || '')}</span></div>
+              <div class="credit-card-limit" style="color:var(--text2);"><span data-edit-list="credit_cards|${c.id}|limit" data-type="money">${fmtMoney(c.limit)}</span> limit · <span data-edit-list="credit_cards|${c.id}|rate_info" data-type="text">${escHtml(c.rate_info || '')}</span></div>
               <div class="credit-card-util">
                 <div class="credit-bar-track" style="background:rgba(255,255,255,0.08);"><div class="credit-bar-fill" style="width:${Math.min(100, util)}%;background:${barFill};box-shadow:0 0 8px ${barFill}88;"></div></div>
-                <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:4px;font-family:'Manrope', sans-serif;">${util.toFixed(1)}% utilised</div>
+                <div style="font-size:11px;color:var(--text2);margin-top:4px;font-family:'Manrope', sans-serif;">${util.toFixed(1)}% utilised</div>
               </div>
             </div>`;
         }).join('')}
