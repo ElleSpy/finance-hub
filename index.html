@@ -3039,9 +3039,8 @@ async function syncMonzo() {
   const btn = document.getElementById('monzo-sync-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Syncing…'; }
   try {
-    // Fetch all rows from the Monzo sheet (Sheet1, all columns)
-    const range = encodeURIComponent('Monzo Transactions!A:P');
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${MONZO_SHEET_ID}/values/${range}`;
+    // Fetch all rows from the Monzo sheet
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${MONZO_SHEET_ID}/values/Monzo%20Transactions!A:P`;
     const res = await fetch(url, { headers: { Authorization: 'Bearer ' + gAccessToken } });
     if (!res.ok) {
       const txt = await res.text();
