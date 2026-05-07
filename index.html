@@ -2417,8 +2417,14 @@ function renderCredit() {
         <div style="margin-top:14px;">
           ${gAppData.investments.map(i => `
             <div class="invest-row">
-              <div><div class="invest-name"><span data-edit-list="investments|${i.id}|name" data-type="text">${escHtml(i.name)}</span></div><div class="invest-sub"><span data-edit-list="investments|${i.id}|notes" data-type="text">${escHtml(i.notes || '')}</span></div></div>
-              <div class="invest-val" style="color:var(--teal);"><span data-edit-list="investments|${i.id}|balance" data-type="money">${fmtMoney(i.balance)}</span><button class="btn-row-del" onclick="deleteItem('investments','${i.id}')">✕</button></div>
+              <div>
+                <div class="invest-name"><span data-edit-list="investments|${i.id}|name" data-type="text">${escHtml(i.name)}</span></div>
+                <div class="invest-sub"><span data-edit-list="investments|${i.id}|notes" data-type="text">${escHtml(i.notes || '')}</span></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div class="invest-val" style="color:var(--teal);"><span data-edit-list="investments|${i.id}|balance" data-type="money">${fmtMoney(i.balance)}</span></div>
+                <button class="btn-row-del" onclick="deleteItem('investments','${i.id}')">✕</button>
+              </div>
             </div>`).join('')}
           <button class="btn-add" onclick="openAddModal('Add investment','investments',[['name','Name','text',''],['balance','Balance £','money',0],['monthly_target','Monthly £ target','money',0],['type','Type','select','isa|cash|roundup|other'],['notes','Notes','text','']])">+ Add investment</button>
         </div>
@@ -2442,18 +2448,18 @@ function renderCredit() {
         <div class="section-eyebrow">Pension Pots <span class="total-pill" data-private>${fmtMoney(totalPension())}</span></div>
         <div style="margin-top:14px;">
           ${gAppData.pension.map(p => `
-            <div class="invest-row" style="align-items:center;">
-              <div style="flex:1;min-width:0;">
-                <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:2px;"><span data-edit-list="pension|${p.id}|name" data-type="text">${escHtml(p.name)}</span></div>
-                <div style="font-size:11px;color:var(--text3);margin-bottom:6px;"><span data-edit-list="pension|${p.id}|notes" data-type="text">${escHtml(p.notes || '')}</span></div>
-                <div style="display:flex;gap:20px;">
-                  <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px;">My contribution</div><div style="font-size:12px;color:var(--amber);font-weight:600;"><span data-edit-list="pension|${p.id}|monthly_contribution" data-type="money">${fmtMoney(p.monthly_contribution||0)}</span><span style="color:var(--text3);font-weight:400;">/mo</span></div></div>
-                  <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px;">Employer</div><div style="font-size:12px;color:var(--text2);font-weight:600;"><span data-edit-list="pension|${p.id}|employer_contribution" data-type="money">${fmtMoney(p.employer_contribution||0)}</span><span style="color:var(--text3);font-weight:400;">/mo</span></div></div>
+            <div class="invest-row">
+              <div>
+                <div class="invest-name"><span data-edit-list="pension|${p.id}|name" data-type="text">${escHtml(p.name)}</span></div>
+                <div class="invest-sub"><span data-edit-list="pension|${p.id}|notes" data-type="text">${escHtml(p.notes || '')}</span></div>
+                <div class="invest-sub" style="margin-top:4px;display:flex;gap:16px;">
+                  <span>Me: <span style="color:var(--amber);font-weight:600;" data-edit-list="pension|${p.id}|monthly_contribution" data-type="money">${fmtMoney(p.monthly_contribution||0)}</span>/mo</span>
+                  <span>Employer: <span style="color:var(--text2);font-weight:600;" data-edit-list="pension|${p.id}|employer_contribution" data-type="money">${fmtMoney(p.employer_contribution||0)}</span>/mo</span>
                 </div>
               </div>
-              <div style="text-align:right;flex-shrink:0;">
+              <div style="display:flex;align-items:center;gap:8px;">
                 <div class="invest-val" style="color:var(--teal);"><span data-edit-list="pension|${p.id}|balance" data-type="money">${fmtMoney(p.balance)}</span></div>
-                <button class="btn-row-del" style="opacity:0.6;margin-top:4px;" onclick="deleteItem('pension','${p.id}')">✕</button>
+                <button class="btn-row-del" onclick="deleteItem('pension','${p.id}')">✕</button>
               </div>
             </div>`).join('')}
           <button class="btn-add" onclick="openAddModal('Add pension','pension',[['name','Name','text',''],['balance','Balance £','money',0],['monthly_contribution','Monthly £ (you)','money',0],['employer_contribution','Monthly £ (employer)','money',0],['notes','Notes','text','']])">+ Add pension</button>
