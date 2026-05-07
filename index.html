@@ -2417,11 +2417,11 @@ function renderCredit() {
         <div style="margin-top:14px;">
           ${gAppData.investments.map(i => `
             <div class="invest-row">
-              <div>
+              <div style="flex:1;min-width:0;">
                 <div class="invest-name"><span data-edit-list="investments|${i.id}|name" data-type="text">${escHtml(i.name)}</span></div>
                 <div class="invest-sub"><span data-edit-list="investments|${i.id}|notes" data-type="text">${escHtml(i.notes || '')}</span></div>
               </div>
-              <div style="display:flex;align-items:center;gap:8px;">
+              <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
                 <div class="invest-val" style="color:var(--teal);"><span data-edit-list="investments|${i.id}|balance" data-type="money">${fmtMoney(i.balance)}</span></div>
                 <button class="btn-row-del" onclick="deleteItem('investments','${i.id}')">✕</button>
               </div>
@@ -2449,15 +2449,11 @@ function renderCredit() {
         <div style="margin-top:14px;">
           ${gAppData.pension.map(p => `
             <div class="invest-row">
-              <div>
+              <div style="flex:1;min-width:0;">
                 <div class="invest-name"><span data-edit-list="pension|${p.id}|name" data-type="text">${escHtml(p.name)}</span></div>
-                <div class="invest-sub"><span data-edit-list="pension|${p.id}|notes" data-type="text">${escHtml(p.notes || '')}</span></div>
-                <div class="invest-sub" style="margin-top:4px;display:flex;gap:16px;">
-                  <span>Me: <span style="color:var(--amber);font-weight:600;" data-edit-list="pension|${p.id}|monthly_contribution" data-type="money">${fmtMoney(p.monthly_contribution||0)}</span>/mo</span>
-                  <span>Employer: <span style="color:var(--text2);font-weight:600;" data-edit-list="pension|${p.id}|employer_contribution" data-type="money">${fmtMoney(p.employer_contribution||0)}</span>/mo</span>
-                </div>
+                <div class="invest-sub"><span data-edit-list="pension|${p.id}|notes" data-type="text">${escHtml(p.notes||'')}</span> · Me: <span data-edit-list="pension|${p.id}|monthly_contribution" data-type="money">${fmtMoney(p.monthly_contribution||0)}</span>/mo · Employer: <span data-edit-list="pension|${p.id}|employer_contribution" data-type="money">${fmtMoney(p.employer_contribution||0)}</span>/mo</div>
               </div>
-              <div style="display:flex;align-items:center;gap:8px;">
+              <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
                 <div class="invest-val" style="color:var(--teal);"><span data-edit-list="pension|${p.id}|balance" data-type="money">${fmtMoney(p.balance)}</span></div>
                 <button class="btn-row-del" onclick="deleteItem('pension','${p.id}')">✕</button>
               </div>
