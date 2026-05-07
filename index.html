@@ -2442,8 +2442,15 @@ function renderCredit() {
         <div class="section-eyebrow">Pension Pots <span class="total-pill" data-private>${fmtMoney(totalPension())}</span></div>
         <div style="margin-top:14px;">
           ${gAppData.pension.map(p => `
-            <div class="invest-row">
-              <div><div class="invest-name"><span data-edit-list="pension|${p.id}|name" data-type="text">${escHtml(p.name)}</span></div><div class="invest-sub"><span data-edit-list="pension|${p.id}|notes" data-type="text">${escHtml(p.notes || '')}</span></div></div>
+            <div class="invest-row" style="flex-wrap:wrap;gap:8px;">
+              <div style="flex:1;min-width:180px;">
+                <div class="invest-name"><span data-edit-list="pension|${p.id}|name" data-type="text">${escHtml(p.name)}</span></div>
+                <div class="invest-sub"><span data-edit-list="pension|${p.id}|notes" data-type="text">${escHtml(p.notes || '')}</span></div>
+                <div style="display:flex;gap:16px;margin-top:6px;flex-wrap:wrap;">
+                  <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">My contribution</div><div style="font-size:13px;color:var(--amber);font-weight:600;"><span data-edit-list="pension|${p.id}|monthly_contribution" data-type="money">${fmtMoney(p.monthly_contribution||0)}</span>/mo</div></div>
+                  <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Employer</div><div style="font-size:13px;color:var(--text2);font-weight:600;"><span data-edit-list="pension|${p.id}|employer_contribution" data-type="money">${fmtMoney(p.employer_contribution||0)}</span>/mo</div></div>
+                </div>
+              </div>
               <div class="invest-val" style="color:var(--teal);"><span data-edit-list="pension|${p.id}|balance" data-type="money">${fmtMoney(p.balance)}</span><button class="btn-row-del" onclick="deleteItem('pension','${p.id}')">✕</button></div>
             </div>`).join('')}
           <button class="btn-add" onclick="openAddModal('Add pension','pension',[['name','Name','text',''],['balance','Balance £','money',0],['monthly_contribution','Monthly £ (you)','money',0],['employer_contribution','Monthly £ (employer)','money',0],['notes','Notes','text','']])">+ Add pension</button>
