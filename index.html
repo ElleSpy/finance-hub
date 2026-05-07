@@ -1557,7 +1557,7 @@ function renderDashboard() {
         ${gAppData.credit_cards.map(c => { const cardBal = totalPurchasesForCard(c.id); const util = cardBal / Math.max(1, c.limit); const utilPct = Math.round(util * 100); return `
           <div class="goal-bar-wrap" style="margin-top:10px;">
             <div class="goal-bar-label"><span>${escHtml(c.name)}</span><span data-private style="color:${cardBal > 0 ? 'var(--coral)' : 'var(--teal)'};">${cardBal > 0 ? '-' : ''}${fmtMoney(cardBal)}</span></div>
-            <div class="goal-bar-track"><div class="goal-bar-fill" style="width:${Math.min(100, util * 100)}%;background:${util > 0.7 ? 'var(--red)' : util > 0.4 ? 'var(--amber)' : 'var(--teal)'};"></div></div>
+            <div class="goal-bar-track"><div class="goal-bar-fill" style="width:${Math.min(100, util * 100)}%;background:var(--teal);"></div></div>
             <div style="font-size:11px;color:var(--text3);margin-top:3px;">${utilPct}% of ${fmtMoney(c.limit)} limit used</div>
           </div>`; }).join('')}
         ${(gAppData.loans||[]).length > 0 ? `
@@ -1569,8 +1569,8 @@ function renderDashboard() {
               const paidPct = 100 - remPct;
               return `<div class="goal-bar-wrap" style="margin-top:10px;">
                 <div class="goal-bar-label"><span>${escHtml(l.name||'Loan')}</span><span data-private style="color:${rem > 0 ? 'var(--coral)' : 'var(--teal)'};">${rem > 0 ? '-' : ''}${fmtMoney(rem)}</span></div>
-                <div class="goal-bar-track"><div class="goal-bar-fill" style="width:${remPct.toFixed(1)}%;background:${remPct > 70 ? 'var(--red)' : remPct > 40 ? 'var(--amber)' : 'var(--teal)'};"></div></div>
-                ${rem <= 0 ? `<div style="font-size:11px;color:var(--teal);margin-top:3px;">Paid off!</div>` : `<div style="font-size:11px;color:var(--text3);margin-top:3px;">${paidPct.toFixed(0)}% paid off · ${fmtMoney(rem)} remaining</div>`}
+                <div class="goal-bar-track"><div class="goal-bar-fill" style="width:${remPct.toFixed(1)}%;background:var(--teal);"></div></div>
+                ${rem <= 0 ? `<div style="font-size:11px;color:var(--teal);margin-top:3px;">Paid off!</div>` : `<div style="font-size:11px;color:var(--text3);margin-top:3px;">${fmtMoney(rem)} remaining</div>`}
               </div>`;
             }).join('')}
           </div>` : ''}
@@ -2341,9 +2341,9 @@ function renderCredit() {
                   </div>
                   ${totalRepayable > 0 ? `<div style="margin-top:12px;">
                     <div style="height:4px;background:rgba(255,255,255,0.08);border-radius:2px;">
-                      <div style="height:4px;width:${remPct.toFixed(1)}%;background:${remPct > 70 ? 'var(--red)' : remPct > 40 ? 'var(--amber)' : 'var(--teal)'};border-radius:2px;box-shadow:0 0 8px rgba(245,166,35,0.4);"></div>
+                      <div style="height:4px;width:${remPct.toFixed(1)}%;background:var(--teal);border-radius:2px;box-shadow:0 0 8px rgba(245,166,35,0.4);"></div>
                     </div>
-                    <div style="font-size:11px;color:var(--text3);margin-top:4px;">${pct.toFixed(0)}% paid off · ${fmtMoney(remaining)} of ${fmtMoney(totalRepayable)} remaining</div>
+                    <div style="font-size:11px;color:var(--text3);margin-top:4px;">${remaining <= 0 ? 'Paid off!' : fmtMoney(remaining) + ' of ' + fmtMoney(totalRepayable) + ' remaining · ' + pct.toFixed(0) + '% paid'}</div>
                   </div>` : ''}
                 </div>
                 <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;">
