@@ -631,20 +631,14 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
 
   <div class="nav-section"><div class="nav-label">Extras</div></div>
     <div class="nav-item" onclick="showPage('perks',this)"><span class="nav-icon">✨</span> Extras</div>
+    <div class="nav-item" onclick="showPage('settings',this)"><span class="nav-icon">⚙️</span> Settings</div>
   </div>
 
   <div class="sidebar-footer">
     <div style="font-size:9px;color:var(--text3);font-family:'Manrope', sans-serif;line-height:1.5;margin-bottom:10px;">
       Synced live to Google Drive<br>(<span id="sync-mode-label">checking…</span>)
     </div>
-    <button class="btn-export" onclick="exportData()">↓ Export JSON Backup</button>
-    <div style="margin-top:6px;">
-      <button class="btn-export" onclick="document.getElementById('import-input').click()">↑ Import JSON</button>
-      <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(event)">
-    </div>
-    <div style="margin-top:6px;">
-      <button class="btn-export" onclick="snapshotNow()" title="Press on payday once you've updated your balances — locks in this month's savings, investments and debt for your trend charts">📸 Save monthly snapshot</button>
-    </div>
+    <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(event)">
     <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);">
       <button class="btn-privacy" id="btn-privacy" onclick="togglePrivacy()">👁 Hide totals</button>
     </div>
@@ -660,6 +654,7 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
   <div class="page" id="page-savings"></div>
   <div class="page" id="page-credit"></div>
   <div class="page" id="page-perks"></div>
+  <div class="page" id="page-settings"></div>
 </main>
 
 <!-- UNIVERSAL ADD/EDIT MODAL -->
@@ -1454,6 +1449,7 @@ function renderAll() {
   renderSavings();
   renderCredit();
   renderPerks();
+  renderSettings();
   attachEditHandlers();
 
   // Restore the active page after render
@@ -1562,7 +1558,7 @@ function renderDashboard() {
           <div class="goal-bar-wrap" style="margin-top:10px;">
             <div class="goal-bar-label"><span>${escHtml(c.name)}</span><span data-private style="color:${cardBal > 0 ? 'var(--coral)' : 'var(--teal)'};">${cardBal > 0 ? '-' : ''}${fmtMoney(cardBal)}</span></div>
             <div class="goal-bar-track"><div class="goal-bar-fill" style="width:${Math.min(100, util * 100)}%;background:${util > 0.7 ? 'var(--red)' : util > 0.4 ? 'var(--amber)' : 'var(--teal)'};"></div></div>
-            ${utilPct > 0 ? `<div style="font-size:11px;color:var(--text3);margin-top:3px;">${utilPct}% of ${fmtMoney(c.limit)} limit used</div>` : `<div style="font-size:11px;color:var(--teal);margin-top:3px;">Clear</div>`}
+            <div style="font-size:11px;color:var(--text3);margin-top:3px;">${utilPct}% of ${fmtMoney(c.limit)} limit used</div>
           </div>`; }).join('')}
         ${(gAppData.loans||[]).length > 0 ? `
           <div style="margin-top:${gAppData.credit_cards.length > 0 ? '18px' : '0'};${gAppData.credit_cards.length > 0 ? 'padding-top:14px;border-top:1px solid var(--border);' : ''}">
@@ -1574,7 +1570,7 @@ function renderDashboard() {
               return `<div class="goal-bar-wrap" style="margin-top:10px;">
                 <div class="goal-bar-label"><span>${escHtml(l.name||'Loan')}</span><span data-private style="color:${rem > 0 ? 'var(--coral)' : 'var(--teal)'};">${rem > 0 ? '-' : ''}${fmtMoney(rem)}</span></div>
                 <div class="goal-bar-track"><div class="goal-bar-fill" style="width:${remPct.toFixed(1)}%;background:${remPct > 70 ? 'var(--red)' : remPct > 40 ? 'var(--amber)' : 'var(--teal)'};"></div></div>
-                ${paidPct > 0 ? `<div style="font-size:11px;color:var(--text3);margin-top:3px;">${paidPct.toFixed(0)}% paid off · ${fmtMoney(rem)} remaining</div>` : `<div style="font-size:11px;color:var(--teal);margin-top:3px;">Paid off!</div>`}
+                ${rem <= 0 ? `<div style="font-size:11px;color:var(--teal);margin-top:3px;">Paid off!</div>` : `<div style="font-size:11px;color:var(--text3);margin-top:3px;">${paidPct.toFixed(0)}% paid off · ${fmtMoney(rem)} remaining</div>`}
               </div>`;
             }).join('')}
           </div>` : ''}
@@ -1621,11 +1617,11 @@ function renderDashboard() {
         ${(gAppData.credit_cards||[]).length > 0 ? `
         <div style="margin-bottom:14px;">
           <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);margin-bottom:8px;">Credit Cards</div>
-          ${(gAppData.credit_cards||[]).map(c => `
+          ${(gAppData.credit_cards||[]).map(c => { const bal = totalPurchasesForCard(c.id); return `
           <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);">
             <span style="font-size:13px;color:var(--text2);">${escHtml(c.name)}</span>
-            <span style="font-size:13px;font-weight:600;color:var(--coral);" data-private>-${fmtMoney(totalPurchasesForCard(c.id))}</span>
-          </div>`).join('')}
+            <span style="font-size:13px;font-weight:600;color:${bal > 0 ? 'var(--coral)' : 'var(--teal)'};" data-private>${bal > 0 ? '-' : ''}${fmtMoney(bal)}</span>
+          </div>`; }).join('')}
         </div>` : ''}
 
         ${(gAppData.loans||[]).length > 0 ? `
@@ -1638,9 +1634,9 @@ function renderDashboard() {
           </div>`).join('')}
         </div>` : ''}
 
-        <div style="padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
-          <div style="font-size:12px;color:var(--text3);">All figures updated?</div>
-          <button onclick="snapshotNow()" style="background:var(--teal);color:#001a14;font-family:'Manrope',sans-serif;font-size:12px;font-weight:700;padding:8px 16px;border:none;border-radius:8px;cursor:pointer;">📸 Save snapshot</button>
+        <div style="padding-top:12px;border-top:1px solid var(--border);">
+          <div style="font-size:12px;color:var(--text3);margin-bottom:10px;">Once you've updated all your figures above, save a snapshot to lock in this month's data for your net worth trend chart.</div>
+          <button onclick="snapshotNow()" style="width:100%;background:var(--teal);color:#001a14;font-family:'Manrope',sans-serif;font-size:13px;font-weight:700;padding:10px 16px;border:none;border-radius:8px;cursor:pointer;">📸 Save monthly snapshot</button>
         </div>
       </div>
 
@@ -3040,6 +3036,11 @@ function initSavingsChart() {
   if (!ctx) return;
   if (savingsChart) savingsChart.destroy();
   const sorted = (gAppData.snapshots || []).slice().sort((a,b)=>a.month.localeCompare(b.month));
+  if (sorted.length === 0) {
+    const wrap = ctx.canvas.parentElement;
+    wrap.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3);font-size:13px;text-align:center;padding:20px;">No snapshots yet — save your first one on payday to start tracking.</div>`;
+    return;
+  }
   let cum = 0;
   const cumData = sorted.map(s => { cum += Number(s.savings_total) || 0; return cum; });
   savingsChart = new Chart(ctx, {
@@ -3056,10 +3057,14 @@ function initNetWorthChart() {
   if (!ctx) return;
   if (networthChart) networthChart.destroy();
   const sorted = (gAppData.snapshots || []).slice().sort((a,b)=>a.month.localeCompare(b.month));
-  // synthesise net_worth approximation if missing using just savings_total
+  if (sorted.length === 0) {
+    // No snapshots yet — show empty state message, no chart
+    const wrap = ctx.canvas.parentElement;
+    wrap.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3);font-size:13px;text-align:center;padding:20px;">Save your first snapshot on payday to start tracking net worth over time.</div>`;
+    return;
+  }
   const labels = sorted.map(s => fmtMonth(s.month));
   const data = sorted.map(s => s.net_worth ?? s.savings_total ?? 0);
-  // Tack on current live net worth as today's point
   labels.push('Today');
   data.push(netWorth());
   networthChart = new Chart(ctx, {
@@ -3067,6 +3072,67 @@ function initNetWorthChart() {
     data: { labels, datasets: [{ label: 'Net Worth', data, borderColor: '#f5a623', backgroundColor: 'rgba(245,166,35,0.15)', tension: 0.3, fill: true, pointBackgroundColor: '#f5a623', pointRadius: 4 }]},
     options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{ticks:{callback:v=>'£'+v.toLocaleString()}}} }
   });
+}
+
+/* ============================================================
+   SETTINGS PAGE
+   ============================================================ */
+function renderSettings() {
+  const snaps = (gAppData.snapshots || []).slice().sort((a,b) => b.month.localeCompare(a.month));
+  const html = `
+    <div class="page-eyebrow">App</div>
+    <div class="page-title">Settings</div>
+    <div class="page-sub">Data management, backups, and snapshot history</div>
+
+    <div class="grid-2" style="gap:24px;align-items:start;">
+
+      <div style="display:flex;flex-direction:column;gap:20px;">
+        <div class="card">
+          <div class="card-title">Data Backup</div>
+          <div class="card-sub" style="margin-bottom:16px;">Export your data as a JSON file or restore from a previous backup.</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <button class="btn-ghost" style="justify-content:center;" onclick="exportData()">↓ Export JSON Backup</button>
+            <button class="btn-ghost" style="justify-content:center;" onclick="document.getElementById('import-input').click()">↑ Import JSON</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title" style="color:var(--red);">Danger Zone</div>
+          <div class="card-sub" style="margin-bottom:16px;">Wipe all snapshot history. This cannot be undone.</div>
+          <button class="btn-danger" style="width:100%;justify-content:center;padding:10px;" onclick="wipeAllSnapshots()">🗑 Wipe all snapshots</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Snapshot History</div>
+        <div class="card-sub" style="margin-bottom:14px;">${snaps.length === 0 ? 'No snapshots saved yet. Hit the button on the Dashboard after updating your figures on payday.' : snaps.length + ' snapshot' + (snaps.length !== 1 ? 's' : '') + ' saved · click ✕ to delete individual ones'}</div>
+        ${snaps.length === 0 ? `<div style="text-align:center;padding:32px 0;color:var(--text3);font-size:13px;">No snapshots yet</div>` : `
+        <table class="data-table">
+          <thead><tr><th>Month</th><th class="td-right">Net Worth</th><th class="td-right">Savings</th><th class="td-right">Debt</th><th></th></tr></thead>
+          <tbody>${snaps.map(s => `
+            <tr>
+              <td style="font-weight:500;">${fmtMonth(s.month)}</td>
+              <td class="td-right td-mono" style="color:${(s.net_worth ?? 0) >= 0 ? 'var(--teal)' : 'var(--coral)'};"><span data-private>${s.net_worth != null ? fmtMoneyD(s.net_worth) : '—'}</span></td>
+              <td class="td-right td-mono" style="color:var(--teal);"><span data-private>${fmtMoney(s.savings_total ?? 0)}</span></td>
+              <td class="td-right td-mono" style="color:var(--coral);"><span data-private>${s.debt != null ? '-' + fmtMoney(s.debt) : '—'}</span></td>
+              <td><button class="btn-row-del" style="opacity:1;" onclick="deleteSnapshot('${s.month}')">✕</button></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`}
+      </div>
+
+    </div>
+  `;
+  document.getElementById('page-settings').innerHTML = html;
+  attachEditHandlers(document.getElementById('page-settings'));
+}
+
+function wipeAllSnapshots() {
+  if (!confirm('Delete ALL snapshots? This cannot be undone.')) return;
+  gAppData.snapshots = [];
+  scheduleSave();
+  renderAll();
+  showToast('All snapshots wiped');
 }
 
 /* ============================================================
