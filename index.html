@@ -718,7 +718,8 @@ let gSyncTimeout = null;
 let gAppData     = {};
 let gSyncEnabled = false;
 
-function getClientId() { return localStorage.getItem(CLIENT_ID_STORAGE) || localStorage.getItem('laura_goog_client_id') || ''; }
+const DEFAULT_CLIENT_ID = '56935101632-caejt9kn3bp3t3c8t3cc1csk7m6h4d3h.apps.googleusercontent.com';
+function getClientId() { return localStorage.getItem(CLIENT_ID_STORAGE) || localStorage.getItem('laura_goog_client_id') || DEFAULT_CLIENT_ID; }
 function saveClientId() {
   const v = document.getElementById('client-id-input').value.trim();
   if (!v || !v.includes('.apps.googleusercontent.com')) { alert("That doesn't look like a valid Client ID. It should end in .apps.googleusercontent.com"); return; }
