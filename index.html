@@ -1429,18 +1429,18 @@ function renderAll() {
   // Spending: log or monthly
   const spendMonthly = document.getElementById('spend-monthly');
   if (spendMonthly) subTabState.spending = spendMonthly.style.display === 'block' ? 'monthly' : 'log';
-  // Credit: which panel is visible
-  ['credit','loans','invest','pension','mortgage'].forEach(t => {
+  // Credit: which panel is visible — check display:none to find hidden ones; default is 'credit'
+  subTabState.credit = 'credit';
+  ['loans','invest','pension','mortgage'].forEach(t => {
     const el = document.getElementById('cred-' + t);
     if (el && el.style.display !== 'none' && el.style.display !== '') subTabState.credit = t;
   });
-  if (!subTabState.credit) subTabState.credit = 'credit';
   // Perks: which panel is visible
-  ['airbnb','miles','cashback'].forEach(t => {
+  subTabState.perks = 'airbnb';
+  ['miles','cashback'].forEach(t => {
     const el = document.getElementById('perks-' + t);
     if (el && el.style.display !== 'none' && el.style.display !== '') subTabState.perks = t;
   });
-  if (!subTabState.perks) subTabState.perks = 'airbnb';
 
   renderDashboard();
   renderBudget();
@@ -1477,21 +1477,17 @@ function renderAll() {
     const el = document.querySelectorAll('#page-spending .etab')[1];
     if (el) switchTab(el, '#spend-monthly', '#spend-log');
   }
-  if (subTabState.credit && subTabState.credit !== 'credit') {
-    const creditTabMap = { loans: 1, invest: 2, pension: 3, mortgage: 4 };
-    const idx = creditTabMap[subTabState.credit];
-    if (idx !== undefined) {
-      const el = document.querySelectorAll('#page-credit .etab')[idx];
-      if (el) switchCreditTab(el, subTabState.credit);
-    }
+  const creditTabMap = { credit: 0, loans: 1, invest: 2, pension: 3, mortgage: 4 };
+  const creditIdx = creditTabMap[subTabState.credit];
+  if (creditIdx !== undefined) {
+    const el = document.querySelectorAll('#page-credit .etab')[creditIdx];
+    if (el) switchCreditTab(el, subTabState.credit);
   }
-  if (subTabState.perks && subTabState.perks !== 'airbnb') {
-    const perksTabMap = { miles: 1, cashback: 2 };
-    const idx = perksTabMap[subTabState.perks];
-    if (idx !== undefined) {
-      const el = document.querySelectorAll('#page-perks .etab')[idx];
-      if (el) switchPerksTab(el, subTabState.perks);
-    }
+  const perksTabMap = { airbnb: 0, miles: 1, cashback: 2 };
+  const perksIdx = perksTabMap[subTabState.perks];
+  if (perksIdx !== undefined) {
+    const el = document.querySelectorAll('#page-perks .etab')[perksIdx];
+    if (el) switchPerksTab(el, subTabState.perks);
   }
 }
 
