@@ -162,7 +162,7 @@ body { font-family: 'Manrope', sans-serif; background: var(--bg); color: var(--t
 }
 
 /* HAMBURGER */
-.hamburger { display:none;position:fixed;top:14px;left:14px;z-index:200;background:var(--sidebar-bg);border:1px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer;color:var(--text);font-size:16px; }
+.hamburger { display:none;position:fixed;top:14px;left:14px;z-index:95;background:var(--sidebar-bg);border:1px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer;color:var(--text);font-size:16px; }
 .sidebar-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:90; }
 
 /* MAIN */
@@ -630,7 +630,7 @@ tr:hover .btn-row-del,.list-row:hover .btn-row-del,.invest-row:hover .btn-row-de
     <div class="nav-item" onclick="showPage('credit',this)"><span class="nav-icon">📈</span> Credit & Investing</div>
 
   <div class="nav-section"><div class="nav-label">Extras</div></div>
-    <div class="nav-item" onclick="showPage('perks',this)"><span class="nav-icon">✨</span> Perks</div>
+    <div class="nav-item" onclick="showPage('perks',this)"><span class="nav-icon">✨</span> Rewards & Extras</div>
   </div>
 
   <div class="sidebar-footer">
@@ -1017,15 +1017,7 @@ function defaultData() {
       { id: id(), what: 'Vinted Adidas (Sonia)', date: '', amount: 25 },
     ],
 
-    snapshots: [
-      { month: '2025-10', net_worth: null, savings_total: 4547, investments: null, pension: null, debt: null },
-      { month: '2025-11', net_worth: null, savings_total: 4833, investments: null, pension: null, debt: null },
-      { month: '2025-12', net_worth: null, savings_total: 1208, investments: null, pension: null, debt: null },
-      { month: '2026-01', net_worth: null, savings_total: 0, investments: null, pension: null, debt: null },
-      { month: '2026-02', net_worth: null, savings_total: 25, investments: null, pension: null, debt: null },
-      { month: '2026-03', net_worth: null, savings_total: 200, investments: null, pension: null, debt: null },
-      { month: '2026-04', net_worth: null, savings_total: 400, investments: null, pension: null, debt: null },
-    ],
+    snapshots: [],
   };
 }
 function id() { return 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
@@ -1309,13 +1301,14 @@ function onEditFocus(e) {
     // Capture the old value before editing — used for loan overpayment detection
     el.dataset.prevVal = raw;
     el.textContent = raw === 0 ? '' : String(raw);
-    // Move cursor to end
-    const range = document.createRange();
-    const sel = window.getSelection();
-    range.selectNodeContents(el);
-    range.collapse(false);
-    sel.removeAllRanges();
-    sel.addRange(range);
+    // Select all so a single click selects the whole number for easy overwriting
+    setTimeout(() => {
+      const range = document.createRange();
+      const sel = window.getSelection();
+      range.selectNodeContents(el);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }, 0);
   }
 }
 function onEditKey(e) {
@@ -1377,6 +1370,9 @@ function showPage(pageId, el) {
   document.getElementById('page-' + pageId).classList.add('active');
   if (el) el.classList.add('active');
   if (window.innerWidth <= 900) toggleSidebar();
+  // Always scroll to top when switching pages
+  window.scrollTo(0, 0);
+  document.querySelector('.main').scrollTop = 0;
   if (pageId === 'spending') initSpendingChart();
   if (pageId === 'savings') initSavingsChart();
   if (pageId === 'dashboard') initNetWorthChart();
@@ -1564,21 +1560,21 @@ function renderDashboard() {
         ${gAppData.credit_cards.length === 0 && (gAppData.loans||[]).length === 0 ? `<div style="color:var(--text3);font-size:13px;padding:12px 0;">No credit cards or loans added yet.</div>` : ''}
         ${gAppData.credit_cards.map(c => { const cardBal = totalPurchasesForCard(c.id); const util = cardBal / Math.max(1, c.limit); const utilPct = Math.round(util * 100); return `
           <div class="goal-bar-wrap" style="margin-top:10px;">
-            <div class="goal-bar-label"><span>${escHtml(c.name)}</span><span data-private style="color:var(--coral);">-${fmtMoney(cardBal)}</span></div>
+            <div class="goal-bar-label"><span>${escHtml(c.name)}</span><span data-private style="color:${cardBal > 0 ? 'var(--coral)' : 'var(--teal)'};">${cardBal > 0 ? '-' : ''}${fmtMoney(cardBal)}</span></div>
             <div class="goal-bar-track"><div class="goal-bar-fill" style="width:${Math.min(100, util * 100)}%;background:${util > 0.7 ? 'var(--red)' : util > 0.4 ? 'var(--amber)' : 'var(--teal)'};"></div></div>
-            ${utilPct > 0 ? `<div style="font-size:11px;color:var(--text3);margin-top:3px;">${utilPct}% of ${fmtMoney(c.limit)} limit used</div>` : ''}
+            ${utilPct > 0 ? `<div style="font-size:11px;color:var(--text3);margin-top:3px;">${utilPct}% of ${fmtMoney(c.limit)} limit used</div>` : `<div style="font-size:11px;color:var(--teal);margin-top:3px;">Clear</div>`}
           </div>`; }).join('')}
         ${(gAppData.loans||[]).length > 0 ? `
           <div style="margin-top:${gAppData.credit_cards.length > 0 ? '18px' : '0'};${gAppData.credit_cards.length > 0 ? 'padding-top:14px;border-top:1px solid var(--border);' : ''}">
             ${(gAppData.loans||[]).map(l => {
               const rem = loanRemaining(l);
               const total = loanTotalRepayable(l);
-              const paid = Math.max(0, total - rem);
-              const pct = total > 0 ? Math.min(100, (paid / total) * 100) : 0;
+              const remPct = total > 0 ? Math.min(100, (rem / total) * 100) : 0;
+              const paidPct = 100 - remPct;
               return `<div class="goal-bar-wrap" style="margin-top:10px;">
-                <div class="goal-bar-label"><span>${escHtml(l.name||'Loan')}</span><span data-private style="color:var(--coral);">-${fmtMoney(rem)}</span></div>
-                <div class="goal-bar-track"><div class="goal-bar-fill" style="width:${pct.toFixed(1)}%;background:var(--teal);"></div></div>
-                ${pct > 0 ? `<div style="font-size:11px;color:var(--text3);margin-top:3px;">${pct.toFixed(0)}% paid off</div>` : ''}
+                <div class="goal-bar-label"><span>${escHtml(l.name||'Loan')}</span><span data-private style="color:${rem > 0 ? 'var(--coral)' : 'var(--teal)'};">${rem > 0 ? '-' : ''}${fmtMoney(rem)}</span></div>
+                <div class="goal-bar-track"><div class="goal-bar-fill" style="width:${remPct.toFixed(1)}%;background:${remPct > 70 ? 'var(--red)' : remPct > 40 ? 'var(--amber)' : 'var(--teal)'};"></div></div>
+                ${paidPct > 0 ? `<div style="font-size:11px;color:var(--text3);margin-top:3px;">${paidPct.toFixed(0)}% paid off · ${fmtMoney(rem)} remaining</div>` : `<div style="font-size:11px;color:var(--teal);margin-top:3px;">Paid off!</div>`}
               </div>`;
             }).join('')}
           </div>` : ''}
@@ -2315,8 +2311,9 @@ function renderCredit() {
             const totalRepayable = loanTotalRepayable(l);
             const monthly = Number(l.monthly_payment)||0;
             const remMonths = loanMonthsLeft(l);
-            // Progress: how much of the total repayable has been paid off
+            // Progress: bar shows remaining (full = all owed, shrinks as paid)
             const paid = Math.max(0, totalRepayable - remaining);
+            const remPct = totalRepayable > 0 ? Math.min(100, (remaining / totalRepayable) * 100) : 0;
             const pct = totalRepayable > 0 ? Math.min(100, (paid / totalRepayable) * 100) : 0;
             return `
             <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;margin-bottom:12px;">
@@ -2346,11 +2343,11 @@ function renderCredit() {
                     ${remMonths > 0 ? `<div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Months left</div><div style="font-size:14px;font-weight:600;">${remMonths}</div></div>` : ''}
                     ${l.lender ? `<div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;">Lender</div><div style="font-size:13px;color:var(--text2);"><span data-edit-list="loans|${l.id}|lender" data-type="text">${escHtml(l.lender)}</span></div></div>` : ''}
                   </div>
-                  ${pct > 0 ? `<div style="margin-top:12px;">
+                  ${totalRepayable > 0 ? `<div style="margin-top:12px;">
                     <div style="height:4px;background:rgba(255,255,255,0.08);border-radius:2px;">
-                      <div style="height:4px;width:${pct.toFixed(1)}%;background:var(--teal);border-radius:2px;box-shadow:0 0 8px rgba(245,166,35,0.4);"></div>
+                      <div style="height:4px;width:${remPct.toFixed(1)}%;background:${remPct > 70 ? 'var(--red)' : remPct > 40 ? 'var(--amber)' : 'var(--teal)'};border-radius:2px;box-shadow:0 0 8px rgba(245,166,35,0.4);"></div>
                     </div>
-                    <div style="font-size:11px;color:var(--text3);margin-top:4px;">${pct.toFixed(0)}% paid off · ${fmtMoney(paid)} of ${fmtMoney(totalRepayable)}</div>
+                    <div style="font-size:11px;color:var(--text3);margin-top:4px;">${pct.toFixed(0)}% paid off · ${fmtMoney(remaining)} of ${fmtMoney(totalRepayable)} remaining</div>
                   </div>` : ''}
                 </div>
                 <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;">
@@ -2789,7 +2786,7 @@ function renderPerks() {
   const currentYear = new Date().getFullYear();
   const html = `
     <div class="page-eyebrow">Extras</div>
-    <div class="page-title">Perks</div>
+    <div class="page-title">Rewards & Extras</div>
     <div class="page-sub">Airbnb, miles, cashback — totals computed live</div>
 
     <div class="tab-bar">
