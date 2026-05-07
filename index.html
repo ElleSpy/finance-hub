@@ -765,6 +765,14 @@ function launchApp() {
   if (!gAppData || Object.keys(gAppData).length === 0) gAppData = defaultData();
   ensureSchema(gAppData);
   migrateColours();
+  // If API key is in localStorage (from this device) but not yet in Drive data, push it in
+  try {
+    const localKey = localStorage.getItem(FH_API_KEY_STORE);
+    if (localKey && !gAppData[FH_API_KEY_STORE]) {
+      gAppData[FH_API_KEY_STORE] = localKey;
+      saveToDrive(); // fire and forget
+    }
+  } catch(e) {}
   renderAll();
   setSyncStatus('ok', 'Synced');
 }
@@ -835,6 +843,75 @@ function setSyncStatus(state, label) {
   if (lbl) lbl.textContent = label;
 }
 // localStorage fallback removed — data is Google Drive only
+
+/* ============================================================
+   ANTHROPIC API KEY — stored in gAppData (Drive-synced) + localStorage fallback
+   Same pattern as Health Hub so the key follows you across every device.
+   ============================================================ */
+const FH_API_KEY_STORE = 'laura_anthropic_api_key'; // shared key name with Health Hub
+
+function getAnthropicApiKey() {
+  // 1. Drive-synced gAppData — authoritative across all devices
+  const synced = (gAppData || {})[FH_API_KEY_STORE] || '';
+  if (synced) return synced;
+  // 2. localStorage fallback — survives if Drive is slow / not yet loaded
+  try { const local = localStorage.getItem(FH_API_KEY_STORE); if (local) return local; } catch(e) {}
+  return '';
+}
+function hasAnthropicApiKey() { return !!getAnthropicApiKey(); }
+
+async function saveApiKey() {
+  const inp = document.getElementById('fh-api-key-input');
+  if (!inp) return;
+  const key = inp.value.trim();
+  if (!key) { showFhNotification('Please paste your API key first'); return; }
+  // Write to gAppData so it syncs to Drive
+  gAppData[FH_API_KEY_STORE] = key;
+  // Also write to localStorage as same-device fallback
+  try { localStorage.setItem(FH_API_KEY_STORE, key); } catch(e) {}
+  updateApiKeyStatus();
+  // Save to Drive immediately (not debounced) so it's there on next device
+  setSyncStatus('saving', 'Saving…');
+  try {
+    await saveToDrive();
+    showFhNotification('API key saved & synced to Drive ✓');
+  } catch(e) {
+    showFhNotification('API key saved locally — Drive sync failed, try again');
+  }
+}
+
+function toggleApiKeyVisibility(btn) {
+  const inp = document.getElementById('fh-api-key-input');
+  if (!inp) return;
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = 'Hide'; }
+  else { inp.type = 'password'; btn.textContent = 'Show'; }
+}
+
+function populateApiKeyInput() {
+  const inp = document.getElementById('fh-api-key-input');
+  if (!inp) return;
+  const k = getAnthropicApiKey();
+  if (k) inp.value = k;
+}
+
+function updateApiKeyStatus() {
+  const el = document.getElementById('fh-api-key-status');
+  if (!el) return;
+  if (hasAnthropicApiKey()) {
+    const k = getAnthropicApiKey();
+    el.textContent = '✓ Key saved (' + k.substring(0, 8) + '…' + k.slice(-4) + ')';
+    el.style.color = 'var(--teal)';
+  } else {
+    el.textContent = 'No API key configured yet';
+    el.style.color = 'var(--text2)';
+  }
+}
+
+function showFhNotification(msg) {
+  // Reuse existing notification if present, otherwise console
+  if (typeof showNotification === 'function') { showNotification(msg); return; }
+  console.log(msg);
+}
 
 /* ============================================================
    DEFAULT DATA (seed from existing Money sheet)
@@ -1384,6 +1461,7 @@ function showPage(pageId, el) {
   if (pageId === 'spending') initSpendingChart();
   if (pageId === 'savings') initSavingsChart();
   if (pageId === 'dashboard') initNetWorthChart();
+  if (pageId === 'settings') { populateApiKeyInput(); updateApiKeyStatus(); }
 }
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('open');
@@ -1467,6 +1545,8 @@ function renderAll() {
   renderCredit();
   renderPerks();
   renderSettings();
+  populateApiKeyInput();
+  updateApiKeyStatus();
   attachEditHandlers();
 
   // Restore the active page after render
@@ -3112,6 +3192,20 @@ function renderSettings() {
     <div class="grid-2" style="gap:24px;align-items:start;">
 
       <div style="display:flex;flex-direction:column;gap:20px;">
+
+        <div class="card">
+          <div class="card-title">Anthropic API Key</div>
+          <div class="card-sub" style="margin-bottom:16px;">Stored in your Google Drive so it's available on every device — no copy-pasting needed again.</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input id="fh-api-key-input" type="password" placeholder="sk-ant-…" style="flex:1;padding:11px 14px;border-radius:10px;border:1.5px solid var(--border);font-family:'Manrope',sans-serif;font-size:13px;background:var(--bg);color:var(--text);outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+              <button class="btn-ghost" style="padding:10px 14px;flex-shrink:0;" onclick="toggleApiKeyVisibility(this)">Show</button>
+            </div>
+            <button class="btn-primary" style="justify-content:center;" onclick="saveApiKey()">Save & Sync to Drive</button>
+            <div id="fh-api-key-status" style="font-size:12.5px;color:var(--text2);padding:10px 12px;background:var(--bg);border-radius:8px;border-left:3px solid var(--border);">No API key configured yet</div>
+          </div>
+        </div>
+
         <div class="card">
           <div class="card-title">Data Backup</div>
           <div class="card-sub" style="margin-bottom:16px;">Export your data as a JSON file or restore from a previous backup.</div>
